@@ -33,7 +33,7 @@ export default function SoftSkillsPage() {
   const fetchHistory = async () => {
     try {
       const res = await api.get('/student/mock-interview/history');
-      setHistory(res.data.interviews || res.data || []);
+      setHistory(res.data.sessions || res.data.interviews || res.data || []);
     } catch (e) { console.error(e); }
   };
 

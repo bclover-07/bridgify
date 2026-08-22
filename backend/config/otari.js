@@ -1,27 +1,26 @@
 import axios from 'axios';
 
 const routingTable = {
-  'assessment.generate': { model: 'gemini-1.5-flash', priority: 'normal' },
-  'assessment.grade': { model: 'gemini-1.5-flash', priority: 'normal' },
-  'interview.evaluate': { model: 'gemini-1.5-pro', priority: 'high' },
-  'interview.question': { model: 'gemini-1.5-pro', priority: 'high' },
-  'debate.coach': { model: 'gemini-1.5-pro', priority: 'high' },
-  'dropout.analyze': { model: 'gemini-1.5-flash', priority: 'low' },
-  'naac.report': { model: 'gemini-1.5-pro', priority: 'normal' },
-  'notes.generate': { model: 'gemini-1.5-flash', priority: 'normal' },
-  'search.match': { model: 'gemini-1.5-flash', priority: 'normal' },
-  'gap.analyze': { model: 'gemini-1.5-flash', priority: 'normal' },
-  'ps.generate': { model: 'gemini-1.5-flash', priority: 'normal' },
-  'feedback.analyze': { model: 'gemini-1.5-flash', priority: 'low' },
-  'placement.strategy': { model: 'gemini-1.5-pro', priority: 'normal' },
-  'study.plan': { model: 'gemini-1.5-flash', priority: 'normal' },
-  'seg.audit': { model: 'gemini-1.5-flash', priority: 'low' },
+  'assessment.generate': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'assessment.grade': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'interview.evaluate': { model: 'gemini-2.5-flash', priority: 'high' },
+  'interview.question': { model: 'gemini-2.5-flash', priority: 'high' },
+  'debate.coach': { model: 'gemini-2.5-flash', priority: 'high' },
+  'dropout.analyze': { model: 'gemini-2.5-flash', priority: 'low' },
+  'naac.report': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'notes.generate': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'search.match': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'gap.analyze': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'ps.generate': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'feedback.analyze': { model: 'gemini-2.5-flash', priority: 'low' },
+  'placement.strategy': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'study.plan': { model: 'gemini-2.5-flash', priority: 'normal' },
+  'seg.audit': { model: 'gemini-2.5-flash', priority: 'low' },
   'embedding.generate': { model: 'hf/sentence-transformers/all-MiniLM-L6-v2' },
 };
 
 const budgetCounters = {
-  'gemini-1.5-flash': { daily: 0, dailyLimit: 1500, rpm: 0, rpmLimit: 15, lastRpmReset: Date.now() },
-  'gemini-1.5-pro': { daily: 0, dailyLimit: 50, rpm: 0, rpmLimit: 2, lastRpmReset: Date.now() },
+  'gemini-2.5-flash': { daily: 0, dailyLimit: 1500, rpm: 0, rpmLimit: 15, lastRpmReset: Date.now() },
 };
 
 function resetRPMIfNeeded(model) {
@@ -49,7 +48,7 @@ function incrementBudget(model) {
 }
 
 export function getRouteConfig(routeTag) {
-  return routingTable[routeTag] || { model: 'gemini-1.5-flash', priority: 'normal' };
+  return routingTable[routeTag] || { model: 'gemini-2.5-flash', priority: 'normal' };
 }
 
 export function getBudgetStatus() {
@@ -67,7 +66,7 @@ export function getBudgetStatus() {
 }
 
 export async function callGemini(prompt, options = {}) {
-  const model = options.model || 'gemini-1.5-flash';
+  const model = options.model || 'gemini-2.5-flash';
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -82,11 +81,7 @@ export async function callGemini(prompt, options = {}) {
   }
 
   const candidateModels = [
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash-002',
-    'gemini-1.5-pro-002',
-    'gemini-2.0-flash-exp',
+    'gemini-2.5-flash',
   ];
 
   let lastError = null;

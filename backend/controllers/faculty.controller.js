@@ -55,16 +55,29 @@ export async function getCourses(req, res, next) {
 
 export async function generateAssessment(req, res, next) {
   try {
-    const { courseId, topic, difficulty, questionCount = 10 } = req.body;
+    const { topic, difficulty, questionCount = 10 } = req.body;
+    let { courseId } = req.body;
 
-    if (!courseId || !topic) {
-      return res.status(400).json({ error: 'Course ID and topic are required' });
+    if (!topic) {
+      return res.status(400).json({ error: 'Topic is required' });
     }
 
-    const course = await Course.findById(courseId);
+    let course = null;
+    if (courseId) {
+      try {
+        course = await Course.findById(courseId);
+      } catch { /* invalid ObjectId */ }
+    }
+
     if (!course) {
-      return res.status(404).json({ error: 'Course not found' });
+      course = await Course.findOne({ facultyId: req.user._id }) || await Course.findOne({});
     }
+
+    if (!course) {
+      return res.status(404).json({ error: 'No course found in system' });
+    }
+
+    courseId = course._id;
 
     const result = await runAssessmentGenerator({
       courseId,
@@ -388,11 +401,16 @@ export async function getCohortHeatmap(req, res, next) {
 
 export async function analyzeCurriculumGap(req, res, next) {
   try {
-    const { courseId } = req.body;
-    if (!courseId) return res.status(400).json({ error: 'Course ID is required' });
-
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
+    let { courseId } = req.body;
+    let course = null;
+    if (courseId) {
+      try { course = await Course.findById(courseId); } catch {}
+    }
+    if (!course) {
+      course = await Course.findOne({ facultyId: req.user._id }) || await Course.findOne({});
+    }
+    if (!course) return res.status(404).json({ error: 'No course found in system' });
+    courseId = course._id;
 
     const { runCurriculumGap } = await import('../agents/07-curriculumGap.js');
     const result = await runCurriculumGap({ courseId, userId: req.user._id });
@@ -443,11 +461,16 @@ export async function getLearningFeed(req, res, next) {
 
 export async function lectureBridge(req, res, next) {
   try {
-    const { courseId, lectureTopics } = req.body;
-    if (!courseId) return res.status(400).json({ error: 'Course ID is required' });
-
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
+    let { courseId, lectureTopics } = req.body;
+    let course = null;
+    if (courseId) {
+      try { course = await Course.findById(courseId); } catch {}
+    }
+    if (!course) {
+      course = await Course.findOne({ facultyId: req.user._id }) || await Course.findOne({});
+    }
+    if (!course) return res.status(404).json({ error: 'No course found in system' });
+    courseId = course._id;
 
     const assessments = await Assessment.find({ courseId, status: 'published' });
     const testedSkills = new Set(assessments.flatMap((a) => a.questions.map((q) => q.skillId)));
@@ -472,9 +495,16 @@ export async function lectureBridge(req, res, next) {
 
 export async function mentorshipMatch(req, res, next) {
   try {
-    const { courseId } = req.body;
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
+    let { courseId } = req.body;
+    let course = null;
+    if (courseId) {
+      try { course = await Course.findById(courseId); } catch {}
+    }
+    if (!course) {
+      course = await Course.findOne({ facultyId: req.user._id }) || await Course.findOne({});
+    }
+    if (!course) return res.status(404).json({ error: 'No course found in system' });
+    courseId = course._id;
 
     const students = await User.find({
       _id: { $in: course.enrolledStudentIds },

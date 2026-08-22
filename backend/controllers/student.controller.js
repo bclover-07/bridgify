@@ -96,11 +96,11 @@ export async function getReadiness(req, res, next) {
 
 export async function whatIfReadiness(req, res, next) {
   try {
-    const { targetRole, hypotheticalScores } = req.body;
+    const { targetRole, hypotheticalScores = {} } = req.body;
     const studentId = req.user._id;
 
-    if (!targetRole || !hypotheticalScores) {
-      return res.status(400).json({ error: 'targetRole and hypotheticalScores are required' });
+    if (!targetRole) {
+      return res.status(400).json({ error: 'targetRole is required' });
     }
 
     const { computeWhatIfReadiness } = await import('../services/readiness.service.js');
@@ -198,10 +198,11 @@ export async function getSkillEvidence(req, res, next) {
 export async function shareWallet(req, res, next) {
   try {
     const studentId = req.user._id;
-    const { skillIds, expiresInHours = 72 } = req.body;
+    const { skillIds, expiresInHours, expiryDays } = req.body;
 
-    const token = generateShareToken(studentId, expiresInHours);
-    const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+    const hours = expiresInHours || (expiryDays ? Number(expiryDays) * 24 : 72);
+    const token = generateShareToken(studentId, hours);
+    const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
 
     if (skillIds && skillIds.length > 0) {
       await SkillEvidenceGraph.updateMany(
@@ -383,11 +384,7 @@ export async function getSubmission(req, res, next) {
 
 export async function startMockInterview(req, res, next) {
   try {
-    const { targetRole } = req.body;
-
-    if (!targetRole) {
-      return res.status(400).json({ error: 'Target role is required' });
-    }
+    const targetRole = req.body.targetRole || req.body.topic || 'Software Engineer';
 
     const session = await InterviewSession.create({
       studentId: req.user._id,
@@ -395,12 +392,23 @@ export async function startMockInterview(req, res, next) {
       status: 'preparing',
     });
 
-    req.io.to(`student:${req.user._id}`).emit('interview:preparing', {
-      sessionId: session._id,
-      targetRole,
-    });
+    try {
+      req.io.to(`student:${req.user._id}`).emit('interview:preparing', {
+        sessionId: session._id,
+        targetRole,
+      });
+    } catch { /* socket emit fail safe */ }
 
-    res.status(201).json({ session });
+    const { runMockInterview } = await import('../agents/04-mockInterview.js');
+    runMockInterview({ sessionId: session._id, userId: req.user._id })
+      .catch(err => console.error('Mock interview agent background execution failed:', err.message));
+
+    res.status(201).json({
+      session,
+      targetRole,
+      firstQuestion: `Welcome to your ${targetRole} Mock Interview. Tell me about a challenging technical project you worked on recently and the key engineering decisions you made.`,
+      message: 'Interview session initialized.',
+    });
   } catch (error) {
     next(error);
   }
@@ -420,11 +428,8 @@ export async function getInterviewHistory(req, res, next) {
 
 export async function startDebate(req, res, next) {
   try {
-    const { topic, side } = req.body;
-
-    if (!topic || !side) {
-      return res.status(400).json({ error: 'Topic and side are required' });
-    }
+    const topic = req.body.topic || 'AI taking over Software Engineering jobs';
+    const side = req.body.side || 'against';
 
     const session = await DebateSession.create({
       studentId: req.user._id,
@@ -433,7 +438,17 @@ export async function startDebate(req, res, next) {
       status: 'preparing',
     });
 
-    res.status(201).json({ session });
+    const { runDebateCoach } = await import('../agents/05-debateCoach.js');
+    runDebateCoach({ sessionId: session._id, userId: req.user._id })
+      .catch(err => console.error('Debate agent background execution failed:', err.message));
+
+    res.status(201).json({
+      session,
+      topic,
+      side,
+      openingArgument: `I'll be debating against your stance on "${topic}". While technology rapidly evolves, human problem-solving, architectural design, and empathy remain irreplaceable core competencies. What is your primary counter-argument?`,
+      message: 'Debate session initialized.',
+    });
   } catch (error) {
     next(error);
   }

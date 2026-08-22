@@ -100,10 +100,11 @@ export async function searchCandidates(req, res, next) {
 
 export async function semanticSearch(req, res, next) {
   try {
-    const { jobDescription, limit = 20 } = req.body;
+    const jobDescription = req.body.jobDescription || req.body.query;
+    const limit = req.body.limit || 20;
 
     if (!jobDescription) {
-      return res.status(400).json({ error: 'Job description is required' });
+      return res.status(400).json({ error: 'Job description or query is required' });
     }
 
     const { embedText } = await import('../utils/embeddings.js');
@@ -235,8 +236,8 @@ export async function getSharedProfile(req, res, next) {
 
 export async function generatePS(req, res, next) {
   try {
-    const { rawIdea } = req.body;
-    if (!rawIdea) return res.status(400).json({ error: 'Raw idea is required' });
+    const rawIdea = req.body.rawIdea || req.body.idea || req.body.topic || req.body.description;
+    if (!rawIdea) return res.status(400).json({ error: 'Problem statement idea/topic is required' });
 
     const institutionId = req.user.institutionId?._id || req.user.institutionId;
 

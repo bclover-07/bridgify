@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'http://127.0.0.1:5000/api';
 
 let studentToken = '';
 let facultyToken = '';
@@ -181,7 +181,7 @@ async function runTests() {
       headers: { Authorization: `Bearer ${facultyToken}` },
     });
     if (res.data.courses && res.data.courses.length > 0) {
-      courseId = res.data.courses[0]._id;
+      courseId = String(res.data.courses[0]._id);
     }
     return { profile: res.data.profile.name, coursesCount: res.data.courses?.length, selectedCourseId: courseId };
   });
@@ -191,7 +191,7 @@ async function runTests() {
       headers: { Authorization: `Bearer ${facultyToken}` },
     });
     if (res.data.courses && res.data.courses.length > 0) {
-      courseId = res.data.courses[0]._id;
+      courseId = String(res.data.courses[0]._id);
     }
     return { courses: res.data.courses?.map(c => c.code), selectedCourseId: courseId };
   });

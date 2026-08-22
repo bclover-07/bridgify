@@ -22,14 +22,12 @@ export default function StudyHubPage() {
     setLoading(true);
     try {
       const { data } = await api.post('/student/mock-interview/start', {
-        topic: 'General Placement Prep' // This could be dynamic in a full implementation
+        targetRole: 'Fullstack Software Engineer',
+        topic: 'General Placement Prep',
       });
       setSessionData(data);
-      console.log("Interview started:", data);
-      alert(`Interview session started! Agent Run ID: ${data.agentRunId}`);
     } catch (err) {
-      console.error(err);
-      alert("Failed to start interview. See console.");
+      console.error('Interview start error:', err);
     } finally {
       setLoading(false);
     }
@@ -39,14 +37,12 @@ export default function StudyHubPage() {
     setLoading(true);
     try {
       const { data } = await api.post('/student/debate/start', {
-        topic: 'AI taking over Software Engineering jobs'
+        topic: 'AI taking over Software Engineering jobs',
+        side: 'against',
       });
       setSessionData(data);
-      console.log("Debate started:", data);
-      alert(`Debate session started! Opponent ready.`);
     } catch (err) {
-      console.error(err);
-      alert("Failed to start debate. See console.");
+      console.error('Debate start error:', err);
     } finally {
       setLoading(false);
     }
