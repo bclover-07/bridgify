@@ -1,0 +1,497 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #14121F;
+  --color-paper: #FBF6EC;
+  --color-electric: #4B3AFF;
+  --color-acid: #E8FF3D;
+  --color-coral: #FF5A4E;
+  --color-mint: #2FE3A3;
+  --color-sky: #3AC1FF;
+  --color-violet: #A960FF;
+  --color-hotpink: #FF3D9A;
+  --color-amber: #FFB020;
+
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+:root {
+  --ink: #14121F;
+  --paper: #FBF6EC;
+  --electric: #4B3AFF;
+  --acid: #E8FF3D;
+  --coral: #FF5A4E;
+  --mint: #2FE3A3;
+  --sky: #3AC1FF;
+  --violet: #A960FF;
+  --hotpink: #FF3D9A;
+  --amber: #FFB020;
+
+  --border-width: 3px;
+  --radius-card: 20px;
+  --radius-button: 14px;
+  --radius-input: 12px;
+  --radius-pill: 999px;
+
+  --shadow-brutal: 6px 6px 0px 0px var(--ink);
+  --shadow-brutal-sm: 4px 4px 0px 0px var(--ink);
+  --shadow-brutal-hover: 8px 8px 0px 0px var(--ink);
+  --shadow-brutal-press: 2px 2px 0px 0px var(--ink);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-display), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+/* ─── Neubrutalist Card ────────────────────── */
+.neu-card {
+  border: var(--border-width) solid var(--ink);
+  border-radius: var(--radius-card);
+  background-color: var(--paper);
+  box-shadow: var(--shadow-brutal);
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+              box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.neu-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-brutal-hover);
+}
+
+.neu-card-static {
+  border: var(--border-width) solid var(--ink);
+  border-radius: var(--radius-card);
+  background-color: var(--paper);
+  box-shadow: var(--shadow-brutal);
+}
+
+/* ─── Neubrutalist Button ──────────────────── */
+.neu-btn {
+  border: var(--border-width) solid var(--ink);
+  border-radius: var(--radius-button);
+  font-weight: 700;
+  font-family: var(--font-display), sans-serif;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-brutal-sm);
+  transition: transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1),
+              box-shadow 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  user-select: none;
+}
+
+.neu-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-brutal);
+}
+
+.neu-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-brutal-press);
+}
+
+.neu-btn-primary {
+  background-color: var(--electric);
+  color: white;
+}
+
+.neu-btn-acid {
+  background-color: var(--acid);
+  color: var(--ink);
+}
+
+.neu-btn-coral {
+  background-color: var(--coral);
+  color: white;
+}
+
+.neu-btn-mint {
+  background-color: var(--mint);
+  color: var(--ink);
+}
+
+.neu-btn-sky {
+  background-color: var(--sky);
+  color: var(--ink);
+}
+
+.neu-btn-violet {
+  background-color: var(--violet);
+  color: white;
+}
+
+.neu-btn-hotpink {
+  background-color: var(--hotpink);
+  color: white;
+}
+
+.neu-btn-ghost {
+  background-color: transparent;
+  color: var(--ink);
+}
+
+.neu-btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-input);
+}
+
+.neu-btn-lg {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+/* ─── Neubrutalist Input ───────────────────── */
+.neu-input {
+  border: var(--border-width) solid var(--ink);
+  border-radius: var(--radius-input);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.95rem;
+  background-color: white;
+  color: var(--ink);
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  width: 100%;
+}
+
+.neu-input:focus {
+  box-shadow: var(--shadow-brutal-sm);
+  border-color: var(--electric);
+}
+
+.neu-input::placeholder {
+  color: #999;
+}
+
+/* ─── Neubrutalist Select ──────────────────── */
+.neu-select {
+  border: var(--border-width) solid var(--ink);
+  border-radius: var(--radius-input);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.95rem;
+  background-color: white;
+  color: var(--ink);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2314121F' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
+  width: 100%;
+}
+
+.neu-select:focus {
+  box-shadow: var(--shadow-brutal-sm);
+  border-color: var(--electric);
+  outline: none;
+}
+
+/* ─── Neubrutalist Badge/Pill ──────────────── */
+.neu-badge {
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ─── Shadows ──────────────────────────────── */
+.neu-shadow {
+  box-shadow: var(--shadow-brutal);
+}
+
+.neu-shadow-sm {
+  box-shadow: var(--shadow-brutal-sm);
+}
+
+.neu-shadow-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-brutal-hover);
+}
+
+/* ─── Neubrutalist Divider ─────────────────── */
+.neu-divider {
+  border-top: var(--border-width) solid var(--ink);
+  margin: 1.5rem 0;
+}
+
+/* ─── Neubrutalist Modal ───────────────────── */
+.neu-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 18, 31, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.neu-modal {
+  border: var(--border-width) solid var(--ink);
+  border-radius: var(--radius-card);
+  background-color: var(--paper);
+  box-shadow: 10px 10px 0px 0px var(--ink);
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* ─── Tab Navigation ───────────────────────── */
+.neu-tabs {
+  display: flex;
+  gap: 0;
+  border: var(--border-width) solid var(--ink);
+  border-radius: var(--radius-button);
+  overflow: hidden;
+}
+
+.neu-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  border-right: var(--border-width) solid var(--ink);
+  background: var(--paper);
+  transition: background-color 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.neu-tab:last-child {
+  border-right: none;
+}
+
+.neu-tab:hover {
+  background: rgba(75, 58, 255, 0.08);
+}
+
+.neu-tab-active {
+  background: var(--electric) !important;
+  color: white;
+}
+
+/* ─── Sidebar Navigation ───────────────────── */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-input);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.15s;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.sidebar-link:hover {
+  background: rgba(75, 58, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.sidebar-link-active {
+  background: var(--electric);
+  color: white;
+  box-shadow: var(--shadow-brutal-sm);
+}
+
+/* ─── Progress / Skill Bar ─────────────────── */
+.skill-bar-track {
+  height: 12px;
+  background: #e8e5dc;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--ink);
+  overflow: hidden;
+}
+
+.skill-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Risk Level Colors ────────────────────── */
+.risk-high {
+  background-color: var(--coral);
+  color: white;
+}
+
+.risk-medium {
+  background-color: var(--amber);
+  color: var(--ink);
+}
+
+.risk-low {
+  background-color: var(--mint);
+  color: var(--ink);
+}
+
+/* ─── Pulse Animation (HIGH risk badges) ──── */
+@keyframes pulse-risk {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.pulse-risk {
+  animation: pulse-risk 2s ease-in-out infinite;
+}
+
+/* ─── Counter Animation ────────────────────── */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-count {
+  animation: count-up 0.6s ease-out forwards;
+}
+
+/* ─── Skeleton Loading ─────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e8e5dc 25%, #f0ede4 50%, #e8e5dc 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-input);
+}
+
+/* ─── Stagger Entrance ─────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-enter > * {
+  opacity: 0;
+  animation: fade-up 0.5s ease-out forwards;
+}
+
+.stagger-enter > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-enter > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-enter > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-enter > *:nth-child(4) { animation-delay: 240ms; }
+.stagger-enter > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-enter > *:nth-child(6) { animation-delay: 400ms; }
+.stagger-enter > *:nth-child(7) { animation-delay: 480ms; }
+.stagger-enter > *:nth-child(8) { animation-delay: 560ms; }
+
+/* ─── Tooltip ──────────────────────────────── */
+.neu-tooltip {
+  position: relative;
+}
+
+.neu-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.75rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-input);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.neu-tooltip:hover::after {
+  opacity: 1;
+}
+
+/* ─── Scrollbar ────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ink);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--electric);
+}
+
+/* ─── Role Accent Colors ──────────────────── */
+.accent-student { --accent: var(--electric); }
+.accent-faculty { --accent: var(--sky); }
+.accent-admin { --accent: var(--violet); }
+.accent-recruiter { --accent: var(--hotpink); }
+
+/* ─── Mobile Responsive ───────────────────── */
+@media (max-width: 768px) {
+  .neu-card, .neu-card-static {
+    border-radius: 16px;
+  }
+  
+  .neu-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+}
+
+@media (max-width: 480px) {
+  .neu-card, .neu-card-static {
+    box-shadow: 4px 4px 0px 0px var(--ink);
+  }
+  
+  .neu-btn {
+    box-shadow: 3px 3px 0px 0px var(--ink);
+  }
+}
