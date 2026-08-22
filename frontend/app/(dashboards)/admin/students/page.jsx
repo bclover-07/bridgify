@@ -32,7 +32,7 @@ export default function AdminStudentsPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchStudents(); }, []);
+  useEffect(() => { setTimeout(() => fetchStudents(), 0); }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();

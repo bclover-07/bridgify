@@ -82,7 +82,7 @@ export default function SemanticSearchPage() {
                    <div className="flex-1 space-y-4">
                      <div>
                        <h4 className="font-bold mb-2">Matched Skills Context</h4>
-                       <p className="text-sm text-gray-700 italic mb-2">"{match.reasoning}"</p>
+                       <p className="text-sm text-gray-700 italic mb-2">&quot;{match.reasoning}&quot;</p>
                        <div className="flex flex-wrap gap-2">
                          {match.matchedSkills?.map(skill => (
                            <span key={skill} className="neu-badge bg-[var(--acid)] text-[var(--ink)]">{skill}</span>

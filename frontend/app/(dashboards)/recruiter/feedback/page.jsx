@@ -152,7 +152,7 @@ export default function FeedbackPage() {
                 </div>
                 <h3 className="font-bold text-lg mb-4">Skill Signals</h3>
                 <p className="text-sm text-gray-500 font-medium mb-4">
-                  Add specific skills demonstrated during the interview. This feeds directly into the candidate's SEG as validated evidence.
+                  Add specific skills demonstrated during the interview. This feeds directly into the candidate&apos;s SEG as validated evidence.
                 </p>
 
                 <div className="space-y-4">

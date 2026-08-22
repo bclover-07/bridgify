@@ -20,7 +20,9 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    fetchUser();
+    setTimeout(() => {
+      fetchUser();
+    }, 0);
   }, []);
 
   const login = async (email, password) => {

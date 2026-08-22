@@ -36,17 +36,20 @@ export default function FairHiringPage() {
   useEffect(() => {
     if (!selectedDrive) return;
     
-    setFetchingData(true);
-    api.get(`/recruiter/fair-hiring/${selectedDrive}`)
-      .then(res => {
-        setAnalytics(res.data);
-        setError(null);
-      })
-      .catch(err => {
-        setError(err.response?.data?.error || 'Failed to load fair hiring data');
-        setAnalytics(null);
-      })
-      .finally(() => setFetchingData(false));
+    const timer = setTimeout(() => {
+      setFetchingData(true);
+      api.get(`/recruiter/fair-hiring/${selectedDrive}`)
+        .then(res => {
+          setAnalytics(res.data);
+          setError(null);
+        })
+        .catch(err => {
+          setError(err.response?.data?.error || 'Failed to load fair hiring data');
+          setAnalytics(null);
+        })
+        .finally(() => setFetchingData(false));
+    }, 0);
+    return () => clearTimeout(timer);
   }, [selectedDrive]);
 
   if (loading) return <DashboardSkeleton />;

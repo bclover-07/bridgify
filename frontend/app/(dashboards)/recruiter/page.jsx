@@ -119,7 +119,7 @@ export default function RecruiterDashboard() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-bold text-xl">
-                        {blindMode ? `Candidate ID: #${Math.floor(1000 + Math.random() * 9000)}` : `Student Name ${i+1}`}
+                        {blindMode ? `Candidate ID: #${1000 + i}` : `Student Name ${i+1}`}
                       </h3>
                       {candidate.match > 90 && (
                         <span className="bg-[var(--electric)] text-white text-xs px-2 py-1 rounded-full font-bold">Top Match</span>
