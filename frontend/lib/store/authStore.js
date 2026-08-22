@@ -4,7 +4,7 @@ import { connectSocket, disconnectSocket } from '../socket';
 
 const useAuthStoreHook = create((set, get) => ({
   user: null,
-  isLoading: true,
+  isLoading: false,
   isAuthenticated: false,
   error: null,
 

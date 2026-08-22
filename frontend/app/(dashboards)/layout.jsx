@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/shared/Sidebar';
 import Navbar from '@/components/shared/Navbar';
@@ -10,16 +10,22 @@ export default function DashboardLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, fetchMe } = useAuthStore();
+  const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (!user && !isLoading) {
-      fetchMe().catch(() => {
+    if (!user && !hasFetched.current) {
+      hasFetched.current = true;
+      fetchMe().then((fetchedUser) => {
+        if (!fetchedUser) {
+          router.push('/login');
+        }
+      }).catch(() => {
         router.push('/login');
       });
     }
-  }, [user, isLoading, fetchMe, router]);
+  }, [user, fetchMe, router]);
 
-  if (isLoading) {
+  if (isLoading || (!user && !hasFetched.current)) {
     return (
       <div className="min-h-screen bg-[var(--paper)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

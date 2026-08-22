@@ -82,9 +82,11 @@ export async function callGemini(prompt, options = {}) {
   }
 
   const candidateModels = [
-    model === 'gemini-1.5-pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash',
     'gemini-1.5-flash',
-    'gemini-2.0-flash',
+    'gemini-1.5-pro',
+    'gemini-1.5-flash-002',
+    'gemini-1.5-pro-002',
+    'gemini-2.0-flash-exp',
   ];
 
   let lastError = null;

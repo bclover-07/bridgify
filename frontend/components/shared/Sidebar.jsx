@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import {
@@ -85,6 +85,7 @@ export default function Sidebar({ role }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { logout } = useAuthStore();
+  const router = useRouter();
   const config = roleConfigs[role];
 
   if (!config) return null;
@@ -128,7 +129,7 @@ export default function Sidebar({ role }) {
 
       <div className="px-3 pb-4 border-t-[3px] border-[var(--ink)] pt-3 mt-auto">
         <button
-          onClick={() => { logout(); setMobileOpen(false); }}
+          onClick={async () => { await logout(); setMobileOpen(false); router.push('/login'); }}
           className="sidebar-link w-full text-[var(--coral)] hover:bg-red-50"
         >
           <FiLogOut size={18} />

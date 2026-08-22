@@ -29,16 +29,28 @@ const floatingShapes = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const { login, fetchMe, isAuthenticated, error, clearError } = useAuthStore();
   const [isDemo, setIsDemo] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedDemo, setSelectedDemo] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (clearError) clearError();
+    // Check if user already has a valid session
+    fetchMe().then((user) => {
+      if (user) {
+        if (user.role === 'student') router.push('/student');
+        else if (user.role === 'faculty') router.push('/faculty');
+        else if (user.role === 'admin') router.push('/admin');
+        else if (user.role === 'recruiter') router.push('/recruiter');
+      }
+    }).catch(() => {
+      // No existing session, stay on login page
+    });
   }, []);
 
   const handleSelectDemo = (account) => {
@@ -51,6 +63,7 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) return;
+    setIsSubmitting(true);
     try {
       const user = await login(email, password);
       if (user) {
@@ -64,6 +77,8 @@ export default function LoginPage() {
       }
     } catch (err) {
       /* error is set in store */
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -205,7 +220,7 @@ export default function LoginPage() {
                         type="submit"
                         variant="primary"
                         className="w-full text-base py-3"
-                        loading={isLoading}
+                        loading={isSubmitting}
                         iconRight={FiArrowRight}
                       >
                         Sign In as {selectedDemo}
@@ -262,7 +277,7 @@ export default function LoginPage() {
                   type="submit"
                   variant="primary"
                   className="w-full text-base py-3"
-                  loading={isLoading}
+                  loading={isSubmitting}
                   iconRight={FiArrowRight}
                 >
                   Sign In

@@ -20,7 +20,8 @@ const roles = [
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, isLoading, error } = useAuthStore();
+  const { register, error } = useAuthStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -34,6 +35,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       const user = await register(formData);
       if (user?.role === 'student') router.push('/student');
@@ -42,6 +44,8 @@ export default function RegisterPage() {
       else if (user?.role === 'recruiter') router.push('/recruiter');
     } catch (err) {
       console.error('Registration failed:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -182,7 +186,7 @@ export default function RegisterPage() {
                     type="submit"
                     variant="primary"
                     className="flex-1 py-3"
-                    loading={isLoading}
+                    loading={isSubmitting}
                     iconRight={FiArrowRight}
                   >
                     Create Account

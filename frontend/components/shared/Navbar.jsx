@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { FiBell, FiUser, FiLogOut, FiChevronDown } from 'react-icons/fi';
 import useAuthStore from '@/lib/store/authStore';
 import { useNotificationStore } from '@/lib/store/segStore';
@@ -18,6 +19,7 @@ export default function Navbar({ user }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { logout } = useAuthStore();
+  const router = useRouter();
   const { notifications, unreadCount } = useNotificationStore();
   const roleInfo = roleColors[user?.role] || roleColors.student;
 
@@ -111,7 +113,7 @@ export default function Navbar({ user }) {
                 </div>
                 <div className="p-2">
                   <button
-                    onClick={logout}
+                    onClick={async () => { await logout(); router.push('/login'); }}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[var(--coral)] font-bold text-sm hover:bg-red-50 transition-colors"
                   >
                     <FiLogOut size={16} />
