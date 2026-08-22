@@ -1,165 +1,132 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { FiTarget, FiSliders, FiTrendingUp, FiAward } from 'react-icons/fi';
 import NeuCard from '@/components/shared/NeuCard';
-import AnimatedCounter from '@/components/shared/AnimatedCounter';
-import SkillBar from '@/components/shared/SkillBar';
-import SkeletonLoader from '@/components/shared/SkeletonLoader';
-import EmptyState from '@/components/shared/EmptyState';
+import NeuButton from '@/components/shared/NeuButton';
+import NeuSelect from '@/components/shared/NeuSelect';
+import { NeuRadarChart, NeuBarChart } from '@/components/shared/NeuChart';
+import NeuBadge from '@/components/shared/NeuBadge';
+import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
+import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
 import api from '@/lib/api';
-import { getSocket } from '@/lib/socket';
 
 export default function ReadinessPage() {
-  const [readiness, setReadiness] = useState(null);
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const loadReadiness = async () => {
-    try {
-      const { data } = await api.get('/student/readiness');
-      setReadiness(data);
-      if (data.roleBreakdown?.length > 0 && !selectedRole) {
-        setSelectedRole(data.roleBreakdown[0].roleId);
-      }
-    } catch (err) {
-      console.error('Failed to load readiness:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [targetRole, setTargetRole] = useState('');
+  const [whatIfResult, setWhatIfResult] = useState(null);
+  const [simulating, setSimulating] = useState(false);
 
   useEffect(() => {
-    loadReadiness();
-
-    const socket = getSocket();
-    if (socket) {
-      socket.on('seg:updated', () => {
-        loadReadiness();
-      });
-      return () => socket.off('seg:updated');
-    }
+    api.get('/student/readiness').then(res => { setData(res.data); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <SkeletonLoader variant="card" count={4} />;
-  if (!readiness) return <EmptyState title="No readiness data" description="Complete assessments to see your readiness score" />;
+  const handleWhatIf = async () => {
+    if (!targetRole) return;
+    setSimulating(true);
+    try {
+      const res = await api.post('/student/readiness/what-if', { targetRole });
+      setWhatIfResult(res.data);
+    } catch (e) { console.error(e); }
+    setSimulating(false);
+  };
 
-  const selectedRoleData = readiness.roleBreakdown?.find((r) => r.roleId === selectedRole);
+  if (loading) return <DashboardSkeleton />;
+
+  const radarData = data?.skillBreakdown?.slice(0, 8).map(s => ({
+    name: s.skillName?.substring(0, 12) || 'Skill',
+    score: s.score || 0,
+    required: s.requiredScore || 80,
+  })) || [];
 
   return (
-    <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-3">
-          <FiTarget style={{ color: 'var(--electric)' }} />
-          Readiness Simulator
-        </h1>
-        <p className="text-sm opacity-60 mt-1">See how ready you are for different job roles</p>
-      </motion.div>
+    <PageTransition className="space-y-6">
+      <StaggerItem>
+        <h1 className="text-3xl font-bold mb-1">🎯 Readiness Simulator</h1>
+        <p className="text-gray-500 font-medium">See how ready you are for your target role</p>
+      </StaggerItem>
 
-      {/* Overall Readiness Gauge */}
-      <NeuCard hoverable={false} padding="p-8">
-        <div className="flex flex-col items-center">
-          <div className="relative w-48 h-48 mb-4">
-            <svg viewBox="0 0 200 200" className="w-full h-full">
-              <circle
-                cx="100" cy="100" r="85"
-                fill="none"
-                stroke="#e8e5dc"
-                strokeWidth="14"
-              />
-              <motion.circle
-                cx="100" cy="100" r="85"
-                fill="none"
-                stroke="var(--electric)"
-                strokeWidth="14"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 85}
-                initial={{ strokeDashoffset: 2 * Math.PI * 85 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 85 * (1 - (readiness.overallReadiness || 0) / 100) }}
-                transition={{ duration: 2, ease: [0.34, 1.56, 0.64, 1] }}
-                transform="rotate(-90 100 100)"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <AnimatedCounter
-                value={readiness.overallReadiness || 0}
-                suffix="%"
-                className="text-4xl font-bold font-mono"
-              />
-              <span className="text-xs opacity-50 font-semibold mt-1">OVERALL</span>
-            </div>
-          </div>
-          <p className="text-sm opacity-60 text-center max-w-md">
-            Your readiness is calculated from verified skill evidence across all assessments, projects, and AI evaluations.
-          </p>
-        </div>
-      </NeuCard>
+      <StaggerItem className="grid md:grid-cols-3 gap-4">
+        <NeuCard className="p-5 bg-[var(--electric)] text-white text-center">
+          <p className="text-sm font-semibold opacity-80 mb-1">Overall Readiness</p>
+          <p className="text-5xl font-bold">{data?.overallScore || 0}%</p>
+        </NeuCard>
+        <NeuCard className="p-5 bg-[var(--mint)] text-center">
+          <p className="text-sm font-semibold opacity-80 mb-1">Skills Covered</p>
+          <p className="text-5xl font-bold">{data?.skillBreakdown?.length || 0}</p>
+        </NeuCard>
+        <NeuCard className="p-5 bg-[var(--amber)] text-center">
+          <p className="text-sm font-semibold opacity-80 mb-1">Gaps Found</p>
+          <p className="text-5xl font-bold">{data?.gaps?.length || 0}</p>
+        </NeuCard>
+      </StaggerItem>
 
-      {/* Role Selector */}
-      {readiness.roleBreakdown && readiness.roleBreakdown.length > 0 && (
-        <>
-          <div className="flex flex-wrap gap-3">
-            {readiness.roleBreakdown.map((role) => (
-              <button
-                key={role.roleId}
-                className={`neu-btn neu-btn-sm ${selectedRole === role.roleId ? 'neu-btn-primary' : 'neu-btn-ghost'}`}
-                onClick={() => setSelectedRole(role.roleId)}
-              >
-                {role.label}
-                <span className="font-mono ml-1">{Math.round(role.readiness)}%</span>
-              </button>
-            ))}
+      {radarData.length > 0 && (
+        <StaggerItem>
+          <NeuCard className="p-5 bg-white">
+            <h2 className="text-xl font-bold mb-4">Skill Radar</h2>
+            <NeuRadarChart data={radarData} dataKeys={[
+              { key: 'score', label: 'Your Score', color: '#4B3AFF' },
+              { key: 'required', label: 'Required', color: '#FF3D9A' },
+            ]} height={350} />
+          </NeuCard>
+        </StaggerItem>
+      )}
+
+      <StaggerItem>
+        <NeuCard className="p-5 bg-white">
+          <h2 className="text-xl font-bold mb-4">What-If Simulator</h2>
+          <p className="text-gray-500 text-sm font-medium mb-4">Enter a target role to see what skills you need to improve</p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              className="neu-input flex-1"
+              placeholder="e.g. Frontend Developer, Data Scientist"
+              value={targetRole}
+              onChange={(e) => setTargetRole(e.target.value)}
+            />
+            <NeuButton variant="primary" onClick={handleWhatIf} loading={simulating}>
+              Simulate
+            </NeuButton>
           </div>
 
-          {/* Selected Role Detail */}
-          {selectedRoleData && (
-            <motion.div key={selectedRole} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <NeuCard hoverable={false}>
-                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                  <FiAward style={{ color: 'var(--electric)' }} />
-                  {selectedRoleData.label} - Skill Breakdown
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-                  {selectedRoleData.skills?.map((skill, i) => (
-                    <div key={skill.skillId}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${
-                          skill.importance === 'core' ? 'bg-[var(--coral)]' : 
-                          skill.importance === 'important' ? 'bg-[var(--amber)]' : 'bg-[var(--mint)]'
-                        }`} />
-                        <span className="text-xs font-semibold uppercase opacity-40">{skill.importance}</span>
-                      </div>
-                      <SkillBar
-                        label={skill.label}
-                        score={skill.confidenceScore || 0}
-                        color={skill.confidenceScore >= 70 ? 'mint' : skill.confidenceScore >= 40 ? 'amber' : 'coral'}
-                      />
+          {whatIfResult && (
+            <div className="mt-6 p-4 border-[3px] border-[var(--ink)] rounded-2xl bg-[var(--paper)]">
+              <h3 className="font-bold mb-3">Simulation Result for &quot;{targetRole}&quot;</h3>
+              <div className="flex gap-3 mb-4">
+                <NeuBadge variant={whatIfResult.readinessScore >= 70 ? 'success' : 'warning'}>
+                  Readiness: {whatIfResult.readinessScore || 0}%
+                </NeuBadge>
+              </div>
+              {whatIfResult.recommendations && (
+                <div className="space-y-2">
+                  <p className="font-bold text-sm">Recommendations:</p>
+                  {(Array.isArray(whatIfResult.recommendations) ? whatIfResult.recommendations : [whatIfResult.recommendations]).map((rec, i) => (
+                    <div key={i} className="text-sm text-gray-600 flex gap-2">
+                      <span className="text-[var(--electric)]">→</span> {typeof rec === 'string' ? rec : rec.suggestion || JSON.stringify(rec)}
                     </div>
                   ))}
                 </div>
-
-                {selectedRoleData.gaps?.length > 0 && (
-                  <div className="mt-6 pt-4 border-t-2 border-[var(--ink)]/10">
-                    <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
-                      <FiTrendingUp style={{ color: 'var(--coral)' }} />
-                      Skills to Improve
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedRoleData.gaps.map((gap) => (
-                        <span key={gap.skillId} className="neu-badge bg-[var(--coral)]/10 text-[var(--coral)]">
-                          {gap.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </NeuCard>
-            </motion.div>
+              )}
+            </div>
           )}
-        </>
+        </NeuCard>
+      </StaggerItem>
+
+      {data?.gaps?.length > 0 && (
+        <StaggerItem>
+          <NeuCard className="p-5 bg-white">
+            <h2 className="text-xl font-bold mb-4">Skill Gaps</h2>
+            <div className="space-y-3">
+              {data.gaps.map((gap, i) => (
+                <div key={i} className="flex items-center justify-between p-3 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)]">
+                  <span className="font-bold text-sm">{gap.skillName || gap}</span>
+                  <NeuBadge variant="danger">Gap</NeuBadge>
+                </div>
+              ))}
+            </div>
+          </NeuCard>
+        </StaggerItem>
       )}
-    </div>
+    </PageTransition>
   );
 }

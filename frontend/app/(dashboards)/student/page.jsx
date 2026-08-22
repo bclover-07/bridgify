@@ -1,135 +1,156 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaBolt, FaTrophy, FaCalendarCheck, FaChartLine } from 'react-icons/fa';
 import NeuCard from '@/components/shared/NeuCard';
+import NeuBadge from '@/components/shared/NeuBadge';
+import { NeuBarChart, NeuRadarChart } from '@/components/shared/NeuChart';
 import SkillBar from '@/components/shared/SkillBar';
-import EvidenceBadge from '@/components/shared/EvidenceBadge';
-import AnimatedCounter from '@/components/shared/AnimatedCounter';
-import useAuthStore from '@/lib/store/authStore';
-import useSegStore from '@/lib/store/segStore';
-
+import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
+import { FiTarget, FiBookOpen, FiAward, FiTrendingUp, FiClipboard, FiBell } from 'react-icons/fi';
+import api from '@/lib/api';
+import Link from 'next/link';
 
 export default function StudentDashboard() {
-  const { user } = useAuthStore();
-  const { seg, fetchSeg, isLoading } = useSegStore();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSeg();
-  }, [fetchSeg]);
+    api.get('/student/dashboard')
+      .then(res => setData(res.data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
-  if (isLoading || !seg) {
-    return (
-      <div className="space-y-6">
-        <div className="h-24 bg-gray-200 rounded-[24px] animate-pulse border-[4px] border-[var(--ink)]"></div>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="h-64 bg-gray-200 rounded-[24px] animate-pulse border-[4px] border-[var(--ink)] col-span-2"></div>
-          <div className="h-64 bg-gray-200 rounded-[24px] animate-pulse border-[4px] border-[var(--ink)]"></div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
+
+  const stats = [
+    { label: 'Total Skills', value: data?.stats?.totalSkills || 0, icon: FiTarget, color: 'var(--electric)', bg: '#4B3AFF' },
+    { label: 'Evidence Points', value: data?.stats?.totalEvidence || 0, icon: FiAward, color: 'var(--mint)', bg: '#2FE3A3' },
+    { label: 'Avg Confidence', value: `${data?.stats?.avgConfidence || 0}%`, icon: FiTrendingUp, color: 'var(--hotpink)', bg: '#FF3D9A' },
+    { label: 'Assessments', value: data?.upcomingAssessments?.length || 0, icon: FiClipboard, color: 'var(--amber)', bg: '#FFB020' },
+  ];
+
+  const radarData = data?.segSummary?.slice(0, 6).map(s => ({
+    subject: s.skillLabel?.substring(0, 12) || 'Skill',
+    score: s.confidenceScore || 0,
+  })) || [];
 
   return (
-    <PageTransition className="space-y-8">
-      <StaggerItem className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.name.split(' ')[0]}!</h1>
-          <p className="text-gray-600 text-lg">Your Skill Evidence Graph is up to date.</p>
+    <PageTransition className="space-y-6">
+      <StaggerItem>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-1">
+              Hey, {data?.profile?.name?.split(' ')[0] || 'Student'}! 🎓
+            </h1>
+            <p className="text-gray-500 font-medium">
+              {data?.profile?.branch} · Year {data?.profile?.year} · CGPA: {data?.profile?.cgpa}
+            </p>
+          </div>
+          {data?.notifications?.length > 0 && (
+            <NeuBadge variant="warning" className="flex items-center gap-1">
+              <FiBell size={12} /> {data.notifications.length} new notifications
+            </NeuBadge>
+          )}
         </div>
-        <div className="flex gap-3">
-          <EvidenceBadge type="VERIFIED" text="Identity Verified" />
-          <EvidenceBadge type="ASSESSMENT" text="Ready for Placements" />
-        </div>
       </StaggerItem>
 
-      {/* KPI Cards */}
-      <StaggerItem className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <NeuCard className="p-6 bg-[var(--electric)] text-white relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 opacity-20 transform group-hover:scale-110 transition-transform">
-            <FaBolt size={80} />
-          </div>
-          <p className="font-semibold opacity-90 mb-2">Overall Readiness</p>
-          <div className="text-4xl font-bold flex items-baseline gap-1">
-            <AnimatedCounter end={seg.readinessScore || 0} />%
-          </div>
-        </NeuCard>
-
-        <NeuCard className="p-6 bg-[var(--acid)] text-[var(--ink)] relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 opacity-10 transform group-hover:scale-110 transition-transform">
-            <FaTrophy size={80} />
-          </div>
-          <p className="font-semibold mb-2">Verified Skills</p>
-          <div className="text-4xl font-bold">
-            <AnimatedCounter end={seg.nodes?.length || 0} />
-          </div>
-        </NeuCard>
-
-        <NeuCard className="p-6 bg-white relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 opacity-5 transform group-hover:scale-110 transition-transform text-[var(--ink)]">
-            <FaCalendarCheck size={80} />
-          </div>
-          <p className="font-semibold text-gray-600 mb-2">Assessments Taken</p>
-          <div className="text-4xl font-bold">
-            <AnimatedCounter end={seg.edges?.filter(e => e.evidenceType === 'assessment').length || 0} />
-          </div>
-        </NeuCard>
-
-        <NeuCard className="p-6 bg-[var(--amber)] relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 opacity-10 transform group-hover:scale-110 transition-transform text-[var(--ink)]">
-            <FaChartLine size={80} />
-          </div>
-          <p className="font-semibold text-[var(--ink)] mb-2">Target Role Rank</p>
-          <div className="text-4xl font-bold">
-            #Top <AnimatedCounter end={15} />%
-          </div>
-        </NeuCard>
-      </StaggerItem>
-
-      <StaggerItem className="grid md:grid-cols-3 gap-8">
-        {/* Skill Graph Summary */}
-        <NeuCard className="md:col-span-2 p-0 bg-white flex flex-col">
-          <div className="p-6 border-b-[4px] border-[var(--ink)] flex justify-between items-center bg-[var(--cyan)] rounded-t-[20px]">
-            <h2 className="text-2xl font-bold">Top Verified Skills</h2>
-          </div>
-          <div className="p-6 space-y-6 flex-1">
-            {seg.nodes?.slice(0, 5).map((node, i) => (
-              <div key={node.skillId || i}>
-                <div className="flex justify-between mb-2">
-                  <span className="font-bold">{node.skillName}</span>
-                  <span className="font-mono font-bold">{node.proficiencyScore}%</span>
-                </div>
-                <SkillBar percentage={node.proficiencyScore} color="var(--electric)" />
+      <StaggerItem className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s, i) => (
+          <motion.div key={i} whileHover={{ y: -3 }} className="transition-all">
+            <NeuCard className="p-4 md:p-5 bg-white">
+              <div className="w-10 h-10 rounded-xl border-[3px] border-[var(--ink)] flex items-center justify-center text-white mb-3 shadow-[3px_3px_0px_0px_var(--ink)]" style={{ background: s.bg }}>
+                <s.icon size={18} />
               </div>
-            )) || <p className="text-gray-500 font-semibold">No skills verified yet.</p>}
-          </div>
-        </NeuCard>
-
-        {/* Recent Evidence */}
-        <NeuCard className="p-0 bg-white flex flex-col h-[500px]">
-          <div className="p-6 border-b-[4px] border-[var(--ink)] bg-[var(--lime)] rounded-t-[20px]">
-            <h2 className="text-xl font-bold text-[var(--ink)]">Recent Evidence</h2>
-          </div>
-          <div className="p-6 overflow-y-auto flex-1 space-y-4">
-            {seg.edges?.slice(0, 5).map((edge, i) => (
-              <div key={i} className="p-4 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)]">
-                <div className="flex justify-between items-start mb-2">
-                  <EvidenceBadge type={edge.evidenceType.toUpperCase()} />
-                  <span className="text-xs font-bold text-gray-500 font-mono">
-                    {new Date(edge.timestamp).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="font-bold text-sm mb-1">{edge.context}</p>
-                <div className="flex items-center gap-2 text-xs font-bold text-[var(--electric)]">
-                  <span>+{edge.scoreContributed}pts</span>
-                </div>
-              </div>
-            )) || <p className="text-gray-500 font-semibold text-sm">No recent evidence found.</p>}
-          </div>
-        </NeuCard>
+              <p className="text-2xl md:text-3xl font-bold">{s.value}</p>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mt-1">{s.label}</p>
+            </NeuCard>
+          </motion.div>
+        ))}
       </StaggerItem>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {data?.segSummary?.length > 0 && (
+          <StaggerItem>
+            <NeuCard className="p-5 bg-white">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">🧠 Skill Radar</h2>
+                <Link href="/student/learning-path">
+                  <NeuBadge variant="info" className="cursor-pointer hover:opacity-80">View SEG →</NeuBadge>
+                </Link>
+              </div>
+              {radarData.length >= 3 ? (
+                <NeuRadarChart data={radarData} dataKeys={[{ key: 'score', label: 'Confidence', color: '#4B3AFF' }]} height={280} />
+              ) : (
+                <div className="space-y-3">
+                  {data.segSummary.slice(0, 6).map((s, i) => (
+                    <SkillBar key={i} label={s.skillLabel} value={s.confidenceScore} color={s.confidenceScore > 70 ? 'var(--mint)' : s.confidenceScore > 40 ? 'var(--amber)' : 'var(--coral)'} />
+                  ))}
+                </div>
+              )}
+            </NeuCard>
+          </StaggerItem>
+        )}
+
+        <StaggerItem>
+          <NeuCard className="p-5 bg-white">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">📋 Upcoming Assessments</h2>
+              <Link href="/student/assessments">
+                <NeuBadge variant="default" className="cursor-pointer hover:opacity-80">View All →</NeuBadge>
+              </Link>
+            </div>
+            {data?.upcomingAssessments?.length > 0 ? (
+              <div className="space-y-3">
+                {data.upcomingAssessments.slice(0, 5).map((a, i) => (
+                  <Link key={a._id || i} href={`/student/assessments/${a._id}`}>
+                    <div className="flex items-center justify-between p-3 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)] hover:shadow-[4px_4px_0px_0px_var(--ink)] transition-all cursor-pointer">
+                      <div>
+                        <p className="font-bold text-sm">{a.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{a.topic}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-gray-500">{a.totalMarks} marks</p>
+                        {a.dueDate && <p className="text-[10px] text-gray-400">{new Date(a.dueDate).toLocaleDateString()}</p>}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400 text-sm font-medium text-center py-8">No upcoming assessments</p>
+            )}
+          </NeuCard>
+        </StaggerItem>
+      </div>
+
+      {data?.recentSubmissions?.length > 0 && (
+        <StaggerItem>
+          <NeuCard className="p-5 bg-white">
+            <h2 className="text-xl font-bold mb-4">📝 Recent Submissions</h2>
+            <div className="space-y-3">
+              {data.recentSubmissions.map((s, i) => (
+                <div key={s._id || i} className="flex items-center justify-between p-3 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)]">
+                  <div>
+                    <p className="font-bold text-sm">{s.assessmentId?.title || 'Assessment'}</p>
+                    <p className="text-xs text-gray-500">{s.assessmentId?.topic}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {s.percentage !== undefined && (
+                      <span className="font-bold text-lg">{s.percentage}%</span>
+                    )}
+                    <NeuBadge variant={s.gradingStatus === 'final' ? 'success' : s.gradingStatus === 'auto_graded' ? 'info' : 'warning'}>
+                      {s.gradingStatus?.replace('_', ' ') || 'pending'}
+                    </NeuBadge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </NeuCard>
+        </StaggerItem>
+      )}
     </PageTransition>
   );
 }

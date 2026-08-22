@@ -3,45 +3,40 @@
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
-export default function NeuCard({ 
-  children, 
-  className = '', 
-  accent,
-  hoverable = true,
-  padding = 'p-6',
-  onClick,
-  ...props 
-}) {
-  const accentBg = {
-    electric: 'bg-[var(--electric)]',
-    acid: 'bg-[var(--acid)]',
-    coral: 'bg-[var(--coral)]',
-    mint: 'bg-[var(--mint)]',
-    sky: 'bg-[var(--sky)]',
-    violet: 'bg-[var(--violet)]',
-    hotpink: 'bg-[var(--hotpink)]',
-    amber: 'bg-[var(--amber)]',
-  };
+export default function NeuCard({ children, className, hover = true, onClick, style }) {
+  const Component = hover ? motion.div : 'div';
+  const props = hover
+    ? {
+        whileHover: { y: -3, x: -3 },
+        whileTap: onClick ? { y: 1, x: 1 } : undefined,
+        transition: { type: 'spring', stiffness: 400, damping: 25 },
+      }
+    : {};
 
   return (
-    <motion.div
-      className={clsx(
-        hoverable ? 'neu-card' : 'neu-card-static',
-        padding,
-        accent && accentBg[accent],
-        onClick && 'cursor-pointer',
-        className
-      )}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      whileHover={hoverable ? { scale: 1.02, y: -4, x: -4, boxShadow: '8px 8px 0px 0px var(--ink)' } : undefined}
-      whileTap={onClick ? { scale: 0.98, y: 0, x: 0, boxShadow: '0px 0px 0px 0px var(--ink)' } : undefined}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    <Component
+      className={clsx('neu-card', className)}
       onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : undefined, ...style }}
       {...props}
     >
       {children}
-    </motion.div>
+    </Component>
+  );
+}
+
+export function NeuCardStatic({ children, className, style }) {
+  return (
+    <div className={clsx('neu-card-static', className)} style={style}>
+      {children}
+    </div>
+  );
+}
+
+export function NeuCardFlat({ children, className, style }) {
+  return (
+    <div className={clsx('neu-card-flat', className)} style={style}>
+      {children}
+    </div>
   );
 }

@@ -3,62 +3,65 @@
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
-export default function NeuButton({ 
-  children, 
-  variant = 'primary', 
+const variantMap = {
+  primary: 'neu-btn-primary',
+  acid: 'neu-btn-acid',
+  coral: 'neu-btn-coral',
+  mint: 'neu-btn-mint',
+  sky: 'neu-btn-sky',
+  violet: 'neu-btn-violet',
+  hotpink: 'neu-btn-hotpink',
+  amber: 'neu-btn-amber',
+  ghost: 'neu-btn-ghost',
+  white: 'neu-btn-white',
+  danger: 'neu-btn-danger',
+};
+
+const sizeMap = {
+  xs: 'neu-btn-xs',
+  sm: 'neu-btn-sm',
+  md: '',
+  lg: 'neu-btn-lg',
+  icon: 'neu-btn-icon',
+};
+
+export default function NeuButton({
+  children,
+  variant = 'primary',
   size = 'md',
-  className = '', 
-  disabled = false,
+  className,
   loading = false,
+  disabled = false,
   icon: Icon,
-  onClick,
+  iconRight: IconRight,
   type = 'button',
-  ...props 
+  onClick,
+  ...props
 }) {
-  const variants = {
-    primary: 'neu-btn-primary',
-    acid: 'neu-btn-acid',
-    coral: 'neu-btn-coral',
-    mint: 'neu-btn-mint',
-    sky: 'neu-btn-sky',
-    violet: 'neu-btn-violet',
-    hotpink: 'neu-btn-hotpink',
-    ghost: 'neu-btn-ghost',
-  };
-
-  const sizes = {
-    sm: 'neu-btn-sm',
-    md: '',
-    lg: 'neu-btn-lg',
-  };
-
   return (
     <motion.button
       type={type}
       className={clsx(
         'neu-btn',
-        variants[variant],
-        sizes[size],
-        disabled && 'opacity-50 cursor-not-allowed',
+        variantMap[variant],
+        sizeMap[size],
         className
       )}
-      whileHover={!disabled ? { scale: 1.05, y: -4, x: -4, boxShadow: '8px 8px 0px 0px var(--ink)' } : undefined}
-      whileTap={!disabled ? { scale: 0.95, y: 0, x: 0, boxShadow: '0px 0px 0px 0px var(--ink)' } : undefined}
-      transition={{ type: "spring", stiffness: 400, damping: 10 }}
-      onClick={disabled ? undefined : onClick}
       disabled={disabled || loading}
+      onClick={onClick}
+      whileTap={!disabled && !loading ? { scale: 0.95 } : undefined}
       {...props}
     >
       {loading ? (
-        <motion.div
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        />
+        <>
+          <span className="inline-block w-4 h-4 border-3 border-current border-t-transparent rounded-full animate-spin" />
+          <span>Loading...</span>
+        </>
       ) : (
         <>
-          {Icon && <Icon size={18} />}
+          {Icon && <Icon size={size === 'xs' ? 14 : size === 'sm' ? 16 : 18} />}
           {children}
+          {IconRight && <IconRight size={size === 'xs' ? 14 : size === 'sm' ? 16 : 18} />}
         </>
       )}
     </motion.button>

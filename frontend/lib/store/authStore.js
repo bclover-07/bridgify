@@ -21,7 +21,7 @@ const useAuthStoreHook = create((set, get) => ({
 
       return data.user;
     } catch {
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      set({ user: null, isAuthenticated: false, isLoading: false, error: null });
       return null;
     }
   },
@@ -30,7 +30,7 @@ const useAuthStoreHook = create((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const { data } = await api.post('/auth/login', { email, password });
-      set({ user: data.user, isAuthenticated: true, isLoading: false });
+      set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
 
       const rooms = [];
       if (data.user.role === 'student') rooms.push(`student:${data.user._id}`);
@@ -39,7 +39,8 @@ const useAuthStoreHook = create((set, get) => ({
 
       return data.user;
     } catch (err) {
-      set({ error: err.response?.data?.error || 'Login failed', isLoading: false });
+      const errorMsg = err.response?.data?.error || 'Login failed. Please check your credentials.';
+      set({ error: errorMsg, isLoading: false, user: null, isAuthenticated: false });
       throw err;
     }
   },
@@ -48,10 +49,11 @@ const useAuthStoreHook = create((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const { data } = await api.post('/auth/register', userData);
-      set({ user: data.user, isAuthenticated: true, isLoading: false });
+      set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
       return data.user;
     } catch (err) {
-      set({ error: err.response?.data?.error || 'Registration failed', isLoading: false });
+      const errorMsg = err.response?.data?.error || 'Registration failed. Please try again.';
+      set({ error: errorMsg, isLoading: false, user: null, isAuthenticated: false });
       throw err;
     }
   },
@@ -63,12 +65,14 @@ const useAuthStoreHook = create((set, get) => ({
       // continue logout even if server call fails
     }
     disconnectSocket();
-    set({ user: null, isAuthenticated: false });
+    set({ user: null, isAuthenticated: false, isLoading: false, error: null });
   },
+
+  clearError: () => set({ error: null }),
 
   clearUser: () => {
     disconnectSocket();
-    set({ user: null, isAuthenticated: false });
+    set({ user: null, isAuthenticated: false, isLoading: false });
   },
 
   updateUser: (updates) => {
