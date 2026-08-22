@@ -52,7 +52,7 @@ async function saveAndNotify(state) {
 
   await createNotification({
     userId: studentId,
-    type: 'study_plan_generated',
+    type: 'study_plan_ready',
     title: 'Study Plan Ready',
     body: `Your personalized ${plan.weeks?.length || 4}-week study plan for "${targetRole}" is ready.`,
     metadata: { targetRole, currentReadiness: readiness.overallReadiness },

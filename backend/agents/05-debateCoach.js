@@ -13,7 +13,7 @@ async function selectTopic(state) {
   const session = await DebateSession.findById(sessionId);
   if (!session) throw new Error('Debate session not found');
 
-  return { ...state, session: session.toObject(), topic: session.topic, studentId: session.studentId, stance: session.stance || 'for', turns: [], turnIndex: 0, maxTurns: 4, nodesExecuted: [...(state.nodesExecuted || []), { nodeName: 'selectTopic', durationMs: Date.now() - s, status: 'success' }] };
+  return { ...state, session: session.toObject(), topic: session.topic, studentId: session.studentId, stance: session.side || 'for', turns: [], turnIndex: 0, maxTurns: 4, nodesExecuted: [...(state.nodesExecuted || []), { nodeName: 'selectTopic', durationMs: Date.now() - s, status: 'success' }] };
 }
 
 async function prepareArguments(state) {
@@ -95,18 +95,49 @@ function decideNext(state) {
 
 async function scoreDebate(state) {
   const s = Date.now();
-  const { turns, topic, userId } = state;
+  const { turns, topic, stance, userId } = state;
 
   const studentTurns = turns.filter(t => t.speaker === 'student');
-  const avgLogical = studentTurns.reduce((sum, t) => sum + (t.analysis?.logicalScore || 50), 0) / Math.max(studentTurns.length, 1);
+  const fullTranscript = turns.map(t => `${t.speaker.toUpperCase()} (${t.turnType}): ${t.text}`).join('\n\n');
 
-  const scores = {
-    logicalReasoning: Math.round(avgLogical),
-    evidenceUsage: Math.round(avgLogical * 0.8),
-    communication: Math.round(avgLogical * 0.9),
-    counterArguments: Math.round(avgLogical * 0.7),
-    overall: Math.round(avgLogical * 0.85),
-  };
+  const prompt = `You are a professional debate judge evaluating a debate on topic "${topic}".
+Candidate stance: ${stance}
+
+Full Debate Transcript:
+${fullTranscript}
+
+Evaluate candidate performance across 5 key dimensions (0 to 100 integer score):
+1. logicalReasoning
+2. evidenceUsage
+3. communication
+4. counterArguments
+5. overall
+
+Return JSON object:
+{"logicalReasoning": 0-100, "evidenceUsage": 0-100, "communication": 0-100, "counterArguments": 0-100, "overall": 0-100}
+Return ONLY the JSON object.`;
+
+  let scores = { logicalReasoning: 50, evidenceUsage: 50, communication: 50, counterArguments: 50, overall: 50 };
+  let result;
+  try {
+    result = await otariCallWithRetry({ route: 'debate.coach', prompt, userId, options: { temperature: 0.3, maxTokens: 512 } });
+    const jsonStr = result.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    scores = JSON.parse(jsonStr);
+  } catch {
+    const jsonMatch = result?.text?.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      scores = JSON.parse(jsonMatch[0]);
+    } else {
+      const avgLogical = studentTurns.reduce((sum, t) => sum + (t.analysis?.logicalScore || 50), 0) / Math.max(studentTurns.length, 1);
+      scores = {
+        logicalReasoning: Math.round(avgLogical),
+        evidenceUsage: Math.round(avgLogical),
+        communication: Math.round(avgLogical),
+        counterArguments: Math.round(avgLogical),
+        overall: Math.round(avgLogical),
+      };
+    }
+  }
 
   await DebateSession.findByIdAndUpdate(state.sessionId, { status: 'completed', report: { scores, turns } });
 

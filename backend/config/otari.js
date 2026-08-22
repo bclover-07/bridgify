@@ -81,47 +81,59 @@ export async function callGemini(prompt, options = {}) {
     throw new Error(`Budget exceeded for ${model}. Rate limit or daily cap reached.`);
   }
 
-  const modelId = model === 'gemini-1.5-pro'
-    ? 'gemini-1.5-pro-latest'
-    : 'gemini-1.5-flash-latest';
+  const candidateModels = [
+    model === 'gemini-1.5-pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash',
+    'gemini-1.5-flash',
+    'gemini-2.0-flash',
+  ];
 
-  try {
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 4096,
-          topP: options.topP || 0.95,
+  let lastError = null;
+  for (const modelId of candidateModels) {
+    try {
+      const response = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`,
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: options.temperature || 0.7,
+            maxOutputTokens: options.maxTokens || 4096,
+            topP: options.topP || 0.95,
+          },
         },
-      },
-      { timeout: 60000 }
-    );
+        { timeout: 60000 }
+      );
 
-    incrementBudget(model);
+      incrementBudget(model);
 
-    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const usage = response.data?.usageMetadata || {};
+      const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const usage = response.data?.usageMetadata || {};
 
-    return {
-      text,
-      model: modelId,
-      tokensUsed: {
-        prompt: usage.promptTokenCount || 0,
-        completion: usage.candidatesTokenCount || 0,
-        total: (usage.promptTokenCount || 0) + (usage.candidatesTokenCount || 0),
-      },
-    };
-  } catch (error) {
-    if (error.response?.status === 429 || error.response?.status === 500) {
-      if (process.env.OPENROUTER_API_KEY) {
-        console.warn(`Gemini ${model} failed (${error.response?.status}), falling back to OpenRouter`);
-        return callOpenRouter(prompt, options);
+      return {
+        text,
+        model: modelId,
+        tokensUsed: {
+          prompt: usage.promptTokenCount || 0,
+          completion: usage.candidatesTokenCount || 0,
+          total: (usage.promptTokenCount || 0) + (usage.candidatesTokenCount || 0),
+        },
+      };
+    } catch (err) {
+      lastError = err;
+      if (err.response?.status === 404) {
+        console.warn(`Gemini model ${modelId} 404, trying next candidate model...`);
+        continue;
       }
+      break;
     }
-    throw error;
   }
+
+  if (lastError?.response?.status === 429 || lastError?.response?.status === 500 || lastError?.response?.status === 404) {
+    if (process.env.OPENROUTER_API_KEY) {
+      console.warn(`Gemini ${model} failed (${lastError.response?.status}), falling back to OpenRouter`);
+      return callOpenRouter(prompt, options);
+    }
+  }
+  throw lastError;
 }
 
 async function callOpenRouter(prompt, options = {}) {

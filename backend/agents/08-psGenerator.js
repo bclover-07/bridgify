@@ -101,16 +101,18 @@ async function formatAndSave(state) {
 
   const ps = await ProblemStatement.create({
     recruiterId: userId,
-    institutionId,
-    title: psData.title,
-    description: psData.description,
-    objectives: psData.objectives,
-    requiredSkills: inferredSkills,
-    deliverables: psData.deliverables,
-    rubric: generatedRubric,
-    estimatedWeeks,
-    difficulty: state.difficulty,
-    domain: state.domain,
+    rawIdea: state.idea || 'Project Idea',
+    targetInstitutionId: institutionId || null,
+    refined: {
+      title: psData.title || state.idea,
+      background: psData.description || `Problem statement for ${state.idea}`,
+      objective: Array.isArray(psData.objectives) ? psData.objectives.join('\n') : (psData.objectives || ''),
+      deliverables: psData.deliverables || [],
+      skillsRequired: inferredSkills,
+      evaluationRubric: generatedRubric,
+      estimatedHours: (estimatedWeeks || 4) * 10,
+      difficulty: ['beginner', 'intermediate', 'advanced', 'expert'].includes(state.difficulty) ? state.difficulty : 'intermediate',
+    },
     status: 'draft',
     embedding,
   });

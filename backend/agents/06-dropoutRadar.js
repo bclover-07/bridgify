@@ -83,7 +83,7 @@ async function computeSignals(state) {
       scoreDecline,
       submissionGap,
       engagementDrop,
-      financialStressFlag: 0,
+      financialStressFlag: (student.student?.feeOverdue || student.student?.financialAidNeeded) ? 1 : 0,
       attendanceRate,
       recentAvgScore: Math.round(recentAvg),
     };

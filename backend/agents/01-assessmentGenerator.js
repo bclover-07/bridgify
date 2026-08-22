@@ -30,10 +30,15 @@ async function parseSyllabus(state) {
     throw new Error('Course not found');
   }
 
-  const relevantTopics = course.syllabus.topics.filter(
+  let relevantTopics = course.syllabus?.topics?.filter(
     t => t.name.toLowerCase().includes(topic.toLowerCase()) ||
-      t.subtopics.some(st => st.toLowerCase().includes(topic.toLowerCase()))
-  );
+      topic.toLowerCase().includes(t.name.toLowerCase()) ||
+      t.subtopics.some(st => st.toLowerCase().includes(topic.toLowerCase()) || topic.toLowerCase().includes(st.toLowerCase()))
+  ) || [];
+
+  if (relevantTopics.length === 0 && course.syllabus?.topics) {
+    relevantTopics = course.syllabus.topics;
+  }
 
   const allTopicNames = relevantTopics.flatMap(t => [t.name, ...t.subtopics]);
   const allSkillIds = [...new Set(relevantTopics.flatMap(t => t.skillIds || []))];
@@ -160,7 +165,7 @@ Return ONLY the JSON array, no additional text.`;
     route: 'assessment.generate',
     prompt,
     userId,
-    options: { temperature: 0.7, maxTokens: 8192 },
+    options: { temperature: 0.7, maxTokens: 4096 },
   });
 
   let questions = [];

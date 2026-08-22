@@ -155,7 +155,13 @@ export async function aggregateDropoutRadar(courseId) {
           }
         },
         engagementDrop: { $max: [0, { $subtract: [1, { $divide: ['$avgConfidence', 100] }] }] },
-        financialStressFlag: 0 // Placeholder
+        financialStressFlag: {
+          $cond: {
+            if: { $or: [{ $eq: ['$student.feeOverdue', true] }, { $eq: ['$student.financialAidNeeded', true] }] },
+            then: 1,
+            else: 0
+          }
+        }
       }
     },
     // 7. Compute score decline

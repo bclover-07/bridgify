@@ -296,28 +296,27 @@ export async function pushToSEG(req, res, next) {
 
 export async function generateNotes(req, res, next) {
   try {
-    const { sourceType, sourceUrl, courseId, depthLevel, style, language } = req.body;
+    const { sourceType, sourceUrl, courseId, depthLevel, style, language, title, content } = req.body;
 
     if (!sourceType || !courseId) {
       return res.status(400).json({ error: 'Source type and course ID are required' });
     }
 
-    const resource = await FacultyResource.create({
-      facultyId: req.user._id,
-      institutionId: req.user.institutionId._id || req.user.institutionId,
-      title: `Notes from ${sourceType} source`,
-      sourceType,
-      sourceUrl: sourceUrl || '',
-      contentMarkdown: 'Notes generation initiated. Agent 03 will process this content.',
-      depthLevel: depthLevel || 'standard',
-      style: style || 'academic',
-      language: language || 'en',
-      isPublished: false,
+    const institutionId = req.user.institutionId._id || req.user.institutionId;
+
+    const { runNotesExplainer } = await import('../agents/03-notesExplainer.js');
+    const result = await runNotesExplainer({
+      input: { title: title || `Notes from ${sourceType} source`, type: sourceType, url: sourceUrl, content },
+      courseId,
+      userId: req.user._id,
+      institutionId,
     });
 
     res.status(201).json({
-      resource,
-      message: 'Notes generation initiated',
+      resource: result.resource,
+      agentRunId: result.agentRunId,
+      durationMs: result.durationMs,
+      message: 'Notes generated successfully via Agent 03.',
     });
   } catch (error) {
     next(error);

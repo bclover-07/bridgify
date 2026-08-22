@@ -58,7 +58,7 @@ export async function register(req, res, next) {
     }
 
     const user = await User.create(userData);
-    setTokenCookies(res, user._id);
+    const { accessToken, refreshToken } = setTokenCookies(res, user._id);
 
     const userResponse = await User.findById(user._id)
       .select('-passwordHash')
@@ -66,6 +66,7 @@ export async function register(req, res, next) {
 
     res.status(201).json({
       user: userResponse,
+      accessToken,
       message: 'Registration successful',
     });
   } catch (error) {
@@ -98,7 +99,7 @@ export async function login(req, res, next) {
     user.lastLoginAt = new Date();
     await user.save();
 
-    setTokenCookies(res, user._id);
+    const { accessToken, refreshToken } = setTokenCookies(res, user._id);
 
     const userResponse = await User.findById(user._id)
       .select('-passwordHash')
@@ -106,6 +107,7 @@ export async function login(req, res, next) {
 
     res.json({
       user: userResponse,
+      accessToken,
       message: 'Login successful',
     });
   } catch (error) {

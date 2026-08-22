@@ -1,6 +1,7 @@
 import { StateGraph, END } from '@langchain/langgraph';
 import { otariCallWithRetry } from '../utils/otariCall.js';
 import AgentRun from '../models/AgentRun.js';
+import User from '../models/User.js';
 import InterviewSession from '../models/InterviewSession.js';
 import { createInterviewSEGEntries } from '../services/seg.service.js';
 import { createNotification } from '../services/notification.service.js';
@@ -148,18 +149,24 @@ Score from 0-100 and provide specific feedback. Return JSON:
 {"score": <0-100>, "feedback": "<specific feedback>", "strengths": ["..."], "improvements": ["..."]}
 Return ONLY the JSON.`;
 
-  let evaluation = { score: 50, feedback: 'Evaluation pending.' };
+  let evaluation = { score: 0, feedback: '' };
+  const result = await otariCallWithRetry({
+    route: 'interview.evaluate',
+    prompt,
+    userId,
+    options: { temperature: 0.3, maxTokens: 1024 },
+  });
+
   try {
-    const result = await otariCallWithRetry({
-      route: 'interview.evaluate',
-      prompt,
-      userId,
-      options: { temperature: 0.3, maxTokens: 1024 },
-    });
     const jsonStr = result.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     evaluation = JSON.parse(jsonStr);
   } catch {
-    evaluation = { score: 50, feedback: 'AI evaluation unavailable.' };
+    const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      evaluation = JSON.parse(jsonMatch[0]);
+    } else {
+      throw new Error(`Failed to parse AI evaluation response: ${result.text.substring(0, 200)}`);
+    }
   }
 
   try {
@@ -205,15 +212,35 @@ async function generateReport(state) {
   const startTime = Date.now();
   const { evaluations, targetRole, userId, sessionId } = state;
 
+  const sessionDoc = await InterviewSession.findById(sessionId).lean();
+
+  let bodyLanguageScore = 0;
+  let signalCount = 0;
+
+  if (sessionDoc?.answers && sessionDoc.answers.length > 0) {
+    for (const ans of sessionDoc.answers) {
+      const sig = ans.mediapipeSignals;
+      if (sig && (sig.eyeContact || sig.posture || sig.gesture || sig.engagement)) {
+        const score = Math.round(
+          (sig.eyeContact + sig.posture + sig.gesture + sig.engagement + (100 - sig.nervousness)) / 5
+        );
+        bodyLanguageScore += score;
+        signalCount++;
+      }
+    }
+  }
+
   const avgScore = evaluations.length > 0
     ? Math.round(evaluations.reduce((sum, e) => sum + (e.score || 0), 0) / evaluations.length)
     : 0;
 
+  bodyLanguageScore = signalCount > 0 ? Math.round(bodyLanguageScore / signalCount) : avgScore;
+
   const report = {
     overallScore: avgScore,
     technicalScore: Math.round(evaluations.filter(e => e.skillFocus).reduce((s, e) => s + (e.score || 0), 0) / Math.max(evaluations.length, 1)),
-    communicationScore: Math.min(100, avgScore + 10),
-    bodyLanguageScore: 70,
+    communicationScore: Math.round(evaluations.reduce((sum, e) => sum + (e.score || 0), 0) / Math.max(evaluations.length, 1)),
+    bodyLanguageScore,
     questionResults: evaluations.map((e, i) => ({
       questionIndex: i,
       score: e.score,

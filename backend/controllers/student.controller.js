@@ -469,7 +469,7 @@ export async function generateStudyPlan(req, res, next) {
 
 export async function getOpportunities(req, res, next) {
   try {
-    const { DriveEvent } = await import('../models/DriveEvent.js');
+    const { default: DriveEvent } = await import('../models/DriveEvent.js');
     const drives = await DriveEvent.find({
       status: { $in: ['upcoming', 'active'] },
       institutionId: req.user.institutionId._id || req.user.institutionId,
