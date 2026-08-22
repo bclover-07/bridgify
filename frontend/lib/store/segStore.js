@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { getSocket } from '../socket';
+import api from '../api';
 
 const useSegStoreHook = create((set, get) => ({
   seg: null,
@@ -10,25 +11,15 @@ const useSegStoreHook = create((set, get) => ({
   fetchSeg: async () => {
     try {
       set({ isLoading: true });
-      // In a real implementation this would fetch from /student/seg
-      // Simulating a fetch for the UI to render correctly based on our mock data
-      setTimeout(() => {
-        set({ 
-          seg: {
-            readinessScore: 82,
-            nodes: [
-              { skillName: 'React.js', proficiencyScore: 92 },
-              { skillName: 'Node.js', proficiencyScore: 85 },
-              { skillName: 'System Design', proficiencyScore: 78 }
-            ],
-            edges: [
-              { evidenceType: 'assessment', context: 'Passed Midterm React Quiz', scoreContributed: 15, timestamp: Date.now() - 86400000 },
-              { evidenceType: 'project', context: 'Built full-stack e-commerce', scoreContributed: 25, timestamp: Date.now() - 172800000 }
-            ]
-          },
-          isLoading: false
-        });
-      }, 500);
+      const { data } = await api.get('/student/seg');
+      set({ 
+        seg: {
+          readinessScore: data.aggregate?.totalReadinessScore || 0,
+          nodes: data.nodes || [],
+          edges: data.edges || []
+        },
+        isLoading: false
+      });
     } catch (err) {
       set({ error: err.message, isLoading: false });
     }

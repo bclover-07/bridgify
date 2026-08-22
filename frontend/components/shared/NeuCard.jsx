@@ -32,8 +32,12 @@ export default function NeuCard({
         onClick && 'cursor-pointer',
         className
       )}
-      whileHover={hoverable ? { y: -2, x: -2 } : undefined}
-      whileTap={onClick ? { y: 2, x: 2 } : undefined}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      whileHover={hoverable ? { scale: 1.02, y: -4, x: -4, boxShadow: '8px 8px 0px 0px var(--ink)' } : undefined}
+      whileTap={onClick ? { scale: 0.98, y: 0, x: 0, boxShadow: '0px 0px 0px 0px var(--ink)' } : undefined}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       onClick={onClick}
       {...props}
     >

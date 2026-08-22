@@ -70,12 +70,13 @@ export default function DemoLoginToggle({ onDemoLogin, loading = false }) {
       </div>
 
       {/* Role tiles */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {DEMO_ACCOUNTS.map((account) => {
           const Icon = account.icon;
           const isSelected = selectedRole === account.role;
           return (
             <motion.button
+              type="button"
               key={account.role}
               className={clsx(
                 'neu-card-static p-4 flex flex-col items-center gap-2 cursor-pointer transition-all',

@@ -17,7 +17,6 @@ export default function LoginPage() {
   // Real Account State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const handleRealLogin = async (e) => {
     e.preventDefault();
     try {
@@ -67,25 +66,31 @@ export default function LoginPage() {
         <NeuCard className="p-8 bg-white">
           <h1 className="text-3xl font-bold mb-6">Welcome Back</h1>
           
-          <div className="flex bg-[var(--paper)] rounded-xl p-1 mb-6 border-2 border-[var(--ink)]">
-             <button 
-                type="button"
-                className={`flex-1 py-2 rounded-lg font-bold transition-all ${isDemo ? 'bg-[var(--electric)] text-white border-2 border-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]' : 'hover:bg-gray-100'}`}
-                onClick={() => setIsDemo(true)}
-             >
-                Demo Mode
-             </button>
-             <button 
-                type="button"
-                className={`flex-1 py-2 rounded-lg font-bold transition-all ${!isDemo ? 'bg-[var(--electric)] text-white border-2 border-[var(--ink)] shadow-[2px_2px_0px_var(--ink)]' : 'hover:bg-gray-100'}`}
-                onClick={() => setIsDemo(false)}
-             >
-                Real Login
-             </button>
+          <div className="flex justify-center mb-8 relative p-1 bg-gray-100 border-[4px] border-[var(--ink)] rounded-2xl shadow-[10px_10px_0px_0px_var(--ink)] w-fit mx-auto">
+            <button 
+              type="button"
+              className={`relative px-6 py-2.5 font-bold text-sm z-10 transition-colors ${isDemo ? 'text-white' : 'text-gray-600 hover:text-black'}`}
+              onClick={() => setIsDemo(true)}
+            >
+              Demo Access
+            </button>
+            <button 
+              type="button"
+              className={`relative px-6 py-2.5 font-bold text-sm z-10 transition-colors ${!isDemo ? 'text-white' : 'text-gray-600 hover:text-black'}`}
+              onClick={() => setIsDemo(false)}
+            >
+              Real Sign In
+            </button>
+            <motion.div 
+              className="absolute top-1 bottom-1 w-[50%] bg-[var(--electric)] border-[4px] border-[var(--ink)] rounded-xl z-0"
+              initial={false}
+              animate={{ left: isDemo ? '4px' : '50%', right: isDemo ? '50%' : '4px' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            />
           </div>
 
           {error && (
-            <div className="p-3 mb-6 bg-red-100 border-2 border-red-500 rounded-[var(--radius-input)] text-red-700 text-sm font-semibold">
+            <div className="p-3 mb-6 bg-red-100 border-[4px] border-red-500 rounded-[var(--radius-input)] text-red-700 text-sm font-semibold">
               {error}
             </div>
           )}
@@ -120,16 +125,15 @@ export default function LoginPage() {
                     required
                   />
                 </div>
+                <NeuButton 
+                  type="submit" 
+                  variant="primary" 
+                  className="w-full text-lg py-3 mt-4"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Authenticating...' : 'Sign In'}
+                </NeuButton>
               </div>
-
-              <NeuButton 
-                type="submit" 
-                variant="primary" 
-                className="w-full text-lg py-3 mt-4"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Authenticating...' : 'Sign In'}
-              </NeuButton>
             </form>
           )}
 

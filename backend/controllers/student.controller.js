@@ -130,7 +130,37 @@ export async function getSEG(req, res, next) {
       .populate('verifierId', 'name role')
       .populate('courseId', 'title code');
 
-    res.json({ entries, total: entries.length });
+    const skillSummary = {};
+    const edges = [];
+
+    for (const entry of entries) {
+      if (!skillSummary[entry.skillId] || skillSummary[entry.skillId].proficiencyScore < entry.confidenceScore) {
+        skillSummary[entry.skillId] = {
+          skillId: entry.skillId,
+          skillName: entry.skillLabel,
+          skillCategory: entry.skillCategory,
+          proficiencyScore: entry.confidenceScore,
+        };
+      }
+      edges.push({
+        evidenceType: entry.evidenceType,
+        context: `Evidence recorded in ${entry.skillLabel}`,
+        scoreContributed: entry.confidenceScore,
+        timestamp: entry.createdAt,
+      });
+    }
+
+    const nodes = Object.values(skillSummary);
+    const totalReadinessScore = nodes.length > 0 
+      ? Math.round(nodes.reduce((sum, n) => sum + n.proficiencyScore, 0) / nodes.length) 
+      : 0;
+
+    res.json({
+      aggregate: { totalReadinessScore },
+      nodes: nodes,
+      edges: edges,
+      total: entries.length,
+    });
   } catch (error) {
     next(error);
   }

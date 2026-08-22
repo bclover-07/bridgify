@@ -27,8 +27,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Do not attempt to refresh token if the error occurred on login or register
-    if (originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/register')) {
+    // Do not attempt to refresh token if the failed request was login, register, or refresh itself
+    if (
+      originalRequest.url.includes('/auth/login') ||
+      originalRequest.url.includes('/auth/register') ||
+      originalRequest.url.includes('/auth/refresh')
+    ) {
       return Promise.reject(error);
     }
 

@@ -84,115 +84,126 @@ export default function RegisterPage() {
           <p className="text-gray-600 mb-8 font-medium">Join the skill evidence ecosystem.</p>
           
           {error && (
-            <div className="p-3 mb-6 bg-red-100 border-2 border-red-500 rounded-[var(--radius-input)] text-red-700 text-sm font-semibold">
+            <div className="p-3 mb-6 bg-red-100 border-[4px] border-red-500 rounded-[var(--radius-input)] text-red-700 text-sm font-semibold">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-6">
-            <div>
-              <label className="block font-semibold mb-3">Select Your Role</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {roles.map((role) => (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: role.id })}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-3 transition-all ${
-                      formData.role === role.id 
-                        ? 'border-[var(--ink)] bg-[#f8f7f4] shadow-[4px_4px_0px_var(--ink)] transform -translate-y-1' 
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="text-2xl mb-1" style={{ color: role.color }}>{role.icon}</div>
-                    <span className="font-bold text-xs">{role.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold mb-2">Full Name</label>
-                <input 
-                  type="text" 
-                  name="name"
-                  className="neu-input" 
-                  placeholder="e.g. John Doe"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block font-semibold mb-2">Email</label>
-                <input 
-                  type="email" 
-                  name="email"
-                  className="neu-input" 
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+          <PageTransition>
+            <form onSubmit={handleRegister} className="space-y-6">
+              <StaggerItem>
+                <label className="block font-semibold mb-3">Select Your Role</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {roles.map((role) => (
+                    <motion.button
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      key={role.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, role: role.id })}
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-[4px] transition-all ${
+                        formData.role === role.id 
+                          ? 'border-[var(--ink)] bg-[color-mix(in_srgb,var(--electric)_10%,var(--paper))] shadow-[10px_10px_0px_var(--ink)]' 
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                      style={formData.role === role.id ? { borderColor: role.color } : {}}
+                    >
+                      <div className="text-2xl mb-1" style={{ color: role.color }}>{role.icon}</div>
+                      <span className="font-bold text-xs">{role.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </StaggerItem>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold mb-2">Password</label>
-                <input 
-                  type="password" 
-                  name="password"
-                  className="neu-input" 
-                  placeholder="Create a password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block font-semibold mb-2">Confirm Password</label>
-                <input 
-                  type="password" 
-                  name="confirmPassword"
-                  className="neu-input" 
-                  placeholder="Confirm password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+              <StaggerItem className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold mb-2">Full Name</label>
+                  <input 
+                    type="text" 
+                    name="name"
+                    className="neu-input" 
+                    placeholder="e.g. John Doe"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-2">Email</label>
+                  <input 
+                    type="email" 
+                    name="email"
+                    className="neu-input" 
+                    placeholder="john@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </StaggerItem>
 
-            {(formData.role === 'faculty' || formData.role === 'admin') && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                <label className="block font-semibold mb-2 text-[var(--electric)]">Institution Code (Optional for Demo)</label>
-                <input 
-                  type="text" 
-                  name="institutionCode"
-                  className="neu-input border-[var(--electric)]" 
-                  placeholder="e.g. MRDU-2026"
-                  value={formData.institutionCode}
-                  onChange={handleChange}
-                />
-                <p className="text-xs text-gray-500 mt-1">Leave blank to create a new sandbox institution.</p>
-              </motion.div>
-            )}
+              <StaggerItem className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold mb-2">Password</label>
+                  <input 
+                    type="password" 
+                    name="password"
+                    className="neu-input" 
+                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-2">Confirm Password</label>
+                  <input 
+                    type="password" 
+                    name="confirmPassword"
+                    className="neu-input" 
+                    placeholder="Confirm password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </StaggerItem>
 
-            <NeuButton 
-              type="submit" 
-              variant="primary" 
-              className="w-full text-lg py-3 mt-4"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-            </NeuButton>
-          </form>
+              {(formData.role === 'faculty' || formData.role === 'admin') && (
+                <StaggerItem>
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                    <label className="block font-semibold mb-2 text-[var(--electric)]">Institution Code (Optional for Demo)</label>
+                    <input 
+                      type="text" 
+                      name="institutionCode"
+                      className="neu-input border-[var(--electric)]" 
+                      placeholder="e.g. MRDU-2026"
+                      value={formData.institutionCode}
+                      onChange={handleChange}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Leave blank to create a new sandbox institution.</p>
+                  </motion.div>
+                </StaggerItem>
+              )}
 
-          <div className="mt-8 text-center text-sm font-semibold">
-            Already have an account? <Link href="/login" className="text-[var(--electric)] hover:underline">Sign in</Link>
-          </div>
+              <StaggerItem>
+                <NeuButton 
+                  type="submit" 
+                  variant="primary" 
+                  className="w-full text-lg py-3 mt-4"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                </NeuButton>
+              </StaggerItem>
+            </form>
+
+            <StaggerItem className="mt-8 text-center text-sm font-semibold">
+              Already have an account? <Link href="/login" className="text-[var(--electric)] hover:underline">Sign in</Link>
+            </StaggerItem>
+          </PageTransition>
         </NeuCard>
       </motion.div>
     </div>

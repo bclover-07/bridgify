@@ -12,6 +12,9 @@
   --color-violet: #A960FF;
   --color-hotpink: #FF3D9A;
   --color-amber: #FFB020;
+  --color-lime: #A5FF33;
+  --color-cyan: #00FFFF;
+  --color-orange: #FF6600;
 
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -29,17 +32,20 @@
   --violet: #A960FF;
   --hotpink: #FF3D9A;
   --amber: #FFB020;
+  --lime: #A5FF33;
+  --cyan: #00FFFF;
+  --orange: #FF6600;
 
-  --border-width: 3px;
-  --radius-card: 20px;
-  --radius-button: 14px;
-  --radius-input: 12px;
+  --border-width: 4px;
+  --radius-card: 24px;
+  --radius-button: 16px;
+  --radius-input: 16px;
   --radius-pill: 999px;
 
-  --shadow-brutal: 6px 6px 0px 0px var(--ink);
-  --shadow-brutal-sm: 4px 4px 0px 0px var(--ink);
-  --shadow-brutal-hover: 8px 8px 0px 0px var(--ink);
-  --shadow-brutal-press: 2px 2px 0px 0px var(--ink);
+  --shadow-brutal: 10px 10px 0px 0px var(--ink);
+  --shadow-brutal-sm: 6px 6px 0px 0px var(--ink);
+  --shadow-brutal-hover: 14px 14px 0px 0px var(--ink);
+  --shadow-brutal-press: 4px 4px 0px 0px var(--ink);
 
   --background: var(--paper);
   --foreground: var(--ink);
@@ -447,21 +453,23 @@ code, pre, .font-mono {
 
 /* ─── Scrollbar ────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 14px;
+  height: 14px;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--paper);
+  border-left: var(--border-width) solid var(--ink);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--ink);
+  background: var(--electric);
+  border: 3px solid var(--paper);
   border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--electric);
+  background: var(--hotpink);
 }
 
 /* ─── Role Accent Colors ──────────────────── */

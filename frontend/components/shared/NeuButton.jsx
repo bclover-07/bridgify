@@ -42,8 +42,9 @@ export default function NeuButton({
         disabled && 'opacity-50 cursor-not-allowed',
         className
       )}
-      whileHover={!disabled ? { y: -2, x: -2 } : undefined}
-      whileTap={!disabled ? { y: 2, x: 2 } : undefined}
+      whileHover={!disabled ? { scale: 1.05, y: -4, x: -4, boxShadow: '8px 8px 0px 0px var(--ink)' } : undefined}
+      whileTap={!disabled ? { scale: 0.95, y: 0, x: 0, boxShadow: '0px 0px 0px 0px var(--ink)' } : undefined}
+      transition={{ type: "spring", stiffness: 400, damping: 10 }}
       onClick={disabled ? undefined : onClick}
       disabled={disabled || loading}
       {...props}
