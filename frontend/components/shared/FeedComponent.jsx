@@ -219,103 +219,119 @@ export default function FeedComponent({ roleTitle = 'Tech & Skill Feed', roleThe
             const isCommenting = activeCommentPost === post._id;
 
             return (
-              <NeuCard key={post._id} className="p-6 bg-white space-y-4">
+              <div key={post._id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
                 {/* Author Info Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-[var(--electric)] text-white border-[2px] border-[var(--ink)] flex items-center justify-center font-bold text-base">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
                       {authorName[0]}
                     </div>
                     <div>
-                      <h4 className="font-bold text-base leading-tight">{authorName}</h4>
-                      <p className="text-xs text-gray-500 font-mono mt-0.5">
-                        {new Date(post.createdAt).toLocaleDateString()} at{' '}
-                        {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <h4 className="font-bold text-sm text-gray-900 leading-tight">{authorName}</h4>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {new Date(post.createdAt).toLocaleDateString()} at {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {post.category || 'Update'}
                       </p>
                     </div>
                   </div>
-                  <NeuBadge variant={getRoleBadgeVariant(authorRole)} className="capitalize font-bold">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-100 px-2 py-1 rounded">
                     {authorRole}
-                  </NeuBadge>
+                  </span>
                 </div>
 
                 {/* Post Body */}
-                <div>
-                  <h3 className="font-bold text-xl mb-2">{post.title}</h3>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm">{post.content}</p>
+                <div className="px-4 pb-3">
+                  <h3 className="font-bold text-base text-gray-900 mb-1">{post.title}</h3>
+                  <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                  
+                  {/* Tags */}
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-3">
+                      {post.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs font-medium text-blue-600 hover:underline cursor-pointer"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Tags */}
-                {post.tags && post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {post.tags.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs font-bold px-2.5 py-1 bg-[var(--paper)] border-[2px] border-[var(--ink)] rounded-full text-gray-700"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
                 {/* Post Footer Controls */}
-                <div className="flex items-center justify-between border-t-[2px] border-[var(--ink)] pt-3 text-sm">
+                <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-6">
                   <button
                     onClick={() => handleLike(post._id)}
-                    className={`flex items-center gap-2 font-bold px-3 py-1.5 rounded-xl border-[2px] border-[var(--ink)] transition-all ${
-                      isLiked ? 'bg-[var(--coral)] text-white' : 'bg-white hover:bg-gray-100'
+                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                      isLiked ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    <FiThumbsUp /> {likesCount} {likesCount === 1 ? 'Like' : 'Likes'}
+                    <FiThumbsUp className={isLiked ? 'fill-current' : ''} size={20} /> 
+                    <span>{likesCount > 0 ? likesCount : 'Like'}</span>
                   </button>
 
                   <button
                     onClick={() => setActiveCommentPost(isCommenting ? null : post._id)}
-                    className="flex items-center gap-2 font-bold px-3 py-1.5 rounded-xl border-[2px] border-[var(--ink)] bg-white hover:bg-gray-100"
+                    className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    <FiMessageCircle /> {post.comments?.length || 0} Comments
+                    <FiMessageCircle size={20} /> 
+                    <span>{post.comments?.length > 0 ? post.comments.length : 'Comment'}</span>
+                  </button>
+                  
+                  <button className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors ml-auto">
+                    <FiShare2 size={18} />
                   </button>
                 </div>
 
                 {/* Comments Section */}
                 {isCommenting && (
-                  <div className="pt-3 border-t-[2px] border-dashed border-gray-300 space-y-3 bg-[var(--paper)] p-4 rounded-xl border-[2px] border-[var(--ink)]">
+                  <div className="bg-gray-50 px-4 py-3 border-t border-gray-100 space-y-3">
                     <div className="flex gap-2">
-                      <input
-                        className="neu-input text-sm flex-1"
-                        placeholder="Write a comment..."
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post._id)}
-                      />
-                      <NeuButton variant="primary" size="sm" onClick={() => handleAddComment(post._id)} icon={FiSend}>
-                        Comment
-                      </NeuButton>
+                      <div className="w-8 h-8 shrink-0 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-xs">
+                        {user?.name?.[0] || 'U'}
+                      </div>
+                      <div className="flex-1 relative">
+                        <input
+                          className="w-full bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-sm py-1.5 pr-8 transition-colors"
+                          placeholder="Write a comment..."
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post._id)}
+                        />
+                        <button 
+                          onClick={() => handleAddComment(post._id)}
+                          className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
+                        >
+                          <FiSend size={16} />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="space-y-2 max-h-48 overflow-y-auto pt-2">
+                    <div className="space-y-3 max-h-60 overflow-y-auto pt-3">
                       {post.comments && post.comments.length > 0 ? (
                         post.comments.map((c, i) => (
-                          <div key={i} className="p-2.5 bg-white border-[2px] border-[var(--ink)] rounded-xl text-xs">
-                            <div className="flex justify-between font-bold text-gray-800 mb-1">
-                              <span>
-                                {c.userName} ({c.userRole})
-                              </span>
-                              <span className="text-[10px] text-gray-400">
-                                {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                          <div key={i} className="flex gap-2 group">
+                            <div className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-tr from-gray-200 to-gray-300 flex items-center justify-center text-gray-600 font-bold text-xs mt-0.5">
+                              {c.userName?.[0] || 'U'}
                             </div>
-                            <p className="text-gray-700">{c.text}</p>
+                            <div className="flex-1 bg-white rounded-2xl rounded-tl-none px-3 py-2 shadow-sm border border-gray-100">
+                              <div className="flex items-baseline gap-2 mb-0.5">
+                                <span className="font-bold text-xs text-gray-900">{c.userName}</span>
+                                <span className="text-[10px] text-gray-400">
+                                  {new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 text-sm">{c.text}</p>
+                            </div>
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-gray-400 font-bold text-center py-2">No comments yet.</p>
+                        <p className="text-xs text-gray-400 text-center py-2">No comments yet. Be the first!</p>
                       )}
                     </div>
                   </div>
                 )}
-              </NeuCard>
+              </div>
             );
           })
         ) : (
