@@ -58,13 +58,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return true;
     } on DioException catch (e) {
       String errorMessage = 'Login failed';
-      if (e.response != null && e.response?.data != null) {
-         errorMessage = e.response?.data['message'] ?? errorMessage;
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        errorMessage = 'Connection timed out. Server unreachable.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        errorMessage = 'Network connection failed (Connection Refused).';
+      } else if (e.response != null && e.response?.data != null) {
+        errorMessage = e.response?.data['error'] ?? e.response?.data['message'] ?? errorMessage;
+      } else {
+        errorMessage = e.message ?? errorMessage;
       }
       state = state.copyWith(isLoading: false, error: errorMessage);
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      state = state.copyWith(isLoading: false, error: 'Unexpected error: ${e.toString()}');
       return false;
     }
   }
@@ -102,13 +108,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return true;
     } on DioException catch (e) {
       String errorMessage = 'Registration failed';
-      if (e.response != null && e.response?.data != null) {
-         errorMessage = e.response?.data['error'] ?? e.response?.data['message'] ?? errorMessage;
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        errorMessage = 'Connection timed out. Server unreachable.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        errorMessage = 'Network connection failed (Connection Refused).';
+      } else if (e.response != null && e.response?.data != null) {
+        errorMessage = e.response?.data['error'] ?? e.response?.data['message'] ?? errorMessage;
+      } else {
+        errorMessage = e.message ?? errorMessage;
       }
       state = state.copyWith(isLoading: false, error: errorMessage);
       return false;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      state = state.copyWith(isLoading: false, error: 'Unexpected error: ${e.toString()}');
       return false;
     }
   }
