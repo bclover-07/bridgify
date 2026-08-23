@@ -72,7 +72,11 @@ export default function StudentProfilePage() {
             </div>
           </div>
 
-          <div className="flex gap-4 text-center">
+          <div className="flex flex-wrap gap-4 text-center">
+            <div className="p-3 bg-white/10 rounded-xl border border-white/20">
+              <span className="text-xs font-bold block opacity-75">Target Role Readiness</span>
+              <span className="text-3xl font-extrabold text-amber-300">{segData?.aggregate?.totalReadinessScore || 82}%</span>
+            </div>
             <div className="p-3 bg-white/10 rounded-xl border border-white/20">
               <span className="text-xs font-bold block opacity-75">CGPA</span>
               <span className="text-3xl font-extrabold text-[var(--mint)]">{profile?.cgpa || '8.8'}</span>

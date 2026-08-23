@@ -7,17 +7,19 @@ import { NeuRadarChart } from '@/components/shared/NeuChart';
 import NeuBadge from '@/components/shared/NeuBadge';
 import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
-import { FiCheckSquare, FiSquare, FiTarget, FiCompass, FiBookOpen, FiCpu, FiCheckCircle } from 'react-icons/fi';
+import { FiCheckSquare, FiSquare, FiTarget, FiCompass, FiBookOpen, FiCpu, FiCheckCircle, FiLayers } from 'react-icons/fi';
 import api from '@/lib/api';
 
 export default function CareerPathTrackerPage() {
   const [roles, setRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState('fullstack-developer');
+  const [knownSkillsInput, setKnownSkillsInput] = useState('React, JavaScript, HTML/CSS, Git');
+  const [learningGoalsInput, setLearningGoalsInput] = useState('System Design, Docker, Microservices, MongoDB');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // AI Study Plan & Interactive Milestone Checkboxes State
   const [generatingPlan, setGeneratingPlan] = useState(false);
+
+  // Active Milestones List
   const [activeMilestones, setActiveMilestones] = useState([
     {
       week: 1,
@@ -84,6 +86,8 @@ export default function CareerPathTrackerPage() {
     try {
       const res = await api.post('/student/study-plan/generate', {
         targetRole: selectedRole,
+        knownSkills: knownSkillsInput.split(',').map(s => s.trim()).filter(Boolean),
+        learningGoals: learningGoalsInput.split(',').map(s => s.trim()).filter(Boolean),
       });
 
       const generatedWeeks = res.data.plan?.weeks || [];
@@ -114,7 +118,6 @@ export default function CareerPathTrackerPage() {
     const goal = milestone.goals.find(g => g.id === goalId);
     if (goal) {
       goal.done = !goal.done;
-      // Check if all goals in milestone are done
       milestone.completed = milestone.goals.every(g => g.done);
       setActiveMilestones(updated);
 
@@ -130,14 +133,15 @@ export default function CareerPathTrackerPage() {
     }
   };
 
-  // Calculate overall milestone progress %
   const totalGoals = activeMilestones.flatMap(m => m.goals).length;
   const completedGoals = activeMilestones.flatMap(m => m.goals).filter(g => g.done).length;
   const progressPercent = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
 
   if (loading && !data) return <DashboardSkeleton />;
 
-  // Clean radar chart data with angleKey="name"
+  const knownSkillsList = knownSkillsInput.split(',').map(s => s.trim()).filter(Boolean);
+  const targetGapSkillsList = learningGoalsInput.split(',').map(s => s.trim()).filter(Boolean);
+
   const radarData = data?.skillBreakdown?.slice(0, 8).map(s => ({
     name: s.label?.substring(0, 14) || 'Skill',
     score: s.currentScore || 0,
@@ -152,50 +156,110 @@ export default function CareerPathTrackerPage() {
 
   return (
     <PageTransition className="space-y-6">
-      {/* Header & Role Selector */}
+      {/* Header */}
       <StaggerItem className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-1">🎯 Career Path & Interactive Study Tracker</h1>
-          <p className="text-gray-500 font-medium">Select your target career role, track milestone goal completion, and view AI skill gap analysis</p>
-        </div>
-
-        <div className="flex gap-2 w-full sm:w-auto">
-          <select 
-            className="neu-input bg-white font-bold text-sm"
-            value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
-          >
-            {roles.map(r => (
-              <option key={r.roleId} value={r.roleId}>{r.label}</option>
-            ))}
-          </select>
-
-          <NeuButton variant="primary" icon={FiCpu} onClick={handleGenerateAiStudyPlan} loading={generatingPlan}>
-            Generate AI Study Plan
-          </NeuButton>
+          <h1 className="text-3xl font-bold mb-1">🎯 AI Career Path & Study Guidance Generator</h1>
+          <p className="text-gray-500 font-medium">Input your current known skills, target role, and gap goals to generate a personalized learning roadmap</p>
         </div>
       </StaggerItem>
 
-      {/* Overview Metric Cards */}
-      <StaggerItem className="grid md:grid-cols-4 gap-4">
+      {/* Career Path Input Form Card */}
+      <StaggerItem>
+        <NeuCard className="p-6 bg-white space-y-4 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
+          <h2 className="text-xl font-bold text-[var(--ink)] flex items-center gap-2">
+            ⚙️ Career Path Inputs & Customization
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-1">Target Career Role</label>
+              <select
+                className="neu-select w-full font-bold text-sm bg-white"
+                value={selectedRole}
+                onChange={e => setSelectedRole(e.target.value)}
+              >
+                {roles.map(r => (
+                  <option key={r.roleId} value={r.roleId}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-1">Skills You Currently Know</label>
+              <input
+                type="text"
+                className="neu-input w-full text-sm bg-white"
+                value={knownSkillsInput}
+                onChange={e => setKnownSkillsInput(e.target.value)}
+                placeholder="e.g. React, HTML, JS"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-1">Target Skills To Learn / Master</label>
+              <input
+                type="text"
+                className="neu-input w-full text-sm bg-white"
+                value={learningGoalsInput}
+                onChange={e => setLearningGoalsInput(e.target.value)}
+                placeholder="e.g. System Design, Docker, Redis"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <NeuButton variant="primary" icon={FiCpu} onClick={handleGenerateAiStudyPlan} loading={generatingPlan}>
+              Generate AI Career Path & Roadmap
+            </NeuButton>
+          </div>
+        </NeuCard>
+      </StaggerItem>
+
+      {/* Skills Analysis Guidance Summary */}
+      <StaggerItem className="grid md:grid-cols-2 gap-4">
+        <NeuCard className="p-5 bg-white space-y-3">
+          <h3 className="font-bold text-base text-emerald-800 flex items-center gap-2">
+            <FiCheckCircle className="text-emerald-600" /> Verified Skills You Know
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {knownSkillsList.map((sk, idx) => (
+              <NeuBadge key={idx} variant="success">
+                ✅ {sk}
+              </NeuBadge>
+            ))}
+          </div>
+        </NeuCard>
+
+        <NeuCard className="p-5 bg-white space-y-3">
+          <h3 className="font-bold text-base text-rose-800 flex items-center gap-2">
+            <FiTarget className="text-rose-600" /> Target Skills You Need to Master
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {targetGapSkillsList.map((sk, idx) => (
+              <NeuBadge key={idx} variant="danger">
+                🎯 {sk}
+              </NeuBadge>
+            ))}
+          </div>
+        </NeuCard>
+      </StaggerItem>
+
+      {/* Milestone Progress Cards */}
+      <StaggerItem className="grid md:grid-cols-3 gap-4">
         <NeuCard className="p-5 bg-[var(--electric)] text-white text-center">
-          <p className="text-xs font-bold uppercase opacity-80 mb-1">Target Role Readiness</p>
+          <p className="text-xs font-bold uppercase opacity-80 mb-1">Target Role Match</p>
           <p className="text-4xl font-extrabold">{data?.overallReadiness || 78}%</p>
         </NeuCard>
 
         <NeuCard className="p-5 bg-[var(--mint)] text-center">
-          <p className="text-xs font-bold uppercase opacity-80 mb-1">Milestone Progress</p>
+          <p className="text-xs font-bold uppercase opacity-80 mb-1">Roadmap Progress</p>
           <p className="text-4xl font-extrabold">{progressPercent}%</p>
         </NeuCard>
 
         <NeuCard className="p-5 bg-[var(--sky)] text-center">
-          <p className="text-xs font-bold uppercase opacity-80 mb-1">Goals Completed</p>
+          <p className="text-xs font-bold uppercase opacity-80 mb-1">Completed Action Items</p>
           <p className="text-4xl font-extrabold">{completedGoals} / {totalGoals}</p>
-        </NeuCard>
-
-        <NeuCard className="p-5 bg-[var(--amber)] text-center">
-          <p className="text-xs font-bold uppercase opacity-80 mb-1">High Impact Skill Gaps</p>
-          <p className="text-4xl font-extrabold">{data?.skillBreakdown?.filter(s => s.gap > 0).length || 2}</p>
         </NeuCard>
       </StaggerItem>
 
@@ -213,7 +277,7 @@ export default function CareerPathTrackerPage() {
             </div>
             <div className="w-full sm:w-48 space-y-1">
               <div className="flex justify-between text-xs font-bold">
-                <span>Overall Goal Completion</span>
+                <span>Goal Completion</span>
                 <span>{progressPercent}%</span>
               </div>
               <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden border border-[var(--ink)]">

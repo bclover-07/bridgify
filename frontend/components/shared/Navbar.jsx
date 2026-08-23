@@ -59,8 +59,14 @@ export default function Navbar({ user }) {
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 className="absolute right-0 top-14 w-80 max-h-96 bg-white border-[3px] border-[var(--ink)] rounded-2xl shadow-[6px_6px_0px_0px_var(--ink)] overflow-hidden z-50"
               >
-                <div className="p-4 border-b-[3px] border-[var(--ink)] bg-[var(--paper)]">
+                <div className="p-4 border-b-[3px] border-[var(--ink)] bg-[var(--paper)] flex justify-between items-center">
                   <h3 className="font-bold text-sm">Notifications</h3>
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="w-6 h-6 rounded-full border-2 border-[var(--ink)] bg-gray-100 flex items-center justify-center font-bold text-xs hover:bg-gray-200 cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 </div>
                 <div className="overflow-y-auto max-h-72">
                   {notifications.length === 0 ? (
