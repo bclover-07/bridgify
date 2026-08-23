@@ -14,14 +14,51 @@ class LectureBridgeScreen extends ConsumerStatefulWidget {
 class _LectureBridgeScreenState extends ConsumerState<LectureBridgeScreen> {
   bool _isLoading = true;
   String _courseName = "Course";
+  String _courseId = "";
   int _coverageRate = 0;
   List<dynamic> _taughtNotTested = [];
   List<dynamic> _testedNotTaught = [];
+
+  // OCR Assign State
+  final TextEditingController _noteTitleController = TextEditingController();
+  final TextEditingController _noteContentController = TextEditingController();
+  bool _isPublishing = false;
+  Map<String, dynamic>? _publishResult;
 
   @override
   void initState() {
     super.initState();
     _fetchBridgeData();
+  }
+
+  Future<void> _handleOcrAutoAssign() async {
+    if (_noteContentController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter lecture notes content!')));
+      return;
+    }
+    setState(() => _isPublishing = true);
+
+    try {
+      final res = await ApiClient.instance.post('/api/faculty/lecture-bridge/auto-assign', data: {
+        "courseId": _courseId,
+        "title": _noteTitleController.text.trim().isEmpty ? 'Lecture Practice Assignment' : _noteTitleController.text.trim(),
+        "noteContent": _noteContentController.text.trim(),
+        "mimeType": "text/plain",
+      });
+
+      setState(() {
+        _publishResult = res.data;
+        _isPublishing = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Assignment generated & published!')));
+      }
+    } catch (e) {
+      setState(() => _isPublishing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${e.toString()}')));
+      }
+    }
   }
 
   Future<void> _fetchBridgeData() async {
@@ -35,6 +72,7 @@ class _LectureBridgeScreenState extends ConsumerState<LectureBridgeScreen> {
       }
 
       final courseId = courses[0]['_id'];
+      _courseId = courseId;
 
       final response = await ApiClient.instance.post('/api/faculty/lecture-bridge', data: {
         "courseId": courseId
@@ -73,37 +111,102 @@ class _LectureBridgeScreenState extends ConsumerState<LectureBridgeScreen> {
         ? const Center(child: CircularProgressIndicator(color: NeuTheme.electric))
         : Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                NeuCard(
-                  backgroundColor: NeuTheme.paper,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text('$_courseName Analysis', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Syllabus Coverage', style: TextStyle(fontSize: 16)),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  NeuCard(
+                    backgroundColor: NeuTheme.paper,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('OCR Notes to Practice Quiz', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        NeuInput(
+                          controller: _noteTitleController,
+                          hintText: 'Assignment Title',
+                        ),
+                        const SizedBox(height: 16),
+                        NeuInput(
+                          controller: _noteContentController,
+                          hintText: 'Paste lecture text or OCR data here...',
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 16),
+                        NeuButton(
+                          text: _isPublishing ? 'Auto-Publishing to Class...' : 'Auto-Assign from Notes',
+                          backgroundColor: NeuTheme.mint,
+                          onPressed: _isPublishing ? null : _handleOcrAutoAssign,
+                        ),
+                        if (_publishResult != null) ...[
+                          const SizedBox(height: 16),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: NeuTheme.electric,
-                              border: Border.all(color: NeuTheme.ink, width: 2),
+                              color: Colors.white,
+                              border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
                             ),
-                            child: Text('$_coverageRate%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                          )
-                        ],
-                      ),
-                    ],
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.check_circle, color: NeuTheme.ink),
+                                    SizedBox(width: 8),
+                                    Text('Published Successfully!', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(_publishResult!['message'] ?? '', style: const TextStyle(fontSize: 14)),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: (_publishResult!['extractedTopics'] as List<dynamic>? ?? []).map<Widget>((t) => Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: NeuTheme.electric,
+                                      border: Border.all(color: NeuTheme.ink),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text('📌 $t', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  )).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ]
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  const SizedBox(height: 24),
+                  NeuCard(
+                    backgroundColor: NeuTheme.paper,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text('$_courseName Analysis', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Syllabus Coverage', style: TextStyle(fontSize: 16)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: NeuTheme.electric,
+                                border: Border.all(color: NeuTheme.ink, width: 2),
+                              ),
+                              child: Text('$_coverageRate%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: NeuCard(
@@ -113,18 +216,10 @@ class _LectureBridgeScreenState extends ConsumerState<LectureBridgeScreen> {
                             children: [
                               const Text('Taught, Not Tested', style: TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.coral)),
                               const Divider(color: NeuTheme.ink, thickness: 2),
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: _taughtNotTested.length,
-                                  itemBuilder: (context, index) {
-                                    final skill = _taughtNotTested[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
-                                      child: Text('• ${skill['label'] ?? skill['skillId']}', style: const TextStyle(fontSize: 14)),
-                                    );
-                                  },
-                                ),
-                              )
+                              ..._taughtNotTested.map((skill) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Text('• ${skill['label'] ?? skill['skillId']}', style: const TextStyle(fontSize: 14)),
+                              )),
                             ],
                           )
                         ),
@@ -138,26 +233,18 @@ class _LectureBridgeScreenState extends ConsumerState<LectureBridgeScreen> {
                             children: [
                               const Text('Tested, Not Taught', style: TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.amber)),
                               const Divider(color: NeuTheme.ink, thickness: 2),
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: _testedNotTaught.length,
-                                  itemBuilder: (context, index) {
-                                    final skill = _testedNotTaught[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
-                                      child: Text('• ${skill['label'] ?? skill['skillId']}', style: const TextStyle(fontSize: 14)),
-                                    );
-                                  },
-                                ),
-                              )
+                              ..._testedNotTaught.map((skill) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Text('• ${skill['label'] ?? skill['skillId']}', style: const TextStyle(fontSize: 14)),
+                              )),
                             ],
                           )
                         ),
                       )
                     ],
                   )
-                )
-              ],
+                ],
+              ),
             ),
           ),
     );
