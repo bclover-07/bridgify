@@ -9,6 +9,7 @@ import NeuButton from '@/components/shared/NeuButton';
 import AnimatedCounter from '@/components/shared/AnimatedCounter';
 import useAuthStore from '@/lib/store/authStore';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
+import api from '@/lib/api';
 
 export default function FacultyDashboard() {
   const { user } = useAuthStore();

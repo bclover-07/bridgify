@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import NeuCard from '@/components/shared/NeuCard';
 import NeuButton from '@/components/shared/NeuButton';
-import NeuSelect from '@/components/shared/NeuSelect';
 import { NeuRadarChart, NeuBarChart } from '@/components/shared/NeuChart';
 import NeuBadge from '@/components/shared/NeuBadge';
 import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
@@ -11,15 +10,40 @@ import PageTransition, { StaggerItem } from '@/components/shared/PageTransition'
 import api from '@/lib/api';
 
 export default function ReadinessPage() {
+  const [roles, setRoles] = useState([]);
+  const [selectedRole, setSelectedRole] = useState('frontend-developer');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [targetRole, setTargetRole] = useState('');
   const [whatIfResult, setWhatIfResult] = useState(null);
   const [simulating, setSimulating] = useState(false);
 
+  // Fetch available roles on mount
   useEffect(() => {
-    api.get('/student/readiness').then(res => { setData(res.data); setLoading(false); }).catch(() => setLoading(false));
+    api.get('/student/readiness').then(res => {
+      if (res.data.roles) {
+        setRoles(res.data.roles);
+        if (res.data.roles.length > 0 && !selectedRole) {
+          setSelectedRole(res.data.roles[0].roleId);
+        }
+      }
+    }).catch(console.error);
   }, []);
+
+  // Fetch readiness data when selectedRole changes
+  useEffect(() => {
+    if (!selectedRole) return;
+    setLoading(true);
+    api.get(`/student/readiness?targetRole=${selectedRole}`)
+      .then(res => {
+        setData(res.data);
+        setLoading(false);
+      })
+      .catch((e) => {
+        console.error(e);
+        setLoading(false);
+      });
+  }, [selectedRole]);
 
   const handleWhatIf = async () => {
     if (!targetRole) return;
@@ -27,29 +51,43 @@ export default function ReadinessPage() {
     try {
       const res = await api.post('/student/readiness/what-if', { targetRole });
       setWhatIfResult(res.data);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to simulate: ' + (e.response?.data?.error || e.message));
+    }
     setSimulating(false);
   };
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading && !data) return <DashboardSkeleton />;
 
   const radarData = data?.skillBreakdown?.slice(0, 8).map(s => ({
-    name: s.skillName?.substring(0, 12) || 'Skill',
-    score: s.score || 0,
-    required: s.requiredScore || 80,
+    name: s.label?.substring(0, 12) || 'Skill',
+    score: s.currentScore || 0,
+    required: 60, // Default target score
   })) || [];
 
   return (
     <PageTransition className="space-y-6">
-      <StaggerItem>
-        <h1 className="text-3xl font-bold mb-1">🎯 Readiness Simulator</h1>
-        <p className="text-gray-500 font-medium">See how ready you are for your target role</p>
+      <StaggerItem className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-1">🎯 Readiness Simulator</h1>
+          <p className="text-gray-500 font-medium">See how ready you are for your target role</p>
+        </div>
+        <select 
+          className="neu-input bg-white w-full sm:w-auto"
+          value={selectedRole}
+          onChange={(e) => setSelectedRole(e.target.value)}
+        >
+          {roles.map(r => (
+            <option key={r.roleId} value={r.roleId}>{r.label}</option>
+          ))}
+        </select>
       </StaggerItem>
 
       <StaggerItem className="grid md:grid-cols-3 gap-4">
         <NeuCard className="p-5 bg-[var(--electric)] text-white text-center">
           <p className="text-sm font-semibold opacity-80 mb-1">Overall Readiness</p>
-          <p className="text-5xl font-bold">{data?.overallScore || 0}%</p>
+          <p className="text-5xl font-bold">{data?.overallReadiness || 0}%</p>
         </NeuCard>
         <NeuCard className="p-5 bg-[var(--mint)] text-center">
           <p className="text-sm font-semibold opacity-80 mb-1">Skills Covered</p>
@@ -57,7 +95,7 @@ export default function ReadinessPage() {
         </NeuCard>
         <NeuCard className="p-5 bg-[var(--amber)] text-center">
           <p className="text-sm font-semibold opacity-80 mb-1">Gaps Found</p>
-          <p className="text-5xl font-bold">{data?.gaps?.length || 0}</p>
+          <p className="text-5xl font-bold">{data?.skillBreakdown?.filter(s => s.gap > 0).length || 0}</p>
         </NeuCard>
       </StaggerItem>
 
@@ -76,14 +114,18 @@ export default function ReadinessPage() {
       <StaggerItem>
         <NeuCard className="p-5 bg-white">
           <h2 className="text-xl font-bold mb-4">What-If Simulator</h2>
-          <p className="text-gray-500 text-sm font-medium mb-4">Enter a target role to see what skills you need to improve</p>
+          <p className="text-gray-500 text-sm font-medium mb-4">Select a target role to see what skills you need to improve</p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              className="neu-input flex-1"
-              placeholder="e.g. Frontend Developer, Data Scientist"
+            <select
+              className="neu-input flex-1 bg-white"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
-            />
+            >
+              <option value="">Select a role...</option>
+              {roles.map(r => (
+                <option key={r.roleId} value={r.roleId}>{r.label}</option>
+              ))}
+            </select>
             <NeuButton variant="primary" onClick={handleWhatIf} loading={simulating}>
               Simulate
             </NeuButton>
@@ -91,36 +133,32 @@ export default function ReadinessPage() {
 
           {whatIfResult && (
             <div className="mt-6 p-4 border-[3px] border-[var(--ink)] rounded-2xl bg-[var(--paper)]">
-              <h3 className="font-bold mb-3">Simulation Result for &quot;{targetRole}&quot;</h3>
+              <h3 className="font-bold mb-3">Simulation Result for {roles.find(r => r.roleId === targetRole)?.label}</h3>
               <div className="flex gap-3 mb-4">
-                <NeuBadge variant={whatIfResult.readinessScore >= 70 ? 'success' : 'warning'}>
-                  Readiness: {whatIfResult.readinessScore || 0}%
+                <NeuBadge variant={whatIfResult.whatIfReadiness >= 70 ? 'success' : 'warning'}>
+                  Target Readiness: {whatIfResult.whatIfReadiness || 0}%
+                </NeuBadge>
+                <NeuBadge variant="info">
+                  Improvement: +{whatIfResult.improvement || 0}%
                 </NeuBadge>
               </div>
-              {whatIfResult.recommendations && (
-                <div className="space-y-2">
-                  <p className="font-bold text-sm">Recommendations:</p>
-                  {(Array.isArray(whatIfResult.recommendations) ? whatIfResult.recommendations : [whatIfResult.recommendations]).map((rec, i) => (
-                    <div key={i} className="text-sm text-gray-600 flex gap-2">
-                      <span className="text-[var(--electric)]">→</span> {typeof rec === 'string' ? rec : rec.suggestion || JSON.stringify(rec)}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </NeuCard>
       </StaggerItem>
 
-      {data?.gaps?.length > 0 && (
+      {data?.recommendations?.length > 0 && (
         <StaggerItem>
           <NeuCard className="p-5 bg-white">
-            <h2 className="text-xl font-bold mb-4">Skill Gaps</h2>
+            <h2 className="text-xl font-bold mb-4">Skill Recommendations</h2>
             <div className="space-y-3">
-              {data.gaps.map((gap, i) => (
-                <div key={i} className="flex items-center justify-between p-3 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)]">
-                  <span className="font-bold text-sm">{gap.skillName || gap}</span>
-                  <NeuBadge variant="danger">Gap</NeuBadge>
+              {data.recommendations.map((rec, i) => (
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)] gap-2">
+                  <div>
+                    <span className="font-bold text-sm block">{rec.label}</span>
+                    <span className="text-xs text-gray-500">Current: {rec.currentScore}% • Target: {rec.targetScore}%</span>
+                  </div>
+                  <NeuBadge variant="danger">High Impact Gap</NeuBadge>
                 </div>
               ))}
             </div>

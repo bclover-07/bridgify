@@ -3,8 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useAuthStore from '@/lib/store/authStore';
-import Sidebar from '@/components/shared/Sidebar';
-import Navbar from '@/components/shared/Navbar';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 
 export default function FacultyLayout({ children }) {
@@ -32,15 +30,5 @@ export default function FacultyLayout({ children }) {
 
   if (!isAuthenticated || user?.role !== 'faculty') return null;
 
-  return (
-    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
-      <Sidebar role="faculty" />
-      <div className="lg:ml-64">
-        <Navbar accent="var(--sky)" />
-        <main className="p-4 lg:p-6 max-w-7xl mx-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  return <>{children}</>;
 }

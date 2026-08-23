@@ -32,15 +32,5 @@ export default function StudentLayout({ children }) {
 
   if (!isAuthenticated || user?.role !== 'student') return null;
 
-  return (
-    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
-      <Sidebar role="student" />
-      <div className="lg:ml-64">
-        <Navbar accent="var(--electric)" />
-        <main className="p-4 lg:p-6 max-w-7xl mx-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  return <>{children}</>;
 }
