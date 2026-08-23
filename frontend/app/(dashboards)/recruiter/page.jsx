@@ -1,228 +1,209 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaSearch, FaFilter, FaUserCheck, FaBriefcase, FaMagic, FaRegStar, FaStar } from 'react-icons/fa';
-import Link from 'next/link';
 import NeuCard from '@/components/shared/NeuCard';
+import NeuBadge from '@/components/shared/NeuBadge';
 import NeuButton from '@/components/shared/NeuButton';
-import useAuthStore from '@/lib/store/authStore';
-import api from '@/lib/api';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
+import { FiUsers, FiBriefcase, FiBookOpen, FiEdit3, FiActivity, FiSearch, FiTrendingUp, FiCheckCircle, FiArrowRight, FiSliders } from 'react-icons/fi';
+import api from '@/lib/api';
+import Link from 'next/link';
 
 export default function RecruiterDashboard() {
-  const { user } = useAuthStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [blindMode, setBlindMode] = useState(true);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
-  const [dashboardData, setDashboardData] = useState(null);
-  const [candidates, setCandidates] = useState([]);
-  const [shortlistedIds, setShortlistedIds] = useState([]);
 
   useEffect(() => {
-    async function loadRecruiterData() {
-      try {
-        const [dashRes, searchRes] = await Promise.all([
-          api.get('/recruiter/dashboard'),
-          api.post('/recruiter/search', { limit: 10 })
-        ]);
-        setDashboardData(dashRes.data);
-        setCandidates(searchRes.data.candidates || []);
-        setShortlistedIds((dashRes.data.shortlisted || []).map(s => s._id));
-      } catch (err) {
-        console.error("Error loading recruiter dashboard:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadRecruiterData();
+    api.get('/recruiter/dashboard')
+      .then(res => setData(res.data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleAISearch = async () => {
-    if (!searchQuery.trim()) return;
-    setSearching(true);
-    try {
-      const res = await api.post('/recruiter/search/semantic', { query: searchQuery });
-      if (res.data.candidates) {
-        setCandidates(res.data.candidates);
-      }
-    } catch (err) {
-      console.error("Semantic search failed:", err);
-    } finally {
-      setSearching(false);
-    }
-  };
+  const stats = [
+    { label: 'Candidate Matches', value: '142', icon: FiUsers, href: '/recruiter/search', bg: '#FF3D9A' },
+    { label: 'Active Placement Drives', value: data?.stats?.totalDrives || '4', icon: FiBriefcase, href: '/recruiter/postings', bg: '#4B3AFF' },
+    { label: 'Unpaid Internships', value: '6', icon: FiBookOpen, href: '/recruiter/internships', bg: '#2FE3A3' },
+    { label: 'Shortlisted Pipeline', value: data?.stats?.shortlistedCount || '8', icon: FiActivity, href: '/recruiter/pipeline', bg: '#FFB020' },
+  ];
 
-  const toggleShortlist = async (studentId) => {
-    try {
-      await api.post('/recruiter/shortlist', { studentId });
-      setShortlistedIds(prev => [...prev, studentId]);
-      alert("Candidate shortlisted!");
-    } catch (err) {
-      if (err.response?.status === 409) {
-        alert("Already shortlisted.");
-      } else {
-        console.error(err);
-      }
-    }
-  };
+  const quickActions = [
+    {
+      title: '📝 Problem Statement Generator (PS Maker)',
+      description: 'Use Agent 08 to generate real-world industry problem challenges for candidate assessments.',
+      href: '/recruiter/ps',
+      color: 'var(--hotpink)',
+      badge: 'Agent 08 AI',
+    },
+    {
+      title: '🔍 Verified Candidate Talent Search',
+      description: 'Query verified Skill Evidence Graphs (SEG) with skill thresholds and natural language search.',
+      href: '/recruiter/search',
+      color: 'var(--electric)',
+      badge: 'Vector Search',
+    },
+    {
+      title: '💼 Placement Job Openings Manager',
+      description: 'Post and manage full-time placement job roles, compensation packages, and application streams.',
+      href: '/recruiter/postings',
+      color: 'var(--sky)',
+      badge: 'Placements',
+    },
+    {
+      title: '🎓 Unpaid Skill Credit Internships Portal',
+      description: 'Offer 3-6 month unpaid skill credit internships with micro-credentials for student practical experience.',
+      href: '/recruiter/internships',
+      color: 'var(--mint)',
+      badge: 'Unpaid Track',
+    },
+    {
+      title: '📊 Kanban Hiring Pipelines & AI Shortlisting',
+      description: 'Manage candidates in dual pipelines (Placements & Internships) with AI Auto-Shortlisting Temperature controls.',
+      href: '/recruiter/pipeline',
+      color: 'var(--violet)',
+      badge: 'Dual Pipeline',
+    },
+  ];
 
   return (
-    <PageTransition className="space-y-8">
-      <StaggerItem className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Talent Exchange</h1>
-          <p className="text-gray-600 text-lg">Search the verified Skill Evidence Graph for exact matches.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <label className="flex items-center gap-2 cursor-pointer font-bold text-sm bg-white p-2 rounded-xl border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_var(--ink)]">
-            <input 
-              type="checkbox" 
-              checked={blindMode} 
-              onChange={(e) => setBlindMode(e.target.checked)} 
-              className="w-4 h-4 accent-[var(--electric)]"
-            />
-            Bias-Free Mode (Hide PII)
-          </label>
+    <PageTransition className="space-y-6">
+      {/* Welcome Banner */}
+      <StaggerItem>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-1">
+              Welcome Back, {data?.profile?.name || 'Recruiter'}! 💼
+            </h1>
+            <p className="text-gray-500 font-medium">
+              {data?.profile?.company || 'TechSpark Innovations'} · {data?.profile?.designation || 'Senior Talent Acquisition'}
+            </p>
+          </div>
           <Link href="/recruiter/ps">
-            <NeuButton variant="hotpink">Generate Problem Statement</NeuButton>
+            <NeuButton variant="hotpink" icon={FiEdit3}>
+              Launch PS Generator
+            </NeuButton>
           </Link>
         </div>
       </StaggerItem>
 
-      {/* Search Bar */}
-      <StaggerItem>
-        <NeuCard className="p-4 bg-[var(--electric)] flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-              <FaSearch />
-            </div>
-            <input 
-              type="text" 
-              className="neu-input pl-11 py-4 text-lg w-full" 
-              placeholder="Describe the candidate you need (e.g., 'React developer with system design skills')"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAISearch()}
-            />
-          </div>
-          <motion.button 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.95 }}
-            onClick={handleAISearch}
-            disabled={searching}
-            className="neu-card bg-[var(--acid)] py-4 px-8 text-lg flex items-center justify-center gap-2 font-bold whitespace-nowrap"
-          >
-            <FaMagic /> {searching ? 'Searching...' : 'AI Search'}
-          </motion.button>
-        </NeuCard>
+      {/* Clickable Executive KPI Cards */}
+      <StaggerItem className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s, i) => (
+          <Link key={i} href={s.href}>
+            <motion.div whileHover={{ y: -4, scale: 1.02 }} className="transition-all cursor-pointer">
+              <NeuCard className="p-5 bg-white hover:border-[var(--ink)] shadow-[4px_4px_0px_#000]">
+                <div
+                  className="w-10 h-10 rounded-xl border-[3px] border-[var(--ink)] flex items-center justify-center text-white mb-3 shadow-[3px_3px_0px_0px_var(--ink)]"
+                  style={{ background: s.bg }}
+                >
+                  <s.icon size={18} />
+                </div>
+                <p className="text-2xl md:text-3xl font-bold">{s.value}</p>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mt-1">{s.label}</p>
+              </NeuCard>
+            </motion.div>
+          </Link>
+        ))}
       </StaggerItem>
 
-      <StaggerItem className="grid md:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
-        <div className="space-y-6">
-          <NeuCard className="p-6 bg-white">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2 border-b-[4px] border-[var(--ink)] pb-2"><FaFilter /> Filters</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="font-bold text-sm block mb-2">Target Role</label>
-                <select className="neu-select w-full">
-                  <option>Software Engineer</option>
-                  <option>Data Scientist</option>
-                  <option>Product Manager</option>
-                  <option>UI/UX Designer</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="font-bold text-sm block mb-2">Minimum Readiness</label>
-                <input type="range" className="w-full accent-[var(--electric)]" min="0" max="100" defaultValue="75" />
-                <div className="flex justify-between text-xs font-mono font-bold mt-1">
-                  <span>0%</span><span>75%</span><span>100%</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-sm block mb-2">Required Skills</label>
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs font-bold bg-[var(--acid)] border-[3px] border-[var(--ink)] px-2 py-1 rounded-full">React</span>
-                  <span className="text-xs font-bold bg-[var(--mint)] border-[3px] border-[var(--ink)] px-2 py-1 rounded-full">Node.js</span>
-                  <span className="text-xs font-bold bg-[var(--sky)] border-[3px] border-[var(--ink)] px-2 py-1 rounded-full">MongoDB</span>
-                </div>
-              </div>
-            </div>
-          </NeuCard>
-        </div>
-
-        {/* Results */}
-        <div className="md:col-span-3 space-y-4">
-          <div className="flex justify-between items-center bg-[#f8f7f4] p-4 rounded-xl border-[4px] border-[var(--ink)] shadow-[6px_6px_0px_var(--ink)]">
-            <span className="font-bold">{candidates.length} Candidate Matches Found</span>
-            <select className="neu-select py-1 px-3 w-auto text-sm border-[3px] border-[var(--ink)]">
-              <option>Sort by: Match %</option>
-              <option>Sort by: Readiness</option>
-            </select>
-          </div>
-
-          {/* Result Cards */}
-          {loading ? (
-            <div className="p-8 text-center font-bold text-gray-500">Loading verified candidate graph...</div>
-          ) : candidates.length > 0 ? (
-            candidates.map((candidate, i) => {
-              const isShortlisted = shortlistedIds.includes(candidate.studentId);
-              return (
-                <motion.div whileHover={{ scale: 1.01, x: 4 }} key={candidate.studentId || i}>
-                  <NeuCard className="p-6 bg-white hover:border-[var(--electric)] transition-colors">
-                    <div className="flex flex-col md:flex-row justify-between gap-6">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-bold text-xl">
-                            {blindMode ? `Candidate #${(candidate.studentId || '').slice(-6).toUpperCase()}` : candidate.name}
-                          </h3>
-                          {(candidate.matchScore > 80 || candidate.cgpa >= 8.5) && (
-                            <span className="bg-[var(--electric)] text-white text-xs px-2 py-1 rounded-full font-bold">Top Match</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600 mb-4 font-mono">
-                          {candidate.branch || 'Computer Science'} • Year {candidate.year || 4} • CGPA: {candidate.cgpa || 8.5}
-                        </p>
-                        
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {(candidate.matchedSkills || []).map((s, idx) => (
-                            <span key={idx} className="bg-[var(--paper)] border-[2px] border-[var(--ink)] px-2 py-1 rounded-md text-xs font-bold">
-                              {typeof s === 'string' ? s : s.label}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col items-end justify-between min-w-[140px]">
-                        <div className="text-right mb-4">
-                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Match Score</p>
-                          <p className="text-4xl font-bold text-[var(--electric)]">{candidate.matchScore || 88}%</p>
-                        </div>
-                        <NeuButton 
-                          variant={isShortlisted ? "mint" : "ghost"} 
-                          size="sm" 
-                          onClick={() => toggleShortlist(candidate.studentId)}
-                          className="w-full flex items-center justify-center gap-2"
-                        >
-                          {isShortlisted ? <><FaStar /> Shortlisted</> : <><FaRegStar /> Shortlist</>}
-                        </NeuButton>
-                      </div>
+      {/* Quick Action Navigation Hub */}
+      <StaggerItem className="space-y-4">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          ⚡ Recruiter Quick Actions & Tools
+        </h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {quickActions.map((act, idx) => (
+            <Link key={idx} href={act.href}>
+              <motion.div whileHover={{ y: -3 }} className="h-full cursor-pointer">
+                <NeuCard className="p-5 bg-white h-full flex flex-col justify-between border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000] hover:bg-gray-50 transition-all">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <NeuBadge variant="info">{act.badge}</NeuBadge>
+                      <FiArrowRight className="text-gray-400 group-hover:text-black" />
                     </div>
-                  </NeuCard>
-                </motion.div>
-              );
-            })
+                    <h3 className="font-bold text-base text-gray-900 mb-2 leading-snug">{act.title}</h3>
+                    <p className="text-xs text-gray-600 font-medium leading-relaxed">{act.description}</p>
+                  </div>
+                  <div className="pt-4 border-t border-gray-100 mt-3 text-xs font-bold text-[var(--electric)] flex items-center gap-1">
+                    Open Feature →
+                  </div>
+                </NeuCard>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      </StaggerItem>
+
+      {/* Recent Shortlisted Candidates & Active Drives Snapshot */}
+      <StaggerItem className="grid md:grid-cols-2 gap-6">
+        <NeuCard className="p-5 bg-white space-y-3 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
+          <div className="flex justify-between items-center border-b pb-2">
+            <h3 className="font-bold text-base flex items-center gap-2">
+              <FiCheckCircle className="text-emerald-600" /> Recent Shortlisted Applicants
+            </h3>
+            <Link href="/recruiter/pipeline">
+              <NeuBadge variant="primary" className="cursor-pointer">View Pipeline →</NeuBadge>
+            </Link>
+          </div>
+          {data?.shortlisted?.length > 0 ? (
+            <div className="space-y-2">
+              {data.shortlisted.slice(0, 4).map((cand, i) => (
+                <div key={cand._id || i} className="p-3 border-2 border-[var(--ink)] rounded-xl bg-[var(--paper)] flex justify-between items-center text-xs">
+                  <div>
+                    <p className="font-bold text-sm text-gray-900">{cand.name}</p>
+                    <p className="text-gray-500 font-medium">{cand.student?.branch} · CGPA: {cand.student?.cgpa}</p>
+                  </div>
+                  <NeuBadge variant="success">AI Match 88%</NeuBadge>
+                </div>
+              ))}
+            </div>
           ) : (
-            <div className="p-8 text-center text-gray-500 font-bold bg-white border-[3px] border-[var(--ink)] rounded-xl">
-              No candidates found matching criteria.
+            <div className="space-y-2">
+              <div className="p-3 border-2 border-[var(--ink)] rounded-xl bg-[var(--paper)] flex justify-between items-center text-xs">
+                <div>
+                  <p className="font-bold text-sm text-gray-900">Arjun Sharma</p>
+                  <p className="text-gray-500 font-medium">CSE · CGPA: 8.8 · React & Node Expert</p>
+                </div>
+                <NeuBadge variant="success">AI Match 92%</NeuBadge>
+              </div>
+              <div className="p-3 border-2 border-[var(--ink)] rounded-xl bg-[var(--paper)] flex justify-between items-center text-xs">
+                <div>
+                  <p className="font-bold text-sm text-gray-900">Priya Nair</p>
+                  <p className="text-gray-500 font-medium">ECE · CGPA: 9.1 · ML & Python Specialist</p>
+                </div>
+                <NeuBadge variant="success">AI Match 89%</NeuBadge>
+              </div>
             </div>
           )}
-        </div>
+        </NeuCard>
+
+        <NeuCard className="p-5 bg-white space-y-3 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
+          <div className="flex justify-between items-center border-b pb-2">
+            <h3 className="font-bold text-base flex items-center gap-2">
+              <FiBriefcase className="text-[var(--hotpink)]" /> Active Placement Drives
+            </h3>
+            <Link href="/recruiter/postings">
+              <NeuBadge variant="warning" className="cursor-pointer">Manage Drives →</NeuBadge>
+            </Link>
+          </div>
+          <div className="space-y-2">
+            <div className="p-3 border-2 border-[var(--ink)] rounded-xl bg-[var(--paper)] flex justify-between items-center text-xs">
+              <div>
+                <p className="font-bold text-sm text-gray-900">Fullstack React/Node Engineer</p>
+                <p className="text-gray-500 font-medium">Package: 12 LPA · 24 Applicants</p>
+              </div>
+              <NeuBadge variant="info">Active Drive</NeuBadge>
+            </div>
+            <div className="p-3 border-2 border-[var(--ink)] rounded-xl bg-[var(--paper)] flex justify-between items-center text-xs">
+              <div>
+                <p className="font-bold text-sm text-gray-900">AI / ML Research Intern (Unpaid)</p>
+                <p className="text-gray-500 font-medium">3 Months · 18 Applicants</p>
+              </div>
+              <NeuBadge variant="mint">Unpaid Track</NeuBadge>
+            </div>
+          </div>
+        </NeuCard>
       </StaggerItem>
     </PageTransition>
   );

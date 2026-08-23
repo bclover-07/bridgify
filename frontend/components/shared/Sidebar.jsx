@@ -71,13 +71,12 @@ const roleConfigs = {
     basePath: '/recruiter',
     links: [
       { href: '/recruiter', label: 'Dashboard', icon: FiHome },
-      { href: '/recruiter/feed', label: 'Industry Feed', icon: FiTrendingUp },
       { href: '/recruiter/search', label: 'Candidate Search', icon: FiSearch },
+      { href: '/recruiter/postings', label: 'Job Postings', icon: FiBriefcase },
+      { href: '/recruiter/internships', label: 'Unpaid Internships', icon: FiBookOpen },
       { href: '/recruiter/ps', label: 'PS Generator', icon: FiEdit3 },
-      { href: '/recruiter/marketplace', label: 'Marketplace', icon: FiPackage },
-      { href: '/recruiter/pipeline', label: 'Pipeline', icon: FiActivity },
-      { href: '/recruiter/fair-hiring', label: 'Fair Hiring', icon: FiHeart },
-      { href: '/recruiter/feedback', label: 'Feedback', icon: FiStar },
+      { href: '/recruiter/pipeline', label: 'Hiring Pipelines', icon: FiActivity },
+      { href: '/recruiter/feed', label: 'Industry Feed', icon: FiTrendingUp },
     ],
   },
 };
