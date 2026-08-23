@@ -16,6 +16,8 @@ router.get('/assessments/:id/submissions', facultyController.getSubmissions);
 router.patch('/submissions/:id/grade', facultyController.gradeSubmission);
 router.post('/assessments/:id/push-to-seg', facultyController.pushToSEG);
 router.post('/notes/generate', facultyController.generateNotes);
+router.post('/notes/ocr-generate', facultyController.generateNotesFromOCR);
+router.post('/lecture-bridge/auto-assign', facultyController.autoAssignFromLectureNotes);
 router.get('/dropout-radar', facultyController.getDropoutRadar);
 router.get('/dropout-radar/:courseId?', facultyController.getDropoutRadar);
 router.post('/students/:studentId/nudge', facultyController.nudgeStudent);

@@ -283,6 +283,22 @@ async function runTests() {
     return { updatedCount: res.data.updatedCount, message: res.data.message };
   });
 
+  await testEndpoint('POST Faculty OCR Notes Generator', async () => {
+    const res = await apiCall(facultyToken).post('/faculty/notes/ocr-generate', {
+      title: 'Data Structures Lecture OCR',
+      noteContent: 'Binary Search Trees: Left child < parent, right child > parent. Time complexity: O(log N).',
+    });
+    return { message: res.data.message, topicsCount: res.data.topics?.length };
+  });
+
+  await testEndpoint('POST Faculty Lecture Bridge Auto-Assign', async () => {
+    const res = await apiCall(facultyToken).post('/faculty/lecture-bridge/auto-assign', {
+      title: 'Lecture Practice Assignment',
+      noteContent: 'Tree Traversal: Preorder, Inorder, Postorder traversal techniques.',
+    });
+    return { title: res.data.assessment?.title, questionsCount: res.data.assessment?.questions?.length };
+  });
+
   // ----------------------------------------------------
   // 4. RECRUITER ROUTES & AI AGENTS
   // ----------------------------------------------------

@@ -22,7 +22,7 @@ export default function FacultyDashboard() {
       try {
         const [dashRes, assessRes] = await Promise.all([
           api.get('/faculty/dashboard'),
-          api.get('/faculty/assessments') // get recent assessments for grading queue
+          api.get('/faculty/assessments')
         ]);
         setDashboardData(dashRes.data);
         setAssessments(assessRes.data.assessments || []);
@@ -53,11 +53,14 @@ export default function FacultyDashboard() {
       <StaggerItem className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold mb-2">Classroom Hub</h1>
-          <p className="text-gray-600 text-lg">Prof. {user?.name?.split(' ').pop()}, here is your cohort overview.</p>
+          <p className="text-gray-600 text-lg">Prof. {user?.name?.split(' ').pop()}, here is your real-time cohort overview.</p>
         </div>
         <div className="flex gap-3">
           <Link href="/faculty/assessments">
             <NeuButton variant="primary">Assessment Studio</NeuButton>
+          </Link>
+          <Link href="/faculty/lecture-bridge">
+            <NeuButton variant="accent">📷 OCR Auto-Assign</NeuButton>
           </Link>
         </div>
       </StaggerItem>
@@ -78,9 +81,9 @@ export default function FacultyDashboard() {
           <div className="absolute -right-4 -bottom-4 opacity-5 transform group-hover:scale-110 transition-transform text-[var(--ink)]">
             <FaFileAlt size={80} />
           </div>
-          <p className="font-semibold text-gray-600 mb-2">Assessments</p>
+          <p className="font-semibold text-gray-600 mb-2">Assessments Published</p>
           <div className="text-4xl font-bold">
-            <AnimatedCounter end={stats?.assessmentsGraded || 0} />
+            <AnimatedCounter end={stats?.assessmentsGraded || assessments.length || 0} />
           </div>
         </NeuCard>
 
@@ -88,7 +91,7 @@ export default function FacultyDashboard() {
           <div className="absolute -right-4 -bottom-4 opacity-20 transform group-hover:scale-110 transition-transform">
             <FaExclamationTriangle size={80} />
           </div>
-          <p className="font-semibold opacity-90 mb-2">Dropout Risk</p>
+          <p className="font-semibold opacity-90 mb-2">Dropout Risk Students</p>
           <div className="text-4xl font-bold">
             <AnimatedCounter end={stats?.highRiskStudents || 0} />
           </div>
@@ -109,29 +112,36 @@ export default function FacultyDashboard() {
         {/* Quick Actions */}
         <NeuCard className="p-0 bg-white flex flex-col">
           <div className="p-6 border-b-[4px] border-[var(--ink)] bg-[var(--sky)] rounded-t-[20px]">
-            <h2 className="text-2xl font-bold text-[var(--ink)]">AI Assistant Tools</h2>
+            <h2 className="text-2xl font-bold text-[var(--ink)]">AI Assistant Suite</h2>
           </div>
           <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neu-card p-4 flex flex-col items-center justify-center text-center gap-3 bg-[var(--paper)]">
-               <div className="w-12 h-12 rounded-full bg-[var(--sky)] flex items-center justify-center border-[3px] border-[var(--ink)] text-xl">📝</div>
-               <span className="font-bold text-sm">Generate Rubric</span>
-            </motion.button>
+            <Link href="/faculty/lecture-bridge" className="w-full">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neu-card p-4 flex flex-col items-center justify-center text-center gap-3 bg-[var(--paper)] h-full">
+                 <div className="w-12 h-12 rounded-full bg-[var(--sky)] flex items-center justify-center border-[3px] border-[var(--ink)] text-xl">📷</div>
+                 <span className="font-bold text-sm">OCR Auto-Assign</span>
+              </motion.div>
+            </Link>
+
             <Link href="/faculty/cohort-heatmap" className="w-full">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neu-card p-4 flex flex-col items-center justify-center text-center gap-3 bg-[var(--paper)] h-full">
                  <div className="w-12 h-12 rounded-full bg-[var(--acid)] flex items-center justify-center border-[3px] border-[var(--ink)] text-xl">📊</div>
                  <span className="font-bold text-sm">Cohort Heatmap</span>
               </motion.div>
             </Link>
-            <Link href="/faculty/cohort-heatmap" className="w-full">
+
+            <Link href="/faculty/dropout-radar" className="w-full">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neu-card p-4 flex flex-col items-center justify-center text-center gap-3 bg-[var(--paper)] h-full">
-                 <div className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center border-[3px] border-[var(--ink)] text-xl text-white">⚠️</div>
+                 <div className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center border-[3px] border-[var(--ink)] text-xl text-white">🚨</div>
                  <span className="font-bold text-sm">Dropout Radar</span>
               </motion.div>
             </Link>
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neu-card p-4 flex flex-col items-center justify-center text-center gap-3 bg-[var(--paper)]">
-               <div className="w-12 h-12 rounded-full bg-[var(--electric)] flex items-center justify-center border-[3px] border-[var(--ink)] text-xl text-white">🎓</div>
-               <span className="font-bold text-sm">Generate Notes</span>
-            </motion.button>
+
+            <Link href="/faculty/notes" className="w-full">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neu-card p-4 flex flex-col items-center justify-center text-center gap-3 bg-[var(--paper)] h-full">
+                 <div className="w-12 h-12 rounded-full bg-[var(--electric)] flex items-center justify-center border-[3px] border-[var(--ink)] text-xl text-white">🎓</div>
+                 <span className="font-bold text-sm">Notes Generator</span>
+              </motion.div>
+            </Link>
           </div>
         </NeuCard>
 
@@ -139,14 +149,14 @@ export default function FacultyDashboard() {
         <NeuCard className="p-0 bg-white flex flex-col h-[400px]">
           <div className="p-6 border-b-[4px] border-[var(--ink)] bg-[var(--orange)] rounded-t-[20px] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <h2 className="text-xl font-bold text-white">Recent Assessments</h2>
-            <span className="bg-[var(--ink)] text-white text-xs px-2 py-1 rounded-full font-bold">{assessments.length} Active</span>
+            <span className="bg-[var(--ink)] text-white text-xs px-2.5 py-1 rounded-full font-bold">{assessments.length} Active</span>
           </div>
           <div className="p-6 overflow-y-auto flex-1 space-y-4">
             {assessments.length > 0 ? assessments.slice(0, 4).map((item) => (
               <div key={item._id} className="p-4 border-[3px] border-[var(--ink)] rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[var(--paper)]">
                 <div>
                   <p className="font-bold text-sm">{item.title}</p>
-                  <p className="text-xs text-gray-500 font-mono mt-1">{item.topic}</p>
+                  <p className="text-xs text-gray-500 font-mono mt-1">{item.topic || 'General Practice'}</p>
                 </div>
                 <Link href="/faculty/assessments">
                   <NeuButton variant="mint" size="sm">View Submissions</NeuButton>

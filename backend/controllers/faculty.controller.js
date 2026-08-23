@@ -363,6 +363,123 @@ export async function generateNotes(req, res, next) {
   }
 }
 
+export async function generateNotesFromOCR(req, res, next) {
+  try {
+    const { noteContent, mimeType, courseId, title } = req.body;
+    if (!noteContent) return res.status(400).json({ error: 'Note content or file is required' });
+
+    const { extractTextFromNotes } = await import('../services/ocrService.js');
+    const ocrData = await extractTextFromNotes(noteContent, mimeType || 'text/plain');
+
+    let targetCourseId = courseId;
+    if (!targetCourseId) {
+      const Course = (await import('../models/Course.js')).default;
+      const c = await Course.findOne({ facultyId: req.user._id }) || await Course.findOne({});
+      targetCourseId = c?._id;
+    }
+
+    const { runNotesExplainer } = await import('../agents/03-notesExplainer.js');
+    const institutionId = req.user.institutionId._id || req.user.institutionId;
+    const result = await runNotesExplainer({
+      input: {
+        title: title || `OCR Notes: ${ocrData.topics[0] || 'Lecture Concepts'}`,
+        type: 'ocr_extracted',
+        content: ocrData.extractedText,
+      },
+      courseId: targetCourseId,
+      userId: req.user._id,
+      institutionId,
+    });
+
+    res.status(201).json({
+      extractedText: ocrData.extractedText,
+      topics: ocrData.topics,
+      keyConcepts: ocrData.keyConcepts,
+      summary: ocrData.summary,
+      resource: result.resource,
+      message: 'OCR Notes processed and revision guides created!',
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function autoAssignFromLectureNotes(req, res, next) {
+  try {
+    const { noteContent, mimeType, courseId, title } = req.body;
+    if (!noteContent) return res.status(400).json({ error: 'Lecture note content is required' });
+
+    const { extractTextFromNotes } = await import('../services/ocrService.js');
+    const ocrData = await extractTextFromNotes(noteContent, mimeType || 'text/plain');
+
+    let targetCourseId = courseId;
+    const Course = (await import('../models/Course.js')).default;
+    let courseObj = null;
+    if (targetCourseId) {
+      try { courseObj = await Course.findById(targetCourseId); } catch {}
+    }
+    if (!courseObj) {
+      courseObj = await Course.findOne({ facultyId: req.user._id }) || await Course.findOne({});
+    }
+    if (!courseObj) return res.status(404).json({ error: 'No active course found' });
+    targetCourseId = courseObj._id;
+
+    const { runAssessmentGenerator } = await import('../agents/01-assessmentGenerator.js');
+    const institutionId = req.user.institutionId._id || req.user.institutionId;
+
+    const genResult = await runAssessmentGenerator({
+      courseId: targetCourseId,
+      topics: ocrData.topics,
+      difficulty: 'medium',
+      numQuestions: 5,
+      userId: req.user._id,
+      institutionId,
+    });
+
+    const Assessment = (await import('../models/Assessment.js')).default;
+    const publishedAssessment = await Assessment.create({
+      courseId: targetCourseId,
+      facultyId: req.user._id,
+      institutionId,
+      title: title || `Lecture Practice Assignment: ${ocrData.topics[0] || 'Topic Practice'}`,
+      description: ocrData.summary,
+      status: 'published',
+      questions: genResult.questions || [
+        {
+          questionText: `Which key topic was covered in the lecture "${ocrData.topics[0] || 'Core Principles'}"?`,
+          questionType: 'multiple_choice',
+          skillId: 'dsa.basics',
+          difficulty: 'medium',
+          options: [ocrData.topics[0] || 'Topic A', 'Topic B', 'Topic C', 'Topic D'],
+          correctAnswerIndex: 0,
+          explanation: 'Extracted directly from faculty lecture notes.',
+          weightage: 10,
+        }
+      ],
+      totalMarks: 50,
+      passingMarks: 25,
+      timeLimitMinutes: 30,
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    // Notify enrolled students
+    if (req.io && courseObj.enrolledStudentIds?.length > 0) {
+      courseObj.enrolledStudentIds.forEach(stId => {
+        req.io.to(`student:${stId}`).emit('assignment:published', publishedAssessment);
+      });
+    }
+
+    res.status(201).json({
+      message: 'Lecture notes OCR extracted and assignment auto-published to students!',
+      assessment: publishedAssessment,
+      extractedTopics: ocrData.topics,
+      summary: ocrData.summary,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function getDropoutRadar(req, res, next) {
   try {
     let { courseId } = req.params;
