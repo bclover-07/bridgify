@@ -438,14 +438,19 @@ export async function autoAssignFromLectureNotes(req, res, next) {
     const { runAssessmentGenerator } = await import('../agents/01-assessmentGenerator.js');
     const institutionId = req.user.institutionId._id || req.user.institutionId;
 
-    const genResult = await runAssessmentGenerator({
-      courseId: targetCourseId,
-      topics: ocrData.topics,
-      difficulty: 'medium',
-      numQuestions: 5,
-      userId: req.user._id,
-      institutionId,
-    });
+    let genResult = { questions: null };
+    try {
+      genResult = await runAssessmentGenerator({
+        courseId: targetCourseId,
+        topics: ocrData.topics,
+        difficulty: 'medium',
+        numQuestions: 5,
+        userId: req.user._id,
+        institutionId,
+      });
+    } catch (gErr) {
+      console.warn('runAssessmentGenerator fallback:', gErr.message);
+    }
 
     const Assessment = (await import('../models/Assessment.js')).default;
     const publishedAssessment = await Assessment.create({
