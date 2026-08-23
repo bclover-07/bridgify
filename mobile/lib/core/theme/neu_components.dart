@@ -113,12 +113,15 @@ class _NeuButtonState extends State<NeuButton> {
               widget.icon!,
               const SizedBox(width: 8),
             ],
-            Text(
-              widget.text,
-              style: TextStyle(
-                color: widget.textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            Flexible(
+              child: Text(
+                widget.text,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: widget.textColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],

@@ -11,6 +11,9 @@ import '../../features/student/screens/wallet_screen.dart';
 import '../../features/student/screens/opportunities_screen.dart';
 import '../../features/student/screens/benchmarks_screen.dart';
 import '../../features/student/screens/assessments_screen.dart';
+import '../../features/student/screens/student_assignments_screen.dart';
+import '../../features/student/screens/student_profile_screen.dart';
+import '../../features/student/screens/student_leaderboard_screen.dart';
 
 import '../../features/faculty/screens/faculty_layout.dart';
 import '../../features/faculty/screens/faculty_dashboard_screen.dart';
@@ -22,6 +25,8 @@ import '../../features/faculty/screens/cohort_heatmap_screen.dart';
 import '../../features/faculty/screens/lecture_bridge_screen.dart';
 import '../../features/faculty/screens/mentorship_screen.dart';
 import '../../features/faculty/screens/learning_feed_screen.dart';
+import '../../features/faculty/screens/faculty_classrooms_screen.dart';
+import '../../features/faculty/screens/faculty_curriculum_gap_screen.dart';
 
 import '../../features/admin/screens/admin_layout.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
@@ -86,6 +91,18 @@ final appRouter = GoRouter(
           path: '/student/assessments',
           builder: (context, state) => const AssessmentsScreen(),
         ),
+        GoRoute(
+          path: '/student/assignments',
+          builder: (context, state) => const StudentAssignmentsScreen(),
+        ),
+        GoRoute(
+          path: '/student/profile',
+          builder: (context, state) => const StudentProfileScreen(),
+        ),
+        GoRoute(
+          path: '/student/leaderboard',
+          builder: (context, state) => const StudentLeaderboardScreen(),
+        ),
       ],
     ),
     ShellRoute(
@@ -126,6 +143,14 @@ final appRouter = GoRouter(
         GoRoute(
           path: '/faculty/learning_feed',
           builder: (context, state) => const LearningFeedScreen(),
+        ),
+        GoRoute(
+          path: '/faculty/classrooms',
+          builder: (context, state) => const FacultyClassroomsScreen(),
+        ),
+        GoRoute(
+          path: '/faculty/curriculum_gap',
+          builder: (context, state) => const FacultyCurriculumGapScreen(),
         ),
       ],
     ),

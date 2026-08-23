@@ -13,7 +13,7 @@ class AdminLayout extends StatefulWidget {
 
 class _AdminLayoutState extends State<AdminLayout> {
   int _currentIndex = 0;
-  final List<String> _routes = ['/admin/student_directory', '/admin/placement_cc', '/admin/naac_report'];
+  final List<String> _routes = ['/admin', '/admin/student_directory', '/admin/placement_cc', '/admin/naac_report'];
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,9 @@ class _AdminLayoutState extends State<AdminLayout> {
         },
         selectedItemColor: NeuTheme.orange,
         unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Directory'),
           BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Placement'),
           BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'NAAC'),

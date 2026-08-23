@@ -18,8 +18,8 @@ class _StudentLayoutState extends State<StudentLayout> {
 
   final List<String> _routes = [
     '/student',
-    '/student/seg',
-    '/student/hub',
+    '/student/readiness',
+    '/student/study-hub',
     '/student/assessments',
   ];
 
@@ -58,8 +58,8 @@ class _StudentLayoutState extends State<StudentLayout> {
           backgroundColor: Colors.white,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-            BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: 'SEG'),
-            BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Hub'),
+            BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: 'Readiness'),
+            BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Study Hub'),
             BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Tests'),
           ],
         ),

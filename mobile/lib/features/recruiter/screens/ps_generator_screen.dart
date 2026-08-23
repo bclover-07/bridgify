@@ -108,8 +108,11 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
             ),
             const SizedBox(height: 24),
             if (_generatedStatement != null) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   const Text('Generated Statement', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   NeuButton(
