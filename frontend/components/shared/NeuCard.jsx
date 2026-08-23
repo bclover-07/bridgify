@@ -13,9 +13,10 @@ export default function NeuCard({ children, className, hover = true, onClick, st
       }
     : {};
 
+  const hasBg = className && className.includes('bg-');
   return (
     <Component
-      className={clsx('neu-card', className)}
+      className={clsx('neu-card', !hasBg && 'bg-[var(--paper)]', className)}
       onClick={onClick}
       style={{ cursor: onClick ? 'pointer' : undefined, ...style }}
       {...props}
@@ -26,16 +27,18 @@ export default function NeuCard({ children, className, hover = true, onClick, st
 }
 
 export function NeuCardStatic({ children, className, style }) {
+  const hasBg = className && className.includes('bg-');
   return (
-    <div className={clsx('neu-card-static', className)} style={style}>
+    <div className={clsx('neu-card-static', !hasBg && 'bg-[var(--paper)]', className)} style={style}>
       {children}
     </div>
   );
 }
 
 export function NeuCardFlat({ children, className, style }) {
+  const hasBg = className && className.includes('bg-');
   return (
-    <div className={clsx('neu-card-flat', className)} style={style}>
+    <div className={clsx('neu-card-flat', !hasBg && 'bg-white', className)} style={style}>
       {children}
     </div>
   );

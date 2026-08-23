@@ -85,7 +85,6 @@ code, pre, .font-mono {
 .neu-card {
   border: var(--border-width) solid var(--ink);
   border-radius: var(--radius-card);
-  background-color: var(--paper);
   box-shadow: var(--shadow-brutal);
   transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
               box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -101,14 +100,12 @@ code, pre, .font-mono {
 .neu-card-static {
   border: var(--border-width) solid var(--ink);
   border-radius: var(--radius-card);
-  background-color: var(--paper);
   box-shadow: var(--shadow-brutal);
 }
 
 .neu-card-flat {
   border: var(--border-width) solid var(--ink);
   border-radius: var(--radius-card);
-  background-color: white;
 }
 
 /* ─── Comic Speech Bubble Effect ──────────── */
