@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { FaGraduationCap, FaChalkboardTeacher, FaBuilding, FaUserTie, FaBrain, FaChartLine, FaRobot, FaNetworkWired, FaShieldAlt, FaArrowRight, FaCheck, FaStar } from 'react-icons/fa';
 import NeuButton from '@/components/shared/NeuButton';
 import NeuCard from '@/components/shared/NeuCard';
+import Logo from '@/components/shared/Logo';
 import dynamic from 'next/dynamic';
 
 const ThreeModel = dynamic(() => import('@/components/shared/ThreeModel'), {
@@ -147,9 +148,7 @@ export default function LandingPage() {
       {/* ─── NAV ─────────────────────────────── */}
       <nav className="w-full flex items-center justify-between px-6 py-4 border-b-[4px] border-[var(--ink)] bg-white/90 backdrop-blur-md sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-[var(--electric)] border-[4px] border-[var(--ink)] flex items-center justify-center shadow-[3px_3px_0px_0px_var(--ink)]">
-            <div className="w-3 h-3 bg-white rounded-full" />
-          </div>
+          <Logo size={40} />
           <span className="font-bold text-xl tracking-tight">Bridgify</span>
         </Link>
         <div className="flex items-center gap-3">
@@ -415,12 +414,10 @@ export default function LandingPage() {
       <footer className="border-t-[4px] border-[var(--ink)] bg-white px-6 py-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[var(--electric)] border-[3px] border-[var(--ink)] flex items-center justify-center">
-              <div className="w-2.5 h-2.5 bg-white rounded-full" />
-            </div>
+            <Logo size={32} />
             <span className="font-bold text-lg">Bridgify</span>
           </div>
-          <p className="font-semibold text-gray-400 text-sm">© 2026 Bridgify Platform · Built for the National Hackathon</p>
+          <p className="font-semibold text-gray-400 text-sm">© 2026 Bridgify Platform. All rights reserved to black clovers.</p>
         </div>
       </footer>
     </div>
