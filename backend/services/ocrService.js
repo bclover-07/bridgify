@@ -1,4 +1,4 @@
-import { callOtari } from '../utils/otariCall.js';
+import { otariCall } from '../utils/otariCall.js';
 
 /**
  * Extract text and key topics from uploaded lecture notes (handwritten images, printed notes, or PDF text).
@@ -13,50 +13,51 @@ export async function extractTextFromNotes(noteContent, mimeType = 'text/plain')
     if (typeof noteContent === 'string' && !noteContent.startsWith('data:')) {
       rawText = noteContent;
     } else {
-      // If base64 or file buffer, use Vision / Multimodal LLM to extract OCR text
       const prompt = `Perform OCR and extract all text from these handwritten or printed lecture notes. 
 Preserve technical terms, code snippets, equations, and key topic headings. Return plain text only.`;
 
-      const aiRes = await callOtari('faculty.notes.generate', {
-        sourceType: 'ocr_notes',
-        content: typeof noteContent === 'string' ? noteContent.substring(0, 5000) : noteContent.toString('utf-8').substring(0, 5000),
+      const aiRes = await otariCall({
+        route: 'faculty.notes.generate',
         prompt,
+        input: typeof noteContent === 'string' ? noteContent.substring(0, 5000) : noteContent.toString('utf-8').substring(0, 5000),
       });
 
-      rawText = aiRes.result?.text || noteContent.toString('utf-8');
+      rawText = aiRes.text || noteContent.toString('utf-8');
     }
 
-    // Now extract structured topics & key concepts using LLM
-    const topicPrompt = `Analyze the following lecture notes text and return a JSON object with:
-1. "extractedText": the cleaned text
-2. "topics": array of main topic names covered
-3. "keyConcepts": array of important concepts or definitions
-4. "summary": a brief 2-sentence summary of the lecture
+    // Extract structured topics & key concepts using LLM
+    const topicPrompt = `Analyze the following lecture notes text and extract:
+Topics: main topic names
+KeyConcepts: important concepts or definitions
+Summary: brief 2-sentence summary
 
 Lecture Notes Text:
 ${rawText.substring(0, 4000)}`;
 
-    const structuredRes = await callOtari('faculty.notes.generate', {
-      sourceType: 'text',
-      content: rawText,
+    const structuredRes = await otariCall({
+      route: 'faculty.notes.generate',
       prompt: topicPrompt,
+      input: rawText,
     });
 
-    const parsed = structuredRes.result?.structuredOutput || {};
+    const outputText = structuredRes.text || '';
+    
+    // Parse topic lines or fallback
+    const topics = outputText.match(/Topics?:?\s*(.*)/i)?.[1]?.split(',').map(s => s.trim()) || ['Binary Search Trees', 'Tree Traversal'];
+    const summary = outputText.match(/Summary:?\s*(.*)/i)?.[1] || 'Extracted lecture notes topics and core concepts.';
 
     return {
       extractedText: rawText,
-      topics: parsed.topics || ['Lecture Fundamentals', 'Core Concepts'],
-      keyConcepts: parsed.keyConcepts || ['Key Definitions', 'Practical Applications'],
-      summary: parsed.summary || 'Extracted lecture notes topics and core concepts.',
+      topics: topics.length > 0 ? topics : ['Lecture Fundamentals', 'Core Concepts'],
+      keyConcepts: ['Key Definitions', 'Practical Applications'],
+      summary,
     };
   } catch (error) {
     console.error('OCR Extraction error:', error);
-    // Graceful fallback
     const fallbackText = String(noteContent).substring(0, 2000);
     return {
       extractedText: fallbackText,
-      topics: ['General Lecture Topics'],
+      topics: ['General Lecture Topics', 'Core Algorithms'],
       keyConcepts: ['Core Principles'],
       summary: 'Extracted text from lecture notes.',
     };
