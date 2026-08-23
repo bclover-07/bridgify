@@ -12,6 +12,7 @@ router.get('/students/:id/full-profile', adminController.getFullStudentProfile);
 router.put('/students/:id', adminController.updateStudent);
 router.get('/placement-cc', adminController.getPlacementCC);
 router.post('/placement-cc/drives', adminController.createDrive);
+router.post('/placement-cc/invite-recruiter', adminController.inviteRecruiter);
 router.patch('/placement-cc/move-stage', adminController.moveStage);
 router.post('/naac-report/generate', adminController.generateNAACReport);
 router.get('/analytics', adminController.getAnalytics);
