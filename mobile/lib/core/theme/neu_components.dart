@@ -181,3 +181,70 @@ class NeuInput extends StatelessWidget {
     );
   }
 }
+
+class NeuBadge extends StatelessWidget {
+  final String text;
+  final String variant; // 'info', 'warning', 'success', 'default'
+  final Widget? icon;
+
+  const NeuBadge({super.key, required this.text, this.variant = 'default', this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    Color bgColor = NeuTheme.paper;
+    if (variant == 'info') bgColor = NeuTheme.electric;
+    if (variant == 'warning') bgColor = NeuTheme.amber;
+    if (variant == 'success') bgColor = NeuTheme.mint;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border.all(color: NeuTheme.ink, width: 2),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: NeuTheme.ink,
+            offset: Offset(2, 2),
+            blurRadius: 0,
+          )
+        ]
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[icon!, const SizedBox(width: 4)],
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: (variant == 'info' || variant == 'success') ? Colors.white : NeuTheme.ink,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PageTransition extends StatelessWidget {
+  final Widget child;
+  const PageTransition({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return child.animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOut);
+  }
+}
+
+class StaggerItem extends StatelessWidget {
+  final Widget child;
+  final int index;
+  const StaggerItem({super.key, required this.child, this.index = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    return child.animate(delay: (100 * index).ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOut);
+  }
+}

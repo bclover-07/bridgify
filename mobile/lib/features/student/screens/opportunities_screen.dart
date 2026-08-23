@@ -68,20 +68,25 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
         ? const Center(child: CircularProgressIndicator(color: NeuTheme.amber))
         : jobs.isEmpty
           ? const Center(child: Text("No upcoming opportunities found."))
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: jobs.length,
-              itemBuilder: (context, index) {
-                final job = jobs[index];
-                return _buildJobCard(job);
-              },
-            ),
+              : PageTransition(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: jobs.length,
+                    itemBuilder: (context, index) {
+                      final job = jobs[index];
+                      return StaggerItem(
+                        index: index,
+                        child: _buildJobCard(job),
+                      );
+                    },
+                  ),
+                ),
     );
   }
 

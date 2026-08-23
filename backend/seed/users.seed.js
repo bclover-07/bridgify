@@ -2,7 +2,7 @@ const users = [
   {
     name: 'Arjun Reddy',
     email: 'arjun@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -19,7 +19,7 @@ const users = [
   {
     name: 'Prof. Lakshmi Naidu',
     email: 'lakshmi.naidu@mrdu.edu',
-    password: 'faculty123',
+    password: 'Bridgify@2026',
     role: 'faculty',
     onboarded: true,
     faculty: {
@@ -32,14 +32,14 @@ const users = [
   {
     name: 'Dr. Srinivas Rao',
     email: 'admin@mrdu.edu',
-    password: 'admin123',
+    password: 'Bridgify@2026',
     role: 'admin',
     onboarded: true,
   },
   {
     name: 'Ravi Menon',
     email: 'ravi@techspark.com',
-    password: 'recruiter123',
+    password: 'Bridgify@2026',
     role: 'recruiter',
     onboarded: true,
     recruiter: {
@@ -51,7 +51,7 @@ const users = [
   {
     name: 'Priya Sharma',
     email: 'priya.sharma@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -68,7 +68,7 @@ const users = [
   {
     name: 'Rohit Verma',
     email: 'rohit.verma@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -85,7 +85,7 @@ const users = [
   {
     name: 'Sneha Patil',
     email: 'sneha.patil@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -102,7 +102,7 @@ const users = [
   {
     name: 'Vikram Singh',
     email: 'vikram.singh@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -119,7 +119,7 @@ const users = [
   {
     name: 'Ananya Desai',
     email: 'ananya.desai@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -136,7 +136,7 @@ const users = [
   {
     name: 'Karthik Nair',
     email: 'karthik.nair@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -153,7 +153,7 @@ const users = [
   {
     name: 'Meera Joshi',
     email: 'meera.joshi@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -170,7 +170,7 @@ const users = [
   {
     name: 'Aditya Kulkarni',
     email: 'aditya.kulkarni@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {
@@ -187,7 +187,7 @@ const users = [
   {
     name: 'Divya Lakshmi',
     email: 'divya.lakshmi@mrdu.edu',
-    password: 'test123',
+    password: 'Bridgify@2026',
     role: 'student',
     onboarded: true,
     student: {

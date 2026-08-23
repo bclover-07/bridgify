@@ -674,8 +674,9 @@ export async function lectureBridge(req, res, next) {
     courseId = course._id;
 
     const assessments = await Assessment.find({ courseId, status: 'published' });
-    const testedSkills = new Set(assessments.flatMap((a) => a.questions.map((q) => q.skillId)));
-    const taughtSkills = new Set(course.syllabus.topics.flatMap((t) => t.skillIds));
+    const testedSkills = new Set(assessments.flatMap((a) => (a.questions || []).map((q) => q.skillId)));
+    const syllabusTopics = course.syllabus?.topics || [];
+    const taughtSkills = new Set(syllabusTopics.flatMap((t) => t.skillIds || []));
 
     const taughtNotTested = [...taughtSkills].filter((s) => !testedSkills.has(s));
     const testedNotTaught = [...testedSkills].filter((s) => !taughtSkills.has(s));
@@ -707,8 +708,12 @@ export async function mentorshipMatch(req, res, next) {
     if (!course) return res.status(404).json({ error: 'No course found in system' });
     courseId = course._id;
 
+    const enrolledIds = course.enrolledStudentIds || [];
+    if (enrolledIds.length === 0) {
+      return res.json({ pairs: [], message: 'No students enrolled in this course' });
+    }
     const students = await User.find({
-      _id: { $in: course.enrolledStudentIds },
+      _id: { $in: enrolledIds },
       role: 'student',
     }).select('name student');
 

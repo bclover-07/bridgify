@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/neu_theme.dart';
 import '../../../core/theme/neu_components.dart';
+import '../../../core/theme/neu_chart.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/network/api_client.dart';
 
@@ -17,7 +18,6 @@ class StudentDashboardScreen extends ConsumerStatefulWidget {
 class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _dashboardData;
-  Map<String, dynamic>? _readinessData;
 
   @override
   void initState() {
@@ -27,19 +27,14 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
 
   Future<void> _fetchDashboard() async {
     try {
-      final responses = await Future.wait([
-        ApiClient.instance.get('/api/student/dashboard'),
-        ApiClient.instance.get('/api/student/readiness?targetRole=Software%20Engineer'),
-      ]);
+      final response = await ApiClient.instance.get('/api/student/dashboard');
       setState(() {
-        _dashboardData = responses[0].data;
-        _readinessData = responses[1].data;
+        _dashboardData = response.data;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _dashboardData = null; // No mock data
-        _readinessData = null; // No mock data
+        _dashboardData = null;
         _isLoading = false;
       });
       if (mounted) {
@@ -52,180 +47,400 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final user = authState.user ?? {};
-
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: NeuTheme.electric));
     }
 
-    final readinessScores = _readinessData?['readiness'] ?? {};
-    final techScore = readinessScores['technical'] ?? 0;
-    final softScore = readinessScores['softSkills'] ?? 0;
-    final aptScore = readinessScores['aptitude'] ?? 0;
-    
-    final assessments = _dashboardData?['upcomingAssessments'] as List<dynamic>? ?? [];
-    final pendingAssessmentsCount = assessments.length;
+    final data = _dashboardData ?? {};
+    final profile = data['profile'] ?? {};
+    final stats = data['stats'] ?? {};
+    final notifications = data['notifications'] as List<dynamic>? ?? [];
+    final segSummary = data['segSummary'] as List<dynamic>? ?? [];
+    final upcomingAssessments = data['upcomingAssessments'] as List<dynamic>? ?? [];
+    final recentSubmissions = data['recentSubmissions'] as List<dynamic>? ?? [];
+
+    final firstName = (profile['name'] ?? 'Student').toString().split(' ').first;
+
+    final radarData = segSummary.take(6).map((s) {
+      return {
+        'name': (s['skillLabel'] ?? 'Skill').toString(),
+        'score': (s['confidenceScore'] ?? 0),
+      };
+    }).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Welcome, ${user['name'] ?? 'Student'}',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: NeuTheme.ink,
-              letterSpacing: -1,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          NeuCard(
-            backgroundColor: NeuTheme.acid,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Readiness Radar (Software Engineer)',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: NeuTheme.ink,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 200,
-                  child: RadarChart(
-                    RadarChartData(
-                      dataSets: [
-                        RadarDataSet(
-                          fillColor: NeuTheme.electric.withOpacity(0.3),
-                          borderColor: NeuTheme.electric,
-                          entryRadius: 4,
-                          dataEntries: [
-                            RadarEntry(value: techScore.toDouble()),
-                            RadarEntry(value: softScore.toDouble()),
-                            RadarEntry(value: aptScore.toDouble()),
-                          ],
-                          borderWidth: NeuTheme.borderWidth,
+      child: PageTransition(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Welcome Banner
+            StaggerItem(
+              index: 0,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hey, $firstName! 🎓',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: NeuTheme.ink,
+                            letterSpacing: -1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${profile['branch'] ?? 'Unknown'} · Year ${profile['year'] ?? '-'} · CGPA: ${profile['cgpa'] ?? '-'}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
-                      radarBackgroundColor: Colors.transparent,
-                      borderData: FlBorderData(show: false),
-                      radarBorderData: const BorderSide(color: NeuTheme.ink, width: 2),
-                      getTitle: (index, angle) {
-                        switch (index) {
-                          case 0:
-                            return const RadarChartTitle(text: 'Technical', angle: 0);
-                          case 1:
-                            return const RadarChartTitle(text: 'Soft Skills', angle: 0);
-                          case 2:
-                            return const RadarChartTitle(text: 'Aptitude', angle: 0);
-                          default:
-                            return const RadarChartTitle(text: '');
-                        }
-                      },
-                      tickCount: 1,
-                      ticksTextStyle: const TextStyle(color: Colors.transparent),
-                      tickBorderData: const BorderSide(color: NeuTheme.ink),
-                      gridBorderData: const BorderSide(color: NeuTheme.ink, width: 2),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  if (notifications.isNotEmpty)
+                    NeuBadge(
+                      text: '${notifications.length} new',
+                      variant: 'warning',
+                      icon: const Icon(Icons.notifications, size: 14, color: NeuTheme.ink),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // KPI Cards
+            StaggerItem(
+              index: 1,
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.2,
+                children: [
+                  _buildStatCard(
+                    'Total Skills',
+                    (stats['totalSkills'] ?? 0).toString(),
+                    Icons.track_changes,
+                    const Color(0xFF4B3AFF),
+                    () => context.push('/student/profile'),
+                  ),
+                  _buildStatCard(
+                    'Evidence Points',
+                    (stats['totalEvidence'] ?? 0).toString(),
+                    Icons.emoji_events,
+                    const Color(0xFF2FE3A3),
+                    () => context.push('/student/profile'),
+                  ),
+                  _buildStatCard(
+                    'Avg Confidence',
+                    '${stats['avgConfidence'] ?? 0}%',
+                    Icons.trending_up,
+                    const Color(0xFFFF3D9A),
+                    () => context.push('/student/benchmarks'),
+                  ),
+                  _buildStatCard(
+                    'Assessments',
+                    upcomingAssessments.length.toString(),
+                    Icons.assignment,
+                    const Color(0xFFFFB020),
+                    () => context.push('/student/assignments'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Skill Radar
+            StaggerItem(
+              index: 2,
+              child: NeuCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
                   children: [
-                    _buildGauge('Tech', techScore, NeuTheme.cyan),
-                    _buildGauge('Soft', softScore, NeuTheme.hotpink),
-                    _buildGauge('Apt', aptScore, NeuTheme.amber),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '🧠 Skill Radar',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        GestureDetector(
+                          onTap: () => context.push('/student/profile'),
+                          child: const NeuBadge(text: 'View SEG →', variant: 'info'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    if (radarData.length >= 3)
+                      NeuRadarChart(data: radarData)
+                    else if (segSummary.isNotEmpty)
+                      ...segSummary.take(6).map((s) => _buildSkillBar(s['skillLabel'], s['confidenceScore']))
+                    else
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: Text('No skills verified yet', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                        ),
+                      )
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Action Grid
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            children: [
-              _buildActionCard(Icons.trending_up, 'Learning Path', NeuTheme.electric, Colors.white, () => context.push('/student/learning-path')),
-              _buildActionCard(Icons.library_books, 'Study Hub', NeuTheme.hotpink, Colors.white, () => context.push('/student/study-hub')),
-              _buildActionCard(Icons.quiz, 'Assessments ($pendingAssessmentsCount)', NeuTheme.mint, NeuTheme.ink, () => context.push('/student/assessments')),
-              _buildActionCard(Icons.work, 'Opportunities', NeuTheme.amber, NeuTheme.ink, () => context.push('/student/opportunities')),
-              _buildActionCard(Icons.person, 'Academic Profile', NeuTheme.sky, NeuTheme.ink, () => context.push('/student/profile')),
-              _buildActionCard(Icons.assignment, 'Assignments', NeuTheme.hotpink, Colors.white, () => context.push('/student/assignments')),
-              _buildActionCard(Icons.leaderboard, 'Leaderboard', NeuTheme.coral, Colors.white, () => context.push('/student/leaderboard')),
-            ],
-          ),
-        ],
+            // Upcoming Assessments
+            StaggerItem(
+              index: 3,
+              child: NeuCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '📋 Upcoming',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        GestureDetector(
+                          onTap: () => context.push('/student/assignments'),
+                          child: const NeuBadge(text: 'View All →', variant: 'default'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (upcomingAssessments.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24.0),
+                          child: Text('No upcoming assessments', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                        ),
+                      )
+                    else
+                      ...upcomingAssessments.take(5).map((a) {
+                        return GestureDetector(
+                          onTap: () => context.push('/student/assignments'),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: NeuTheme.paper,
+                              border: Border.all(color: NeuTheme.ink, width: 3),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(color: NeuTheme.ink, offset: Offset(4, 4))
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        a['title'] ?? 'Assessment',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        a['topic'] ?? 'Topic',
+                                        style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${a['totalMarks'] ?? 0} marks',
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                                    ),
+                                    if (a['dueDate'] != null)
+                                      Text(
+                                        DateFormat('MM/dd/yyyy').format(DateTime.parse(a['dueDate'])),
+                                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      })
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Recent Submissions
+            if (recentSubmissions.isNotEmpty)
+              StaggerItem(
+                index: 4,
+                child: NeuCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        '📝 Recent Submissions',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      ...recentSubmissions.map((s) {
+                        final status = s['gradingStatus'] ?? 'pending';
+                        String variant = 'warning';
+                        if (status == 'final') variant = 'success';
+                        if (status == 'auto_graded') variant = 'info';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: NeuTheme.paper,
+                            border: Border.all(color: NeuTheme.ink, width: 3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      s['assessmentId']?['title'] ?? 'Assessment',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      s['assessmentId']?['topic'] ?? 'Topic',
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  if (s['percentage'] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8.0),
+                                      child: Text(
+                                        '${s['percentage']}%',
+                                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                                      ),
+                                    ),
+                                  NeuBadge(
+                                    text: status.toString().replaceAll('_', ' ').toUpperCase(),
+                                    variant: variant,
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                        );
+                      })
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildGauge(String label, num value, Color color) {
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox(
-              width: 60,
-              height: 60,
-              child: CircularProgressIndicator(
-                value: value / 100,
-                backgroundColor: NeuTheme.ink.withOpacity(0.1),
-                color: color,
-                strokeWidth: 8,
-              ),
-            ),
-            Text(
-              '$value%',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        )
-      ],
-    );
-  }
-
-  Widget _buildActionCard(IconData icon, String title, Color bgColor, Color textColor, VoidCallback onTap) {
+  Widget _buildStatCard(String label, String value, IconData icon, Color bgColor, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: NeuCard(
-        backgroundColor: bgColor,
         animateHover: true,
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: textColor),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: textColor,
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: NeuTheme.ink, width: 2),
+                boxShadow: const [
+                  BoxShadow(color: NeuTheme.ink, offset: Offset(2, 2))
+                ],
               ),
+              child: Icon(icon, color: Colors.white, size: 20),
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, height: 1.0),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label.toUpperCase(),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 0.5),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSkillBar(String label, num score) {
+    Color color = NeuTheme.coral;
+    if (score > 40) color = NeuTheme.amber;
+    if (score > 70) color = NeuTheme.mint;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              Text('$score%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Container(
+            height: 12,
+            decoration: BoxDecoration(
+              color: NeuTheme.paper,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: NeuTheme.ink, width: 2),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: score / 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(4),
+                  border: const Border(right: BorderSide(color: NeuTheme.ink, width: 2)),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

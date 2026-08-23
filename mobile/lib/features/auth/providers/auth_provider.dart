@@ -46,8 +46,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'password': password,
       });
 
-      final token = response.data['token'];
-      final user = response.data['user'];
+      final token = response.data['accessToken'] ?? response.data['token'];
+      final user = response.data['user'] as Map<String, dynamic>?;
 
       // Save token securely
       await ApiClient.storage.write(key: 'jwt', value: token);

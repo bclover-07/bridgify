@@ -43,27 +43,48 @@ class _StudentLayoutState extends State<StudentLayout> {
           )
         ],
       ),
-      body: widget.child,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: NeuTheme.ink, width: 3)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTap,
-          selectedItemColor: NeuTheme.electric,
-          unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-            BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: 'Readiness'),
-            BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Study Hub'),
-            BottomNavigationBarItem(icon: Icon(Icons.quiz), label: 'Tests'),
+      drawer: Drawer(
+        backgroundColor: NeuTheme.paper,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: NeuTheme.electric,
+                border: Border(bottom: BorderSide(color: NeuTheme.ink, width: NeuTheme.borderWidth)),
+              ),
+              child: const Text(
+                'Student Navigation',
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+              ),
+            ),
+            _buildDrawerItem(Icons.dashboard, 'Dashboard', '/student'),
+            _buildDrawerItem(Icons.person, 'Academic Profile', '/student/profile'),
+            _buildDrawerItem(Icons.account_balance_wallet, 'Skill Wallet', '/student/wallet'),
+            _buildDrawerItem(Icons.trending_up, 'Readiness Simulator', '/student/readiness'),
+            _buildDrawerItem(Icons.timeline, 'AI Learning Path', '/student/learning-path'),
+            _buildDrawerItem(Icons.assignment, 'Assignments', '/student/assignments'),
+            _buildDrawerItem(Icons.quiz, 'Assessments', '/student/assessments'),
+            _buildDrawerItem(Icons.library_books, 'Study Hub', '/student/study-hub'),
+            _buildDrawerItem(Icons.psychology, 'Soft Skills & Debate', '/student/soft-skills'),
+            _buildDrawerItem(Icons.work, 'Opportunities', '/student/opportunities'),
+            _buildDrawerItem(Icons.analytics, 'Benchmarks', '/student/benchmarks'),
+            _buildDrawerItem(Icons.leaderboard, 'Leaderboard', '/student/leaderboard'),
           ],
         ),
       ),
+      body: widget.child,
+    );
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, String route) {
+    return ListTile(
+      leading: Icon(icon, color: NeuTheme.ink),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.ink)),
+      onTap: () {
+        context.pop(); // Close drawer
+        context.go(route);
+      },
     );
   }
 }
