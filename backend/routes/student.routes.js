@@ -29,6 +29,7 @@ router.get('/mock-interview/history', studentController.getInterviewHistory);
 router.post('/debate/start', studentController.startDebate);
 router.post('/study-plan/generate', studentController.generateStudyPlan);
 router.get('/opportunities', studentController.getOpportunities);
+router.post('/opportunities/:id/apply', studentController.applyForOpportunity);
 router.get('/benchmarks', studentController.getBenchmarks);
 
 export default router;

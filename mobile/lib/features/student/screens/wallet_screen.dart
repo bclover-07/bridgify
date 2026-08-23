@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/neu_theme.dart';
 import '../../../core/theme/neu_components.dart';
 import '../../../core/network/api_client.dart';
+import 'package:intl/intl.dart';
 
 class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
@@ -14,6 +15,7 @@ class WalletScreen extends ConsumerStatefulWidget {
 class _WalletScreenState extends ConsumerState<WalletScreen> {
   bool isLoading = true;
   List<dynamic> transactions = [];
+  int verifiedSkillsCount = 0;
 
   @override
   void initState() {
@@ -23,20 +25,32 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
 
   Future<void> _fetchWallet() async {
     try {
-      final response = await ApiClient.instance.get('/api/student/wallet');
+      final response = await ApiClient.instance.get('/api/student/seg');
+      final edges = response.data['edges'] as List<dynamic>? ?? [];
+      final nodes = response.data['nodes'] as List<dynamic>? ?? [];
+      
       setState(() {
-        transactions = response.data['data'] ?? [];
+        transactions = edges;
+        verifiedSkillsCount = nodes.length;
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        transactions = [
-          {"id": "0x1A2B", "skill": "React.js", "date": "2026-08-20", "status": "Verified"},
-          {"id": "0x3C4D", "skill": "Node.js", "date": "2026-08-21", "status": "Verified"},
-          {"id": "0x5E6F", "skill": "System Design", "date": "2026-08-22", "status": "Pending"},
-        ];
+        transactions = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load wallet: ${e.toString()}')));
+      }
+    }
+  }
+
+  String _formatDate(String isoString) {
+    try {
+      final date = DateTime.parse(isoString);
+      return DateFormat('yyyy-MM-dd HH:mm').format(date);
+    } catch (e) {
+      return isoString;
     }
   }
 
@@ -65,22 +79,25 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${transactions.where((t) => t['status'] == 'Verified').length}',
+                        '$verifiedSkillsCount',
                         style: const TextStyle(color: NeuTheme.mint, fontSize: 48, fontWeight: FontWeight.w900),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text('Ledger Transactions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Ledger Transactions (Evidence Logs)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.separated(
+                  child: transactions.isEmpty 
+                  ? const Center(child: Text("No transactions recorded on the ledger."))
+                  : ListView.separated(
                     itemCount: transactions.length,
                     separatorBuilder: (context, index) => const Divider(color: NeuTheme.ink, thickness: NeuTheme.borderWidth),
                     itemBuilder: (context, index) {
                       final t = transactions[index];
-                      final isVerified = t['status'] == 'Verified';
+                      // For this simulation, all returned edges are verified.
+                      final isVerified = true; 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
@@ -100,13 +117,13 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(t['skill'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  Text('Hash: ${t['id']} | ${t['date']}', style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+                                  Text(t['evidenceType'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text('${t['context']} | ${_formatDate(t['timestamp'] ?? '')}', style: TextStyle(color: Colors.grey[700], fontSize: 12)),
                                 ],
                               ),
                             ),
                             Text(
-                              t['status'],
+                              '+${t['scoreContributed'] ?? 0}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 color: isVerified ? NeuTheme.mint : NeuTheme.amber,

@@ -13,7 +13,7 @@ class MarketplaceScreen extends ConsumerStatefulWidget {
 
 class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   bool isLoading = true;
-  List<dynamic> feedItems = [];
+  List<dynamic> _problemStatements = [];
 
   @override
   void initState() {
@@ -25,36 +25,17 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     try {
       final response = await ApiClient.instance.get('/api/recruiter/marketplace');
       setState(() {
-        feedItems = response.data['data'] ?? [];
+        _problemStatements = response.data['problemStatements'] ?? [];
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        feedItems = [
-          {
-            "id": "1",
-            "student": "Arjun Kumar",
-            "action": "completed a Capstone Project",
-            "details": "E-Commerce Microservices with 99.9% uptime test.",
-            "time": "10 mins ago"
-          },
-          {
-            "id": "2",
-            "student": "Sarah Lee",
-            "action": "achieved top 5% in Coding Assessment",
-            "details": "Data Structures and Algorithms Hard Level",
-            "time": "1 hour ago"
-          },
-          {
-            "id": "3",
-            "student": "Ravi Patel",
-            "action": "earned a new skill badge",
-            "details": "Advanced Flutter UI Development",
-            "time": "3 hours ago"
-          },
-        ];
+        _problemStatements = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load marketplace: ${e.toString()}')));
+      }
     }
   }
 
@@ -62,7 +43,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Live Talent Marketplace'),
+        title: const Text('Live PS Marketplace'),
         backgroundColor: NeuTheme.electric,
         foregroundColor: Colors.white,
       ),
@@ -77,11 +58,11 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                   backgroundColor: NeuTheme.paper,
                   child: Row(
                     children: [
-                      const Icon(Icons.radar, color: NeuTheme.electric, size: 32),
+                      const Icon(Icons.storefront, color: NeuTheme.electric, size: 32),
                       const SizedBox(width: 16),
                       const Expanded(
                         child: Text(
-                          'Live Feed of Student Achievements',
+                          'Published Problem Statements',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
@@ -98,10 +79,14 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                 ),
                 const SizedBox(height: 24),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: feedItems.length,
+                  child: _problemStatements.isEmpty 
+                  ? const Center(child: Text('No problem statements in marketplace.'))
+                  : ListView.builder(
+                    itemCount: _problemStatements.length,
                     itemBuilder: (context, index) {
-                      final item = feedItems[index];
+                      final item = _problemStatements[index];
+                      final company = item['recruiterId']?['recruiter']?['company'] ?? 'Unknown Company';
+                      
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: NeuCard(
@@ -112,29 +97,29 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    item['time'],
-                                    style: TextStyle(color: Colors.grey[700], fontSize: 12, fontWeight: FontWeight.bold),
+                                  Expanded(
+                                    child: Text(
+                                      item['title'] ?? 'Untitled PS',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                    ),
                                   ),
                                   NeuButton(
-                                    text: 'View Profile',
-                                    color: NeuTheme.electric,
+                                    text: 'View',
+                                    backgroundColor: NeuTheme.electric,
                                     textColor: Colors.white,
                                     onPressed: () {},
                                   )
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              RichText(
-                                text: TextSpan(
-                                  style: const TextStyle(color: NeuTheme.ink, fontSize: 16),
-                                  children: [
-                                    TextSpan(text: item['student'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    TextSpan(text: ' ${item['action']}\n'),
-                                  ],
-                                ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.business, size: 16, color: NeuTheme.ink),
+                                  const SizedBox(width: 4),
+                                  Text(company, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                ],
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 width: double.infinity,
@@ -143,8 +128,28 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                                   border: Border.all(color: NeuTheme.ink, width: 1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: Text(item['details'], style: const TextStyle(fontStyle: FontStyle.italic)),
+                                child: Text(
+                                  item['description'] ?? 'No description provided.',
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: (item['skillsRequired'] as List<dynamic>? ?? []).map<Widget>((skill) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: NeuTheme.mint,
+                                      border: Border.all(color: NeuTheme.ink, width: 1),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(skill.toString(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  );
+                                }).toList(),
+                              )
                             ],
                           ),
                         ),

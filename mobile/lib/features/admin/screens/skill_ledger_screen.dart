@@ -77,7 +77,7 @@ class _SkillLedgerScreenState extends ConsumerState<SkillLedgerScreen> {
                 NeuInput(
                   controller: _searchController,
                   hintText: 'Search Skill Name or Category...',
-                  onChanged: (v) => setState(() {}),
+                  // onChanged: (v) => setState(() {}),
                 ),
                 const SizedBox(height: 16),
                 Expanded(

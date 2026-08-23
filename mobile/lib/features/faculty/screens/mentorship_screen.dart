@@ -13,44 +13,43 @@ class MentorshipScreen extends ConsumerStatefulWidget {
 
 class _MentorshipScreenState extends ConsumerState<MentorshipScreen> {
   bool isLoading = true;
-  List<dynamic> mentees = [];
-  final TextEditingController _studentIdController = TextEditingController();
+  List<dynamic> pairs = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchMentees();
+    _fetchMatches();
   }
 
-  Future<void> _fetchMentees() async {
+  Future<void> _fetchMatches() async {
     try {
-      final response = await ApiClient.instance.get('/api/faculty/mentees');
+      final coursesRes = await ApiClient.instance.get('/api/faculty/courses');
+      final courses = coursesRes.data['courses'] as List<dynamic>? ?? [];
+      
+      if (courses.isEmpty) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final courseId = courses[0]['_id'];
+
+      final response = await ApiClient.instance.post('/api/faculty/mentorship-match', data: {
+        "courseId": courseId
+      });
       setState(() {
-        mentees = response.data['data'] ?? [];
+        pairs = response.data['pairs'] ?? [];
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        mentees = [
-          {"id": "S101", "name": "Arjun Kumar", "progress": 45, "last_meeting": "2026-08-20"},
-          {"id": "S102", "name": "Sarah Lee", "progress": 80, "last_meeting": "2026-08-21"},
-        ];
+        pairs = []; // No mock data
         isLoading = false;
       });
-    }
-  }
-
-  Future<void> _assignMentee() async {
-    if (_studentIdController.text.trim().isEmpty) return;
-    try {
-      await ApiClient.instance.post('/api/faculty/mentees/assign', data: {
-        "student_id": _studentIdController.text,
-      });
-      _studentIdController.clear();
-      _fetchMentees();
-    } catch (e) {
-      // Handles offline/mock appropriately via interceptor
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mentee assigned offline')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load mentorship pairs: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -58,7 +57,7 @@ class _MentorshipScreenState extends ConsumerState<MentorshipScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mentorship Program'),
+        title: const Text('Peer Mentorship Matches'),
         backgroundColor: NeuTheme.acid,
         foregroundColor: NeuTheme.ink,
       ),
@@ -74,68 +73,97 @@ class _MentorshipScreenState extends ConsumerState<MentorshipScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text('Assign New Mentee', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      NeuInput(
-                        controller: _studentIdController,
-                        hintText: 'Student ID (e.g., S105)',
-                      ),
+                      const Text('Peer-to-Peer Mentoring', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      const Text('Matches top students (Mentors) with struggling students (Mentees) in the current cohort.'),
                       const SizedBox(height: 16),
                       NeuButton(
-                        text: 'Assign',
-                        color: NeuTheme.acid,
-                        onPressed: _assignMentee,
+                        text: 'Refresh Matches',
+                        backgroundColor: NeuTheme.acid,
+                        onPressed: _fetchMatches,
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text('My Mentees', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Current Mentorship Pairs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: mentees.length,
+                  child: pairs.isEmpty
+                    ? const Center(child: Text("No pairs found."))
+                    : ListView.builder(
+                    itemCount: pairs.length,
                     itemBuilder: (context, index) {
-                      final m = mentees[index];
+                      final pair = pairs[index];
+                      final mentor = pair['mentor'];
+                      final mentee = pair['mentee'];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: NeuCard(
                           backgroundColor: Colors.white,
-                          child: Row(
+                          child: Column(
                             children: [
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: NeuTheme.acid,
-                                  border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
-                                ),
-                                child: const Icon(Icons.person, color: NeuTheme.ink),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(m['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                    Text('ID: ${m['id']} | Last Met: ${m['last_meeting']}', style: TextStyle(color: Colors.grey[700], fontSize: 12)),
-                                    const SizedBox(height: 8),
-                                    LinearProgressIndicator(
-                                      value: m['progress'] / 100,
-                                      backgroundColor: NeuTheme.ink.withOpacity(0.1),
-                                      color: NeuTheme.ink,
-                                      minHeight: 8,
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: NeuTheme.acid,
+                                      border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
+                                      shape: BoxShape.circle
                                     ),
+                                    child: const Icon(Icons.star, color: NeuTheme.ink, size: 20),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Mentor', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: NeuTheme.ink)),
+                                        Text(mentor['name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(child: Divider(color: NeuTheme.ink, thickness: 2)),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Icon(Icons.handshake, color: NeuTheme.ink),
+                                    ),
+                                    Expanded(child: Divider(color: NeuTheme.ink, thickness: 2)),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              NeuButton(
-                                text: 'Chat',
-                                color: NeuTheme.electric,
-                                textColor: Colors.white,
-                                onPressed: () {},
-                              )
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: NeuTheme.sky,
+                                      border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
+                                      shape: BoxShape.circle
+                                    ),
+                                    child: const Icon(Icons.person, color: NeuTheme.ink, size: 20),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Mentee', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: NeuTheme.ink)),
+                                        Text(mentee['name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),

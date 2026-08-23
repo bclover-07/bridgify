@@ -20,34 +20,39 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      candidates = [];
+    });
     try {
-      final response = await ApiClient.instance.get('/api/recruiter/search', queryParameters: {"q": query});
+      final response = await ApiClient.instance.post('/api/recruiter/search/semantic', data: {"jobDescription": query});
       setState(() {
-        candidates = response.data['data'] ?? [];
+        candidates = response.data['candidates'] ?? [];
         isLoading = false;
       });
     } catch (e) {
-      // Mock data for UI demonstration
       setState(() {
-        candidates = [
-          {
-            "id": "1",
-            "name": "Arjun Kumar",
-            "skills": ["React.js", "Flutter", "Node.js"],
-            "cgpa": "8.5",
-            "readiness": "92%"
-          },
-          {
-            "id": "2",
-            "name": "Sarah Lee",
-            "skills": ["Python", "Machine Learning", "SQL"],
-            "cgpa": "9.1",
-            "readiness": "88%"
-          },
-        ];
+        candidates = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Search failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _shortlistCandidate(String studentId, String name) async {
+    try {
+      await ApiClient.instance.post('/api/recruiter/shortlist', data: {"studentId": studentId});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Shortlisted $name successfully')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to shortlist: ${e.toString()}')));
+      }
     }
   }
 
@@ -77,14 +82,16 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                   const SizedBox(height: 16),
                   NeuButton(
                     text: isLoading ? 'Searching...' : 'Find Candidates',
-                    color: NeuTheme.sky,
+                    backgroundColor: NeuTheme.sky,
                     onPressed: isLoading ? null : _performSearch,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            if (candidates.isNotEmpty) ...[
+            if (isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator(color: NeuTheme.sky)))
+            else if (candidates.isNotEmpty) ...[
               const Text('Search Results', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Expanded(
@@ -92,6 +99,8 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                   itemCount: candidates.length,
                   itemBuilder: (context, index) {
                     final candidate = candidates[index];
+                    final matchedSkills = (candidate['matchedSkills'] as List<dynamic>? ?? []);
+                    
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: NeuCard(
@@ -102,11 +111,11 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(candidate['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                Text(candidate['name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                                 NeuButton(
                                   text: 'Shortlist',
-                                  color: NeuTheme.mint,
-                                  onPressed: () {},
+                                  backgroundColor: NeuTheme.mint,
+                                  onPressed: () => _shortlistCandidate(candidate['studentId'], candidate['name'] ?? 'Candidate'),
                                 )
                               ],
                             ),
@@ -115,18 +124,18 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                               children: [
                                 const Icon(Icons.school, size: 16, color: NeuTheme.ink),
                                 const SizedBox(width: 4),
-                                Text('CGPA: ${candidate['cgpa']}'),
+                                Text('CGPA: ${candidate['cgpa'] ?? 'N/A'}'),
                                 const SizedBox(width: 16),
                                 const Icon(Icons.speed, size: 16, color: NeuTheme.ink),
                                 const SizedBox(width: 4),
-                                Text('Readiness: ${candidate['readiness']}'),
+                                Text('Match: ${candidate['matchScore'] ?? 0}%'),
                               ],
                             ),
                             const SizedBox(height: 12),
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: (candidate['skills'] as List<dynamic>).map<Widget>((skill) {
+                              children: matchedSkills.take(5).map<Widget>((skill) {
                                 return Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                   decoration: BoxDecoration(
@@ -134,7 +143,7 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                                     border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  child: Text(skill, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: Text(skill['label'] ?? 'Skill', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                                 );
                               }).toList(),
                             )
@@ -145,6 +154,8 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                   },
                 ),
               ),
+            ] else if (_searchController.text.isNotEmpty && !isLoading) ...[
+              const Expanded(child: Center(child: Text("No candidates found.")))
             ]
           ],
         ),

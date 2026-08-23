@@ -49,7 +49,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final user = authState.user ?? {};
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: NeuTheme.primary));
+      return const Center(child: CircularProgressIndicator(color: NeuTheme.hotpink));
     }
 
     return SingleChildScrollView(
@@ -74,7 +74,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             children: [
               Expanded(
                 child: NeuCard(
-                  backgroundColor: NeuTheme.primary,
+                  backgroundColor: NeuTheme.hotpink,
                   child: Column(
                     children: [
                       const Icon(Icons.school, size: 40, color: NeuTheme.ink),

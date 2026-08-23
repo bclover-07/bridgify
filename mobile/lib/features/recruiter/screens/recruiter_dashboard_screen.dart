@@ -27,18 +27,19 @@ class _RecruiterDashboardScreenState extends ConsumerState<RecruiterDashboardScr
     try {
       final response = await ApiClient.instance.get('/api/recruiter/dashboard');
       setState(() {
-        _dashboardData = response.data['data'];
+        _dashboardData = response.data['stats'];
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _dashboardData = {
-          "active_drives": 3,
-          "shortlisted": 45,
-          "upcoming_interviews": 12,
-        };
+        _dashboardData = null; // No mock data
         _isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load dashboard: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -48,7 +49,7 @@ class _RecruiterDashboardScreenState extends ConsumerState<RecruiterDashboardScr
     final user = authState.user ?? {};
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: NeuTheme.primary));
+      return const Center(child: CircularProgressIndicator(color: NeuTheme.hotpink));
     }
 
     return SingleChildScrollView(
@@ -78,8 +79,8 @@ class _RecruiterDashboardScreenState extends ConsumerState<RecruiterDashboardScr
                     children: [
                       const Icon(Icons.business_center, size: 40, color: Colors.white),
                       const SizedBox(height: 8),
-                      Text('${_dashboardData?['active_drives'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                      const Text('Active Drives', textAlign: TextAlign.center, style: TextStyle(color: Colors.white)),
+                      Text('${_dashboardData?['totalDrives'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const Text('Total Drives', textAlign: TextAlign.center, style: TextStyle(color: Colors.white)),
                     ],
                   ),
                 ),
@@ -92,7 +93,7 @@ class _RecruiterDashboardScreenState extends ConsumerState<RecruiterDashboardScr
                     children: [
                       const Icon(Icons.group, size: 40, color: NeuTheme.ink),
                       const SizedBox(height: 8),
-                      Text('${_dashboardData?['shortlisted'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: NeuTheme.ink)),
+                      Text('${_dashboardData?['shortlistedCount'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: NeuTheme.ink)),
                       const Text('Shortlisted', textAlign: TextAlign.center, style: TextStyle(color: NeuTheme.ink)),
                     ],
                   ),

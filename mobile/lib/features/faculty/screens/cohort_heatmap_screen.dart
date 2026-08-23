@@ -15,6 +15,7 @@ class CohortHeatmapScreen extends ConsumerStatefulWidget {
 class _CohortHeatmapScreenState extends ConsumerState<CohortHeatmapScreen> {
   bool isLoading = true;
   List<dynamic> distribution = [];
+  String courseName = "Cohort";
 
   @override
   void initState() {
@@ -24,20 +25,46 @@ class _CohortHeatmapScreenState extends ConsumerState<CohortHeatmapScreen> {
 
   Future<void> _fetchHeatmap() async {
     try {
-      final response = await ApiClient.instance.get('/api/faculty/heatmap');
+      // Fetch courses to get the first course ID
+      final coursesRes = await ApiClient.instance.get('/api/faculty/courses');
+      final courses = coursesRes.data['courses'] as List<dynamic>? ?? [];
+      
+      if (courses.isEmpty) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final courseId = courses[0]['_id'];
+
+      final response = await ApiClient.instance.get('/api/faculty/cohort-heatmap/$courseId');
+      final skills = response.data['skills'] as List<dynamic>? ?? [];
+      
       setState(() {
-        distribution = response.data['data'] ?? [];
+        courseName = response.data['courseName'] ?? "Cohort";
+        distribution = skills.map((s) {
+          final avg = s['cohortAvg'] ?? 0;
+          String status = 'Good';
+          if (avg < 50) status = 'Critical';
+          else if (avg < 75) status = 'Needs Attention';
+          
+          return {
+            "topic": s['skillLabel'] ?? 'Unknown',
+            "avg_score": avg,
+            "status": status,
+          };
+        }).toList();
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        distribution = [
-          {"topic": "Data Structures", "avg_score": 65, "status": "Needs Attention"},
-          {"topic": "Algorithms", "avg_score": 45, "status": "Critical"},
-          {"topic": "Web Dev", "avg_score": 85, "status": "Good"},
-        ];
+        distribution = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load heatmap: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -45,13 +72,15 @@ class _CohortHeatmapScreenState extends ConsumerState<CohortHeatmapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cohort Heatmap'),
+        title: Text('$courseName Heatmap'),
         backgroundColor: NeuTheme.violet,
         foregroundColor: Colors.white,
       ),
       body: isLoading
         ? const Center(child: CircularProgressIndicator(color: NeuTheme.violet))
-        : SingleChildScrollView(
+        : distribution.isEmpty 
+          ? const Center(child: Text("No heatmap data available."))
+          : SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -76,13 +105,7 @@ class _CohortHeatmapScreenState extends ConsumerState<CohortHeatmapScreen> {
                             borderData: FlBorderData(show: true, border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth)),
                             lineBarsData: [
                               LineChartBarData(
-                                spots: const [
-                                  FlSpot(0, 40),
-                                  FlSpot(1, 55),
-                                  FlSpot(2, 50),
-                                  FlSpot(3, 75),
-                                  FlSpot(4, 65),
-                                ],
+                                spots: distribution.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['avg_score'] ?? 0).toDouble())).toList(),
                                 isCurved: true,
                                 color: NeuTheme.violet,
                                 barWidth: 4,

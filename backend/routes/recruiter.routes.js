@@ -20,5 +20,7 @@ router.post('/ps/:id/publish', recruiterController.publishPS);
 router.post('/drives/:driveId/feedback', recruiterController.submitFeedback);
 router.get('/fair-hiring/:driveId', recruiterController.getFairHiring);
 router.get('/marketplace', recruiterController.getMarketplace);
+router.get('/pipeline', recruiterController.getPipeline);
+router.post('/pipeline/update', recruiterController.updatePipelineStage);
 
 export default router;

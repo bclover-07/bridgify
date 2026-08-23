@@ -14,8 +14,8 @@ class PipelineScreen extends ConsumerStatefulWidget {
 class _PipelineScreenState extends ConsumerState<PipelineScreen> {
   bool isLoading = true;
   List<dynamic> pipelineData = [];
-  final List<String> stages = ["Sourced", "Tested", "Interviewed", "Offered"];
-  String selectedStage = "Sourced";
+  final List<String> stages = ["applied", "shortlisted", "interview", "offered"];
+  String selectedStage = "applied";
 
   @override
   void initState() {
@@ -32,19 +32,17 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
       });
     } catch (e) {
       setState(() {
-        pipelineData = [
-          {"id": "1", "name": "Arjun Kumar", "stage": "Sourced", "score": 85},
-          {"id": "2", "name": "Sarah Lee", "stage": "Tested", "score": 92},
-          {"id": "3", "name": "Ravi Patel", "stage": "Interviewed", "score": 88},
-          {"id": "4", "name": "Priya Singh", "stage": "Offered", "score": 95},
-          {"id": "5", "name": "Amit Shah", "stage": "Sourced", "score": 78},
-        ];
+        pipelineData = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load pipeline: ${e.toString()}')));
+      }
     }
   }
 
   Future<void> _updateStage(dynamic candidate, String newStage) async {
+    final oldStage = candidate['stage'];
     setState(() {
       candidate['stage'] = newStage;
     });
@@ -52,10 +50,20 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
       await ApiClient.instance.post('/api/recruiter/pipeline/update', data: {
         "id": candidate['id'],
         "stage": newStage,
+        "driveId": candidate['driveId'],
       });
     } catch (e) {
-      // Offline fallback
+      setState(() {
+        candidate['stage'] = oldStage; // Revert on failure
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update stage: ${e.toString()}')));
+      }
     }
+  }
+
+  String _formatStageName(String stage) {
+    return stage[0].toUpperCase() + stage.substring(1);
   }
 
   @override
@@ -85,8 +93,8 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: NeuButton(
-                            text: stage,
-                            color: isSelected ? NeuTheme.mint : Colors.white,
+                            text: _formatStageName(stage),
+                            backgroundColor: isSelected ? NeuTheme.mint : Colors.white,
                             onPressed: () => setState(() => selectedStage = stage),
                           ),
                         );
@@ -98,12 +106,14 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('$selectedStage Candidates (${displayedCandidates.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text('${_formatStageName(selectedStage)} Candidates (${displayedCandidates.length})', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.builder(
+                  child: displayedCandidates.isEmpty
+                  ? const Center(child: Text("No candidates in this stage."))
+                  : ListView.builder(
                     itemCount: displayedCandidates.length,
                     itemBuilder: (context, index) {
                       final candidate = displayedCandidates[index];
@@ -117,7 +127,7 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(candidate['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text(candidate['name'] ?? 'Candidate', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
@@ -125,7 +135,7 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                                       border: Border.all(color: NeuTheme.ink),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: Text('Score: ${candidate['score']}'),
+                                    child: Text('CGPA: ${candidate['score'] ?? 'N/A'}'),
                                   )
                                 ],
                               ),
@@ -135,7 +145,7 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                                   Expanded(
                                     child: NeuButton(
                                       text: 'View Profile',
-                                      color: Colors.white,
+                                      backgroundColor: Colors.white,
                                       onPressed: () {},
                                     ),
                                   ),
@@ -151,7 +161,7 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                                           boxShadow: const [
                                             BoxShadow(
                                               color: NeuTheme.ink,
-                                              offset: Offset(NeuTheme.shadowOffset, NeuTheme.shadowOffset),
+                                              offset: NeuTheme.shadowOffset,
                                             )
                                           ]
                                         ),
@@ -160,9 +170,9 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                                           value: selectedStage,
                                           icon: const Icon(Icons.arrow_drop_down, color: NeuTheme.ink),
                                           isExpanded: true,
-                                          items: stages.map((s) => DropdownMenuItem(value: s, child: Text('Move to $s', style: const TextStyle(fontSize: 14)))).toList(),
+                                          items: stages.map((s) => DropdownMenuItem(value: s, child: Text('Move to ${_formatStageName(s)}', style: const TextStyle(fontSize: 14)))).toList(),
                                           onChanged: (v) {
-                                            if (v != null) _updateStage(candidate, v);
+                                            if (v != null && v != selectedStage) _updateStage(candidate, v);
                                           },
                                         ),
                                       ),

@@ -47,7 +47,7 @@ class NeuCard extends StatelessWidget {
 
 class NeuButton extends StatefulWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color backgroundColor;
   final Color textColor;
   final Widget? icon;
@@ -55,7 +55,7 @@ class NeuButton extends StatefulWidget {
   const NeuButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.backgroundColor = NeuTheme.electric,
     this.textColor = Colors.white,
     this.icon,
@@ -71,12 +71,12 @@ class _NeuButtonState extends State<NeuButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
+      onTapDown: widget.onPressed != null ? (_) => setState(() => _isPressed = true) : null,
+      onTapUp: widget.onPressed != null ? (_) {
         setState(() => _isPressed = false);
-        widget.onPressed();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
+        widget.onPressed!();
+      } : null,
+      onTapCancel: widget.onPressed != null ? () => setState(() => _isPressed = false) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         transform: Matrix4.translationValues(
