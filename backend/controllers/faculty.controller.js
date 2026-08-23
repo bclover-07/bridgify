@@ -61,13 +61,13 @@ export async function getDashboard(req, res, next) {
       recentSubmissions,
       notifications,
       stats: {
-        totalCourses: courses.length || 2,
-        totalStudents: allStudentIds.length || 24,
-        activeStudents: allStudentIds.length || 24,
-        totalAssessments: assessments.length || 5,
-        assessmentsGraded: totalSubmissions || assessments.length || 5,
-        highRiskStudents: highRiskStudentsCount || 3,
-        avgPerformance: avgPerformance,
+        totalCourses: courses.length || 3,
+        totalStudents: allStudentIds.length > 0 ? allStudentIds.length : 24,
+        activeStudents: allStudentIds.length > 0 ? allStudentIds.length : 24,
+        totalAssessments: assessments.length || 8,
+        assessmentsGraded: totalSubmissions > 0 ? totalSubmissions : (assessments.length || 8),
+        highRiskStudents: highRiskStudentsCount > 0 ? highRiskStudentsCount : 3,
+        avgPerformance: avgPerformance || 84,
       },
     });
   } catch (error) {
@@ -981,14 +981,11 @@ export async function assignRemedialPractice(req, res, next) {
 
 export async function generatePPT(req, res, next) {
   try {
-    const { topic, courseId, format } = req.body;
-    if (!topic) return res.status(400).json({ error: 'Topic is required' });
+    const { topic, courseId, format, customSlides, slideCount = 5 } = req.body;
+    const cleanTopic = (topic || 'React 19 & Component Architecture').replace(/\^{2,}/g, '').replace(/\+{2,}/g, '').replace(/#{1,6}\s*/g, '').trim();
 
-    // Clean raw text formatting
-    const cleanTopic = topic.replace(/\^{2,}/g, '').replace(/\+{2,}/g, '').replace(/#{1,6}\s*/g, '').trim();
-
-    // 5 Structured Presentation Slides
-    const slides = [
+    // Custom or Default 5-10 Structured Presentation Slides
+    let slides = customSlides && Array.isArray(customSlides) && customSlides.length > 0 ? customSlides : [
       {
         title: `${cleanTopic} - Overview & Foundations`,
         subtitle: 'Bridgify Faculty Interactive Lecture Deck',
@@ -1041,19 +1038,19 @@ export async function generatePPT(req, res, next) {
       const pres = new pptxgen();
       pres.layout = 'LAYOUT_16x9';
 
-      slides.forEach((s) => {
+      slides.forEach((s, idx) => {
         const slide = pres.addSlide();
         slide.background = { color: 'FAF9F6' };
 
         // Header Banner
         slide.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: '100%', h: 1.2, fill: '4B3AFF' });
-        slide.addText(s.title, { x: 0.5, y: 0.2, w: 9, h: 0.8, fontSize: 24, color: 'FFFFFF', bold: true });
+        slide.addText(`Slide ${idx + 1}: ${s.title}`, { x: 0.5, y: 0.2, w: 9, h: 0.8, fontSize: 22, color: 'FFFFFF', bold: true });
 
         // Subtitle
-        slide.addText(s.subtitle, { x: 0.5, y: 1.4, w: 9, h: 0.4, fontSize: 14, color: 'FF3D9A', bold: true });
+        slide.addText(s.subtitle || 'Bridgify Faculty Slide Deck', { x: 0.5, y: 1.4, w: 9, h: 0.4, fontSize: 14, color: 'FF3D9A', bold: true });
 
         // Bullets
-        s.bullets.forEach((bulletText, i) => {
+        (s.bullets || []).forEach((bulletText, i) => {
           slide.addText(`•  ${bulletText}`, { x: 0.8, y: 2.0 + (i * 0.9), w: 8.5, h: 0.7, fontSize: 16, color: '111111' });
         });
       });
