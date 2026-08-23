@@ -13,7 +13,7 @@ void main() async {
   await EasyLocalization.ensureInitialized();
   
   await LocalDB.init();
-  ApiClient.init();
+  await ApiClient.init();
 
   // Load Google Fonts for the theme
   GoogleFonts.config.allowRuntimeFetching = true;

@@ -8,20 +8,41 @@ class ApiClient {
   static late Dio _dio;
   static const storage = FlutterSecureStorage();
 
-  static void init({String? baseUrl}) {
-    // Use localhost since adb reverse tcp:5000 tcp:5000 maps physical devices to host
-    // If using an emulator, you may need to change this to http://10.0.2.2:5000
+  static Future<void> init({String? baseUrl}) async {
+    // Network Auto-Discovery: Test all possible connections
     String defaultUrl = 'http://localhost:5000';
     if (!kIsWeb) {
-      // Force localhost for the physical device RMX5110 via adb reverse
-      defaultUrl = 'http://localhost:5000';
+      List<String> candidateUrls = [
+         'http://localhost:5000',      // Physical device via adb reverse
+         'http://10.0.2.2:5000',       // Android emulator
+         'http://192.168.137.1:5000',  // Mobile Hotspot
+         'http://10.20.135.188:5000',  // Wi-Fi Local IP
+         'https://kind-glasses-draw.loca.lt' // Localtunnel fallback
+      ];
+      final dioPing = Dio(BaseOptions(
+         connectTimeout: const Duration(milliseconds: 1500),
+         validateStatus: (status) => true,
+         headers: {'Bypass-Tunnel-Reminder': 'true'},
+      ));
+      for (String url in candidateUrls) {
+        try {
+           await dioPing.get(url);
+           defaultUrl = url;
+           debugPrint('Auto-Discovery connected to: \$url');
+           break;
+        } catch (e) {
+           debugPrint('Auto-Discovery failed on: \$url');
+        }
+      }
     }
+
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl ?? defaultUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {
         'Content-Type': 'application/json',
+        'Bypass-Tunnel-Reminder': 'true', // For localtunnel
       },
     ));
 
