@@ -58,7 +58,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     
     setState(() => _isSubmitting = true);
     try {
-      await ApiClient.instance.post('/api/recruiter/feedback/$_selectedDriveId', data: {
+      await ApiClient.instance.post('/api/recruiter/drives/$_selectedDriveId/feedback', data: {
         "studentId": _candidateIdController.text.trim(),
         "feedback": _feedbackController.text.trim(),
         // Translating UI ratings to abstract skill signals (optional but good for SEG)

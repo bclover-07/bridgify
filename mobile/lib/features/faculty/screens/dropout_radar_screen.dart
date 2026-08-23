@@ -155,8 +155,19 @@ class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with Si
                                 text: 'Alert',
                                 backgroundColor: NeuTheme.ink,
                                 textColor: Colors.white,
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alert dispatched (Not Implemented)')));
+                                onPressed: () async {
+                                  try {
+                                    await ApiClient.instance.post('/api/faculty/students/${s['_id']}/nudge', data: {
+                                      "message": "Please see me after class regarding your attendance/performance."
+                                    });
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nudge sent successfully!')));
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to send nudge: $e')));
+                                    }
+                                  }
                                 },
                               )
                             ],

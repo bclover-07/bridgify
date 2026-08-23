@@ -36,7 +36,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
       final courseId = courses[0]['_id'];
 
-      final response = await ApiClient.instance.post('/api/faculty/generate-notes', data: {
+      final response = await ApiClient.instance.post('/api/faculty/notes/generate', data: {
         "courseId": courseId,
         "sourceType": "youtube",
         "sourceUrl": _urlController.text.trim(),

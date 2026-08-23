@@ -33,7 +33,7 @@ class _MentorshipScreenState extends ConsumerState<MentorshipScreen> {
 
       final courseId = courses[0]['_id'];
 
-      final response = await ApiClient.instance.post('/api/faculty/mentorship-match', data: {
+      final response = await ApiClient.instance.post('/api/faculty/mentorship/match', data: {
         "courseId": courseId
       });
       setState(() {
