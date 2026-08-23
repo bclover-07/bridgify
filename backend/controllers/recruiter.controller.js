@@ -437,3 +437,22 @@ export async function updatePipelineStage(req, res, next) {
     next(error);
   }
 }
+
+export async function sendAutoShortlistEmail(req, res, next) {
+  try {
+    const { email, studentName, jobTitle, companyName, matchScore } = req.body;
+    const { sendInterviewInviteEmail } = await import('../utils/mailer.js');
+    const result = await sendInterviewInviteEmail({
+      to: email || 'arjun@mrdu.edu',
+      studentName: studentName || 'Candidate',
+      jobTitle: jobTitle || 'Fullstack React Engineer',
+      companyName: companyName || 'TechSpark Innovations',
+      matchScore: matchScore || 88,
+      interviewUrl: 'http://localhost:3000/student/study-hub?tab=interview'
+    });
+    res.json({ success: true, message: 'Nodemailer interview invitation dispatched', result });
+  } catch (error) {
+    next(error);
+  }
+}
+

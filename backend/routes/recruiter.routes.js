@@ -22,5 +22,6 @@ router.get('/fair-hiring/:driveId', recruiterController.getFairHiring);
 router.get('/marketplace', recruiterController.getMarketplace);
 router.get('/pipeline', recruiterController.getPipeline);
 router.post('/pipeline/update', recruiterController.updatePipelineStage);
+router.post('/auto-shortlist/email', recruiterController.sendAutoShortlistEmail);
 
 export default router;

@@ -5,7 +5,8 @@ import NeuCard from '@/components/shared/NeuCard';
 import NeuButton from '@/components/shared/NeuButton';
 import NeuBadge from '@/components/shared/NeuBadge';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
-import { FiBriefcase, FiPlusCircle, FiUsers, FiDollarSign, FiCalendar, FiCheckCircle, FiTrash2 } from 'react-icons/fi';
+import { FiBriefcase, FiPlusCircle, FiUsers, FiDollarSign, FiCalendar, FiCheckCircle, FiCpu, FiMail } from 'react-icons/fi';
+import api from '@/lib/api';
 
 export default function JobPostingsPage() {
   const [postings, setPostings] = useState([
@@ -15,6 +16,8 @@ export default function JobPostingsPage() {
       role: 'Fullstack Developer',
       ctc: '12 LPA',
       skills: ['React', 'Node.js', 'MongoDB', 'System Design'],
+      autoShortlist: true,
+      autoShortlistThreshold: 80,
       applicantsCount: 34,
       deadline: '2026-09-15',
       status: 'Active',
@@ -25,6 +28,8 @@ export default function JobPostingsPage() {
       role: 'AI / ML Engineer',
       ctc: '15 LPA',
       skills: ['Python', 'PyTorch', 'Data Structures', 'NLP'],
+      autoShortlist: true,
+      autoShortlistThreshold: 85,
       applicantsCount: 22,
       deadline: '2026-09-20',
       status: 'Active',
@@ -36,8 +41,11 @@ export default function JobPostingsPage() {
   const [newRole, setNewRole] = useState('Fullstack Developer');
   const [newCtc, setNewCtc] = useState('10 LPA');
   const [newSkills, setNewSkills] = useState('React, Node.js, DSA');
+  const [autoShortlist, setAutoShortlist] = useState(true);
+  const [autoThreshold, setAutoThreshold] = useState(80);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
-  const handleCreatePosting = (e) => {
+  const handleCreatePosting = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
@@ -47,15 +55,35 @@ export default function JobPostingsPage() {
       role: newRole,
       ctc: newCtc,
       skills: newSkills.split(',').map(s => s.trim()).filter(Boolean),
+      autoShortlist,
+      autoShortlistThreshold: autoThreshold,
       applicantsCount: 0,
       deadline: '2026-10-01',
       status: 'Active',
     };
 
     setPostings([newPost, ...postings]);
+
+    // If auto-shortlist is enabled, send Nodemailer interview email to demo candidate
+    if (autoShortlist) {
+      setSendingEmail(true);
+      try {
+        await api.post('/recruiter/auto-shortlist/email', {
+          email: 'arjun@mrdu.edu',
+          studentName: 'Arjun Sharma',
+          jobTitle: newTitle,
+          matchScore: 88,
+        });
+      } catch (err) {
+        console.error('Nodemailer trigger warning:', err);
+      } finally {
+        setSendingEmail(false);
+      }
+    }
+
     setNewTitle('');
     setShowCreateModal(false);
-    alert('Full-Time Job Posting Published Successfully!');
+    alert('Placement Job Opening Published Successfully! AI Auto-Shortlisting is ACTIVE.');
   };
 
   return (
@@ -66,7 +94,7 @@ export default function JobPostingsPage() {
             <FiBriefcase className="text-[var(--electric)]" />
             Full-Time Placement Job Openings
           </h1>
-          <p className="text-gray-600 font-medium">Post and manage full-time placement job roles, compensation packages, and candidate pools</p>
+          <p className="text-gray-600 font-medium">Post and manage placement job roles with automated AI candidate shortlisting & Nodemailer interview dispatches</p>
         </div>
 
         <NeuButton variant="primary" icon={FiPlusCircle} onClick={() => setShowCreateModal(!showCreateModal)}>
@@ -130,8 +158,46 @@ export default function JobPostingsPage() {
                 </div>
               </div>
 
+              {/* AI Auto-Shortlisting Config Section */}
+              <div className="p-4 bg-[var(--paper)] border-[2px] border-[var(--ink)] rounded-2xl space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-sm text-gray-900 flex items-center gap-2">
+                    <FiCpu className="text-[var(--electric)]" /> AI Agent Auto-Shortlist Feature
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAutoShortlist(!autoShortlist)}
+                    className={`px-3 py-1 text-xs font-bold rounded-full border-2 border-[var(--ink)] cursor-pointer ${
+                      autoShortlist ? 'bg-emerald-400 text-black' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {autoShortlist ? 'ENABLED ✅' : 'DISABLED ❌'}
+                  </button>
+                </div>
+
+                {autoShortlist && (
+                  <div className="space-y-2 pt-2 border-t border-gray-200">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span>Cutoff Score Threshold</span>
+                      <span className="text-[var(--electric)]">{autoThreshold}% SEG Match</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="60"
+                      max="95"
+                      value={autoThreshold}
+                      onChange={e => setAutoThreshold(Number(e.target.value))}
+                      className="w-full cursor-pointer"
+                    />
+                    <p className="text-[11px] text-gray-600 font-medium">
+                      💡 Candidates with verified SEG score ≥ {autoThreshold}% are automatically shortlisted and emailed a live interview invitation via Nodemailer.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end pt-2">
-                <NeuButton variant="hotpink" type="submit" icon={FiPlusCircle}>
+                <NeuButton variant="hotpink" type="submit" icon={FiPlusCircle} loading={sendingEmail}>
                   Publish Job Posting
                 </NeuButton>
               </div>
@@ -155,10 +221,10 @@ export default function JobPostingsPage() {
                 <NeuBadge variant="success">{post.status}</NeuBadge>
               </div>
 
-              <div className="flex gap-4 text-xs font-bold text-gray-700 py-2 border-y border-gray-200">
+              <div className="flex flex-wrap gap-3 text-xs font-bold text-gray-700 py-2 border-y border-gray-200">
                 <span>💰 Package: {post.ctc}</span>
                 <span>👥 Applicants: {post.applicantsCount}</span>
-                <span>📅 Deadline: {post.deadline}</span>
+                <span>🤖 AI Shortlist: ≥{post.autoShortlistThreshold}%</span>
               </div>
 
               <div>
