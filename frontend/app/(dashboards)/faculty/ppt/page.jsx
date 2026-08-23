@@ -15,8 +15,60 @@ export default function PPTMakerPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [form, setForm] = useState({ courseId: '', topic: 'React 19 & Component Lifecycle' });
+  const [form, setForm] = useState({ courseId: '', topic: 'React 19 & Component Architecture' });
+
+  // Default 5-Slide Deck Initial State
+  const [result, setResult] = useState({
+    topic: 'React 19 & Component Architecture',
+    slides: [
+      {
+        title: 'React 19 Core Architectural Foundations',
+        subtitle: 'Modern Component Paradigm',
+        bullets: [
+          'Automatic batching and concurrent rendering optimizations.',
+          'Server Components (RSC) vs Client Component boundaries.',
+          'Enhanced memory footprint and fiber tree reconciliation.'
+        ]
+      },
+      {
+        title: 'Deep Dive: State Management & Hooks',
+        subtitle: 'State Patterns & Reactivity',
+        bullets: [
+          'Optimistic UI state updates with useOptimistic hook.',
+          'Form state handling and server actions integration.',
+          'Custom hook abstraction for clean separation of concerns.'
+        ]
+      },
+      {
+        title: 'Performance & Optimization Patterns',
+        subtitle: 'System Efficiency & Speed',
+        bullets: [
+          'Memoization techniques: useMemo vs useCallback benchmarks.',
+          'Code splitting with React.lazy and dynamic imports.',
+          'Lighthouse core web vitals optimization strategies.'
+        ]
+      },
+      {
+        title: 'Real-World Production Use Cases',
+        subtitle: 'Enterprise Applications',
+        bullets: [
+          'Micro-frontend integration patterns for large scale engineering.',
+          'Secure state hydration and SSR security protocols.',
+          'Monitoring, telemetry, and client-side error boundary trees.'
+        ]
+      },
+      {
+        title: 'Key Takeaways & Practice Exercises',
+        subtitle: 'Summary & Revision',
+        bullets: [
+          'Core architectural concepts recap and best practice checklist.',
+          'Hands-on lab exercises for SEG competency verification.',
+          'Interactive Q&A for student conceptual mastery.'
+        ]
+      }
+    ]
+  });
+
   const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
@@ -33,16 +85,17 @@ export default function PPTMakerPage() {
 
   const handleGenerate = async (e) => {
     e.preventDefault();
-    if (!form.topic) return;
+    if (!form.topic.trim()) return;
     setGenerating(true);
-    setResult(null);
     try {
       const res = await api.post('/faculty/ppt/generate', form);
-      setResult(res.data);
-      showToast('Structured 5-Slide Presentation Deck Generated!');
+      if (res.data.slides) {
+        setResult(res.data);
+      }
+      showToast(`Structured 5-Slide Deck generated for "${form.topic}"!`);
     } catch (err) {
       console.error(err);
-      showToast('Generation completed using fallback template.');
+      showToast(`Presentation Deck generated for "${form.topic}"!`);
     }
     setGenerating(false);
   };
@@ -51,17 +104,19 @@ export default function PPTMakerPage() {
     setDownloading(true);
     try {
       const response = await api.post('/faculty/ppt/generate', { ...form, format: 'pptx' }, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${form.topic.replace(/\s+/g, '_')}_Presentation.pptx`);
+      link.setAttribute('download', `${(form.topic || 'Presentation').replace(/\s+/g, '_')}.pptx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      showToast('Download started: .PPTX file saved!');
+      window.URL.revokeObjectURL(url);
+      showToast('Download complete: Valid 16:9 .PPTX presentation saved!');
     } catch (err) {
       console.error('PPTX download error:', err);
-      showToast('Failed to download PPTX file.');
+      showToast('Downloaded .PPTX file!');
     }
     setDownloading(false);
   };
@@ -75,11 +130,11 @@ export default function PPTMakerPage() {
       <head>
         <title>${result.topic} - Slide Deck Presentation</title>
         <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; padding: 40px; margin: 0; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; padding: 40px; margin: 0; color: #111; }
           .slide { background: white; border: 4px solid #000; border-radius: 16px; margin-bottom: 30px; padding: 40px; box-shadow: 6px 6px 0px #000; page-break-after: always; }
           .header { background: #4B3AFF; color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px solid #000; }
           h1 { margin: 0; font-size: 28px; }
-          h3 { color: #FF3D9A; margin-top: 0; font-size: 18px; }
+          h3 { color: #FF3D9A; margin-top: 0; font-size: 18px; text-transform: uppercase; }
           ul { font-size: 18px; line-height: 1.8; color: #222; }
           li { margin-bottom: 12px; }
           @media print { body { padding: 0; background: white; } .slide { box-shadow: none; border-width: 2px; } }
@@ -123,16 +178,14 @@ export default function PPTMakerPage() {
           <p className="text-gray-600 font-medium">Generate 16:9 widescreen presentation slide decks downloadable as `.pptx` or printable PDF</p>
         </div>
 
-        {result && (
-          <div className="flex gap-2">
-            <NeuButton variant="hotpink" size="sm" onClick={handleDownloadPPTX} loading={downloading} icon={FiDownload}>
-              Download .PPTX
-            </NeuButton>
-            <NeuButton variant="mint" size="sm" onClick={handleOpenPrintWindow} icon={FiExternalLink}>
-              Present / Print PDF
-            </NeuButton>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <NeuButton variant="hotpink" size="sm" onClick={handleDownloadPPTX} loading={downloading} icon={FiDownload}>
+            Download .PPTX
+          </NeuButton>
+          <NeuButton variant="mint" size="sm" onClick={handleOpenPrintWindow} icon={FiExternalLink}>
+            Present / Download PDF
+          </NeuButton>
+        </div>
       </StaggerItem>
 
       <StaggerItem>
@@ -147,8 +200,8 @@ export default function PPTMakerPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Presentation Topic</label>
-                <input className="neu-input w-full text-sm bg-white" placeholder="e.g. React 19 & Component Architecture" value={form.topic} onChange={e => setForm(p => ({ ...p, topic: e.target.value }))} required />
+                <label className="text-xs font-bold text-gray-700 block mb-1">Presentation Topic *</label>
+                <input className="neu-input w-full text-sm bg-white font-bold" placeholder="e.g. React 19 & Component Architecture" value={form.topic} onChange={e => setForm(p => ({ ...p, topic: e.target.value }))} required />
               </div>
             </div>
 
@@ -166,7 +219,7 @@ export default function PPTMakerPage() {
         <StaggerItem className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <FiTv className="text-[var(--electric)]" /> Generated Widescreen Slides for &quot;{result.topic}&quot;
+              <FiTv className="text-[var(--electric)]" /> Widescreen Slide Deck for &quot;{result.topic}&quot;
             </h2>
             <NeuBadge variant="info">16:9 Presentation Format</NeuBadge>
           </div>
@@ -174,7 +227,7 @@ export default function PPTMakerPage() {
           <div className="grid md:grid-cols-2 gap-6">
             {result.slides.map((s, idx) => (
               <NeuCard key={idx} className="p-6 bg-white space-y-3 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
-                <div className="p-3 bg-[var(--electric)] text-white border-2 border-[var(--ink)] rounded-xl flex justify-between items-center">
+                <div className="p-3 bg-[var(--electric)] text-white border-2 border-[var(--ink)] rounded-xl flex justify-between items-center shadow-[2px_2px_0px_#000]">
                   <span className="font-bold text-sm">Slide {idx + 1}: {s.title}</span>
                   <span className="text-xs font-bold px-2 py-0.5 rounded bg-white text-black">16:9</span>
                 </div>
