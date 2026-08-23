@@ -10,7 +10,14 @@ class ApiClient {
 
   static void init({String? baseUrl}) {
     // Using localhost since adb reverse binds to IPv6 [::]:5000 on some physical devices
-    final defaultUrl = kIsWeb ? 'http://localhost:5000' : 'http://localhost:5000';
+    String defaultUrl = 'http://localhost:5000';
+    if (!kIsWeb) {
+      try {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          defaultUrl = 'http://10.0.2.2:5000';
+        }
+      } catch (_) {}
+    }
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl ?? defaultUrl,
       connectTimeout: const Duration(seconds: 10),
