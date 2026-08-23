@@ -32,7 +32,7 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
 
       final courseId = courses[0]['_id'];
 
-      final response = await ApiClient.instance.post('/api/faculty/generate-ppt', data: {
+      final response = await ApiClient.instance.post('/api/faculty/ppt/generate', data: {
         "courseId": courseId,
         "topic": _topicController.text.trim(),
       });
@@ -96,13 +96,6 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Preview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  NeuButton(
-                    text: 'Download .pptx',
-                    backgroundColor: NeuTheme.mint,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Download not implemented yet')));
-                    },
-                  )
                 ],
               ),
               const SizedBox(height: 16),
