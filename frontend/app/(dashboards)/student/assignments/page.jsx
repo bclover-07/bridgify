@@ -6,6 +6,7 @@ import NeuButton from '@/components/shared/NeuButton';
 import NeuBadge from '@/components/shared/NeuBadge';
 import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
+import NeuModal from '@/components/shared/NeuModal';
 import api from '@/lib/api';
 
 export default function StudentAssignmentsPage() {
@@ -17,6 +18,7 @@ export default function StudentAssignmentsPage() {
   const [code, setCode] = useState('');
   const [codeResult, setCodeResult] = useState(null);
   const [submittingCode, setSubmittingCode] = useState(false);
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '' });
 
   useEffect(() => {
     fetchAssignments();
@@ -64,9 +66,17 @@ export default function StudentAssignmentsPage() {
         ...prev,
         [selectedAsgn.id]: { score, correctCount, totalQ }
       }));
-      alert(`Assignment Submitted! Score: ${score}% (${correctCount}/${totalQ} correct). Readiness score boosted!`);
+      setModalConfig({
+        isOpen: true,
+        title: 'Success!',
+        message: `Assignment Submitted! Score: ${score}% (${correctCount}/${totalQ} correct). Readiness score boosted!`
+      });
     } catch (e) {
-      alert('Submission failed: ' + (e.response?.data?.error || e.message));
+      setModalConfig({
+        isOpen: true,
+        title: 'Error',
+        message: 'Submission failed: ' + (e.response?.data?.error || e.message)
+      });
     }
   };
 
@@ -83,7 +93,11 @@ export default function StudentAssignmentsPage() {
         });
       }
     } catch (e) {
-      alert('Code review failed: ' + (e.response?.data?.error || e.message));
+      setModalConfig({
+        isOpen: true,
+        title: 'Error',
+        message: 'Code review failed: ' + (e.response?.data?.error || e.message)
+      });
     }
     setSubmittingCode(false);
   };
@@ -246,6 +260,22 @@ export default function StudentAssignmentsPage() {
           )}
         </StaggerItem>
       </div>
+
+      <NeuModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.title}
+        size="sm"
+      >
+        <div className="space-y-6">
+          <p className="text-gray-700 font-medium">{modalConfig.message}</p>
+          <div className="flex justify-end">
+            <NeuButton variant="primary" onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}>
+              Okay
+            </NeuButton>
+          </div>
+        </div>
+      </NeuModal>
     </PageTransition>
   );
 }
