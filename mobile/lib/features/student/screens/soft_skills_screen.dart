@@ -36,7 +36,7 @@ class _SoftSkillsScreenState extends ConsumerState<SoftSkillsScreen> {
     } catch (e) {
       setState(() {
         _sessionStarted = true;
-        _messages.add({"sender": "ai", "text": "Failed to connect to AI Coach. (Mock mode)"});
+        _messages.add({"sender": "ai", "text": "Failed to connect to AI Coach."});
         _isLoading = false;
       });
     }
@@ -52,14 +52,14 @@ class _SoftSkillsScreenState extends ConsumerState<SoftSkillsScreen> {
       _isLoading = true;
     });
 
-    // We don't have a backend HTTP route for subsequent rounds in this mock setup.
-    // In a real app this would use WebSockets. We will simulate a response.
-    await Future.delayed(const Duration(seconds: 1));
-    
-    setState(() {
-      _messages.add({"sender": "ai", "text": "That's an interesting perspective. Consider the implications on scalability. What are your thoughts on that?"});
-      _isLoading = false;
-    });
+    // The backend does not currently expose a REST endpoint for subsequent rounds.
+    // Full real-time voice/socket integration is required for this action.
+    if (mounted) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Socket integration required for further debate rounds.'))
+      );
+    }
   }
 
   @override

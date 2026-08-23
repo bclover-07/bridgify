@@ -35,7 +35,6 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
             "company": drive['company'] ?? 'Unknown',
             "role": role['title'] ?? 'Role',
             "package": role['package'] ?? '',
-            "match": 85, // Mock match percentage for now as it's not calculated on backend
             "type": drive['status'] == 'active' ? 'Active' : 'Upcoming',
           });
         }
@@ -108,18 +107,6 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
                   style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: job['match'] >= 80 ? NeuTheme.mint : NeuTheme.amber,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: NeuTheme.ink, width: 2),
-                ),
-                child: Text(
-                  '${job['match']}% Match',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              )
             ],
           ),
           const Spacer(),
