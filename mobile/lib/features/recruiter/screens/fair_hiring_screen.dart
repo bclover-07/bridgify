@@ -14,28 +14,76 @@ class FairHiringScreen extends ConsumerStatefulWidget {
 
 class _FairHiringScreenState extends ConsumerState<FairHiringScreen> {
   bool isLoading = true;
-  String selectedDrive = "Summer Internship 2026";
-  final List<String> drives = [
-    "Summer Internship 2026",
-    "FTE Software Engineer",
-    "Data Science Associate",
-  ];
+  String? selectedDriveId;
+  List<dynamic> drives = [];
+  Map<String, dynamic>? diversityData;
 
   @override
   void initState() {
     super.initState();
-    _fetchDiversityData();
+    _fetchDrives();
+  }
+
+  Future<void> _fetchDrives() async {
+    try {
+      final response = await ApiClient.instance.get('/api/recruiter/dashboard');
+      setState(() {
+        drives = response.data['recentDrives'] ?? [];
+        if (drives.isNotEmpty) {
+          selectedDriveId = drives[0]['_id'];
+          _fetchDiversityData();
+        } else {
+          isLoading = false;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        drives = [];
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load drives: ${e.toString()}')));
+      }
+    }
   }
 
   Future<void> _fetchDiversityData() async {
+    if (selectedDriveId == null) return;
     setState(() => isLoading = true);
     try {
-      await ApiClient.instance.get('/api/recruiter/diversity', queryParameters: {"drive": selectedDrive});
-      setState(() => isLoading = false);
+      final response = await ApiClient.instance.get('/api/recruiter/fair-hiring/$selectedDriveId');
+      setState(() {
+        diversityData = response.data;
+        isLoading = false;
+      });
     } catch (e) {
-      // Offline fallback: data is mocked in charts
-      setState(() => isLoading = false);
+      setState(() {
+        diversityData = null; // No mock data
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load fair hiring data: ${e.toString()}')));
+      }
     }
+  }
+
+  List<PieChartSectionData> _generateChartData(Map<String, dynamic> distribution) {
+    if (distribution.isEmpty) {
+      return [PieChartSectionData(value: 100, color: Colors.grey, title: 'No Data', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))];
+    }
+    final colors = [NeuTheme.mint, NeuTheme.hotpink, NeuTheme.sky, NeuTheme.amber, NeuTheme.violet, NeuTheme.coral];
+    int colorIndex = 0;
+    return distribution.entries.map((e) {
+      final color = colors[colorIndex % colors.length];
+      colorIndex++;
+      return PieChartSectionData(
+        value: (e.value as num).toDouble(),
+        color: color,
+        title: '${e.key}\n${e.value}',
+        radius: 50,
+        titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: NeuTheme.ink),
+      );
+    }).toList();
   }
 
   @override
@@ -51,28 +99,38 @@ class _FairHiringScreenState extends ConsumerState<FairHiringScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            NeuCard(
-              backgroundColor: NeuTheme.paper,
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: selectedDrive,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down, color: NeuTheme.ink),
-                  items: drives.map((d) => DropdownMenuItem(value: d, child: Text(d, style: const TextStyle(fontWeight: FontWeight.bold)))).toList(),
-                  onChanged: (v) {
-                    if (v != null) {
-                      setState(() => selectedDrive = v);
-                      _fetchDiversityData();
-                    }
-                  },
+            if (drives.isNotEmpty)
+              NeuCard(
+                backgroundColor: NeuTheme.paper,
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedDriveId,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down, color: NeuTheme.ink),
+                    items: drives.map((d) {
+                      return DropdownMenuItem(
+                        value: d['_id'] as String,
+                        child: Text('${d['company']} Drive', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      );
+                    }).toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => selectedDriveId = v);
+                        _fetchDiversityData();
+                      }
+                    },
+                  ),
                 ),
               ),
-            ),
+            if (drives.isEmpty && !isLoading)
+              const Center(child: Text('No drives available')),
             const SizedBox(height: 24),
             Expanded(
               child: isLoading
                 ? const Center(child: CircularProgressIndicator(color: NeuTheme.acid))
-                : SingleChildScrollView(
+                : diversityData == null 
+                  ? const Center(child: Text('No data found.'))
+                  : SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -80,7 +138,7 @@ class _FairHiringScreenState extends ConsumerState<FairHiringScreen> {
                           backgroundColor: Colors.white,
                           child: Column(
                             children: [
-                              const Text('Gender Diversity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Text('Branch Distribution', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
                               SizedBox(
                                 height: 200,
@@ -88,11 +146,7 @@ class _FairHiringScreenState extends ConsumerState<FairHiringScreen> {
                                   PieChartData(
                                     sectionsSpace: 2,
                                     centerSpaceRadius: 40,
-                                    sections: [
-                                      PieChartSectionData(value: 55, color: NeuTheme.mint, title: 'Male', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                      PieChartSectionData(value: 40, color: NeuTheme.hotpink, title: 'Female', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                      PieChartSectionData(value: 5, color: NeuTheme.sky, title: 'Other', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                    ],
+                                    sections: _generateChartData(diversityData?['branchDistribution'] ?? {}),
                                   ),
                                 ),
                               ),
@@ -103,45 +157,20 @@ class _FairHiringScreenState extends ConsumerState<FairHiringScreen> {
                         NeuCard(
                           backgroundColor: Colors.white,
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Text('Bias Analysis', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Text('Stage Distribution', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  const Icon(Icons.check_circle, color: NeuTheme.mint),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: RichText(
-                                      text: const TextSpan(
-                                        style: TextStyle(color: NeuTheme.ink, fontSize: 14),
-                                        children: [
-                                          TextSpan(text: 'Skill Matching: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                          TextSpan(text: 'High alignment with required skills (92% match). No significant degree bias detected.'),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                ],
+                              SizedBox(
+                                height: 200,
+                                child: PieChart(
+                                  PieChartData(
+                                    sectionsSpace: 2,
+                                    centerSpaceRadius: 40,
+                                    sections: _generateChartData(diversityData?['stageDistribution'] ?? {}),
+                                  ),
+                                ),
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  const Icon(Icons.warning, color: NeuTheme.amber),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: RichText(
-                                      text: const TextSpan(
-                                        style: TextStyle(color: NeuTheme.ink, fontSize: 14),
-                                        children: [
-                                          TextSpan(text: 'Geographic Diversity: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                          TextSpan(text: 'Candidates are heavily concentrated in Tier 1 cities (78%). Consider expanding outreach.'),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                ],
-                              )
                             ],
                           ),
                         )

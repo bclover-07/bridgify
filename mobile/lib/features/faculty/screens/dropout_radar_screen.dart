@@ -14,6 +14,7 @@ class DropoutRadarScreen extends ConsumerStatefulWidget {
 class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with SingleTickerProviderStateMixin {
   bool isLoading = true;
   List<dynamic> students = [];
+  String courseName = "Radar";
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
@@ -40,19 +41,34 @@ class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with Si
 
   Future<void> _fetchRiskStudents() async {
     try {
-      final response = await ApiClient.instance.get('/api/faculty/radar');
+      final coursesRes = await ApiClient.instance.get('/api/faculty/courses');
+      final courses = coursesRes.data['courses'] as List<dynamic>? ?? [];
+      
+      if (courses.isEmpty) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final courseId = courses[0]['_id'];
+
+      final response = await ApiClient.instance.get('/api/faculty/dropout-radar/$courseId');
       setState(() {
-        students = response.data['data'] ?? [];
+        courseName = response.data['courseName'] ?? "Radar";
+        students = response.data['students'] ?? [];
+        // Only show High/Medium risk students
+        students = students.where((s) => s['riskLevel'] == 'HIGH' || s['riskLevel'] == 'MEDIUM').toList();
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        students = [
-          {"id": "S101", "name": "Arjun Kumar", "risk_level": "High", "attendance": 45, "score": 30},
-          {"id": "S105", "name": "Priya Singh", "risk_level": "Medium", "attendance": 65, "score": 55},
-        ];
+        students = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load dropout radar: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -60,7 +76,7 @@ class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with Si
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dropout Radar'),
+        title: Text('$courseName - Dropout Radar'),
         backgroundColor: NeuTheme.coral,
         foregroundColor: Colors.white,
       ),
@@ -98,11 +114,13 @@ class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with Si
                 const Text('Intervention Required', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.builder(
+                  child: students.isEmpty 
+                  ? const Center(child: Text("No at-risk students found.", style: TextStyle(fontSize: 16)))
+                  : ListView.builder(
                     itemCount: students.length,
                     itemBuilder: (context, index) {
                       final s = students[index];
-                      final isHighRisk = s['risk_level'] == 'High';
+                      final isHighRisk = s['riskLevel'] == 'HIGH';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: NeuCard(
@@ -126,10 +144,10 @@ class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with Si
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(s['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                    Text('ID: ${s['id']} | Risk: ${s['risk_level']}', style: TextStyle(color: Colors.grey[800], fontSize: 12)),
+                                    Text(s['name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                    Text('Roll No: ${s['rollNo'] ?? 'N/A'} | Risk: ${s['riskLevel']}', style: TextStyle(color: Colors.grey[800], fontSize: 12)),
                                     const SizedBox(height: 4),
-                                    Text('Attendance: ${s['attendance']}% | Score: ${s['score']}%', style: TextStyle(color: Colors.grey[800], fontSize: 12, fontWeight: FontWeight.bold)),
+                                    Text('Attendance: ${s['attendanceRate'] ?? 0}% | Score: ${s['recentAvgScore'] ?? 0}%', style: TextStyle(color: Colors.grey[800], fontSize: 12, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               ),
@@ -137,7 +155,9 @@ class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with Si
                                 text: 'Alert',
                                 color: NeuTheme.ink,
                                 textColor: Colors.white,
-                                onPressed: () {},
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alert dispatched (Not Implemented)')));
+                                },
                               )
                             ],
                           ),

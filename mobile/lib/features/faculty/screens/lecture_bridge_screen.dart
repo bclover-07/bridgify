@@ -12,33 +12,52 @@ class LectureBridgeScreen extends ConsumerStatefulWidget {
 }
 
 class _LectureBridgeScreenState extends ConsumerState<LectureBridgeScreen> {
-  final TextEditingController _topicController = TextEditingController();
-  final TextEditingController _subtopicsController = TextEditingController();
-  bool _isGenerating = false;
-  List<dynamic> _microLessons = [];
+  bool _isLoading = true;
+  String _courseName = "Course";
+  int _coverageRate = 0;
+  List<dynamic> _taughtNotTested = [];
+  List<dynamic> _testedNotTaught = [];
 
-  Future<void> _generateLessons() async {
-    if (_topicController.text.trim().isEmpty) return;
-    setState(() => _isGenerating = true);
-    
+  @override
+  void initState() {
+    super.initState();
+    _fetchBridgeData();
+  }
+
+  Future<void> _fetchBridgeData() async {
     try {
-      final response = await ApiClient.instance.post('/api/faculty/bridge', data: {
-        "topic": _topicController.text,
-        "subtopics": _subtopicsController.text,
+      final coursesRes = await ApiClient.instance.get('/api/faculty/courses');
+      final courses = coursesRes.data['courses'] as List<dynamic>? ?? [];
+      
+      if (courses.isEmpty) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final courseId = courses[0]['_id'];
+
+      final response = await ApiClient.instance.post('/api/faculty/lecture-bridge', data: {
+        "courseId": courseId
       });
+      
       setState(() {
-        _microLessons = response.data['data'] ?? [];
-        _isGenerating = false;
+        _courseName = response.data['courseName'] ?? "Course";
+        _coverageRate = response.data['coverageRate'] ?? 0;
+        _taughtNotTested = response.data['taughtNotTested'] ?? [];
+        _testedNotTaught = response.data['testedNotTaught'] ?? [];
+        _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _microLessons = [
-          {"id": 1, "title": "Intro to ${_topicController.text}", "type": "Video", "status": "Ready"},
-          {"id": 2, "title": "Core Concepts", "type": "Article", "status": "Ready"},
-          {"id": 3, "title": "Quick Quiz", "type": "Quiz", "status": "Ready"},
-        ];
-        _isGenerating = false;
+        _taughtNotTested = []; // No mock data
+        _testedNotTaught = [];
+        _isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load bridge data: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -46,98 +65,101 @@ class _LectureBridgeScreenState extends ConsumerState<LectureBridgeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lecture Bridge'),
+        title: const Text('Lecture Bridge Analysis'),
         backgroundColor: NeuTheme.electric,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            NeuCard(
-              backgroundColor: NeuTheme.paper,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text('Create Micro-Learning Module', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  NeuInput(
-                    controller: _topicController,
-                    hintText: 'Main Topic (e.g. Advanced AI)',
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator(color: NeuTheme.electric))
+        : Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                NeuCard(
+                  backgroundColor: NeuTheme.paper,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text('$_courseName Analysis', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Syllabus Coverage', style: TextStyle(fontSize: 16)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: NeuTheme.electric,
+                              border: Border.all(color: NeuTheme.ink, width: 2),
+                            ),
+                            child: Text('$_coverageRate%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                          )
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  NeuInput(
-                    controller: _subtopicsController,
-                    hintText: 'Subtopics (comma separated)',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  NeuButton(
-                    text: _isGenerating ? 'Building Bridge...' : 'Generate Micro-Lessons',
-                    color: NeuTheme.electric,
-                    textColor: Colors.white,
-                    onPressed: _isGenerating ? null : _generateLessons,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (_microLessons.isNotEmpty) ...[
-              const Text('Generated Module', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _microLessons.length,
-                  itemBuilder: (context, index) {
-                    final lesson = _microLessons[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: NeuCard(
-                        backgroundColor: Colors.white,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: NeuTheme.electric,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: NeuTheme.ink, width: 2),
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  lesson['type'] == 'Video' ? Icons.play_arrow : (lesson['type'] == 'Quiz' ? Icons.quiz : Icons.article),
-                                  color: Colors.white,
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: NeuCard(
+                          backgroundColor: Colors.white,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Taught, Not Tested', style: TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.coral)),
+                              const Divider(color: NeuTheme.ink, thickness: 2),
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: _taughtNotTested.length,
+                                  itemBuilder: (context, index) {
+                                    final skill = _taughtNotTested[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                      child: Text('• ${skill['label'] ?? skill['skillId']}', style: const TextStyle(fontSize: 14)),
+                                    );
+                                  },
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(lesson['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  Text(lesson['type'], style: TextStyle(color: Colors.grey[700], fontSize: 14)),
-                                ],
-                              ),
-                            ),
-                            NeuButton(
-                              text: 'Publish',
-                              color: NeuTheme.mint,
-                              onPressed: () {},
-                            )
-                          ],
+                              )
+                            ],
+                          )
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-            ]
-          ],
-        ),
-      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: NeuCard(
+                          backgroundColor: Colors.white,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Tested, Not Taught', style: TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.amber)),
+                              const Divider(color: NeuTheme.ink, thickness: 2),
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: _testedNotTaught.length,
+                                  itemBuilder: (context, index) {
+                                    final skill = _testedNotTaught[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                      child: Text('• ${skill['label'] ?? skill['skillId']}', style: const TextStyle(fontSize: 14)),
+                                    );
+                                  },
+                                ),
+                              )
+                            ],
+                          )
+                        ),
+                      )
+                    ],
+                  )
+                )
+              ],
+            ),
+          ),
     );
   }
 }

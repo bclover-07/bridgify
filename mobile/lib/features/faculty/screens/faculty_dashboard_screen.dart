@@ -27,18 +27,19 @@ class _FacultyDashboardScreenState extends ConsumerState<FacultyDashboardScreen>
     try {
       final response = await ApiClient.instance.get('/api/faculty/dashboard');
       setState(() {
-        _dashboardData = response.data['data'];
+        _dashboardData = response.data['stats'];
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _dashboardData = {
-          "total_students": 120,
-          "at_risk": 15,
-          "pending_assessments": 3,
-        };
+        _dashboardData = null; // No mock data
         _isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load dashboard: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -77,7 +78,7 @@ class _FacultyDashboardScreenState extends ConsumerState<FacultyDashboardScreen>
                     children: [
                       const Icon(Icons.people, size: 40, color: NeuTheme.ink),
                       const SizedBox(height: 8),
-                      Text('${_dashboardData?['total_students'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                      Text('${_dashboardData?['totalStudents'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                       const Text('Total Students'),
                     ],
                   ),
@@ -91,8 +92,8 @@ class _FacultyDashboardScreenState extends ConsumerState<FacultyDashboardScreen>
                     children: [
                       const Icon(Icons.warning, size: 40, color: Colors.white),
                       const SizedBox(height: 8),
-                      Text('${_dashboardData?['at_risk'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                      const Text('At Risk', style: TextStyle(color: Colors.white)),
+                      Text('${_dashboardData?['totalAssessments'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const Text('Total Assessments', style: TextStyle(color: Colors.white)),
                     ],
                   ),
                 ),

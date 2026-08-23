@@ -16,34 +16,49 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
   final TextEditingController _skillsController = TextEditingController();
   final TextEditingController _difficultyController = TextEditingController();
   bool _isGenerating = false;
-  String? _generatedStatement;
+  Map<String, dynamic>? _generatedStatement;
 
   Future<void> _generatePS() async {
     if (_roleController.text.trim().isEmpty) return;
     setState(() => _isGenerating = true);
     
     try {
-      final response = await ApiClient.instance.post('/api/recruiter/ps-generator', data: {
-        "role": _roleController.text,
-        "skills": _skillsController.text,
-        "difficulty": _difficultyController.text,
+      final rawIdea = "Role: ${_roleController.text.trim()}, Skills: ${_skillsController.text.trim()}, Difficulty: ${_difficultyController.text.trim()}";
+      final response = await ApiClient.instance.post('/api/recruiter/ps/generate', data: {
+        "rawIdea": rawIdea,
       });
       setState(() {
-        _generatedStatement = response.data['statement'];
+        _generatedStatement = response.data['problemStatement'];
         _isGenerating = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.data['message'] ?? 'Generated successfully')));
+      }
     } catch (e) {
       setState(() {
-        _generatedStatement = "Role: ${_roleController.text}\n\n"
-            "Problem Statement:\n"
-            "Design and implement a scalable microservice architecture for an e-commerce checkout flow. "
-            "Ensure the system handles high throughput and guarantees ACID properties during transactions.\n\n"
-            "Evaluation Criteria:\n"
-            "- Code Quality and Modularity\n"
-            "- Performance under load\n"
-            "- Correctness of business logic";
+        _generatedStatement = null; // No mock data
         _isGenerating = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Generation failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _publishPS() async {
+    if (_generatedStatement == null || _generatedStatement!['_id'] == null) return;
+    try {
+      final id = _generatedStatement!['_id'];
+      await ApiClient.instance.post('/api/recruiter/ps/$id/publish');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Problem statement published')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Publish failed: ${e.toString()}')));
+      }
     }
   }
 
@@ -83,7 +98,7 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
                   ),
                   const SizedBox(height: 16),
                   NeuButton(
-                    text: _isGenerating ? 'Generating...' : 'Generate Problem Statement',
+                    text: _isGenerating ? 'Generating via Agent...' : 'Generate Problem Statement',
                     color: NeuTheme.violet,
                     textColor: Colors.white,
                     onPressed: _isGenerating ? null : _generatePS,
@@ -100,7 +115,7 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
                   NeuButton(
                     text: 'Publish to Candidates',
                     color: NeuTheme.mint,
-                    onPressed: () {},
+                    onPressed: _publishPS,
                   ),
                 ],
               ),
@@ -109,9 +124,19 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
                 child: NeuCard(
                   backgroundColor: Colors.white,
                   child: SingleChildScrollView(
-                    child: Text(
-                      _generatedStatement!,
-                      style: const TextStyle(fontSize: 14, height: 1.5),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _generatedStatement!['title'] ?? 'Untitled PS',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _generatedStatement!['description'] ?? 'No description generated.',
+                          style: const TextStyle(fontSize: 14, height: 1.5),
+                        ),
+                      ],
                     ),
                   ),
                 ),

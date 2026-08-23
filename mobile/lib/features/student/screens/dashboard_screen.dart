@@ -17,6 +17,7 @@ class StudentDashboardScreen extends ConsumerStatefulWidget {
 class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _dashboardData;
+  Map<String, dynamic>? _readinessData;
 
   @override
   void initState() {
@@ -26,21 +27,26 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
 
   Future<void> _fetchDashboard() async {
     try {
-      final response = await ApiClient.instance.get('/api/student/dashboard');
+      final responses = await Future.wait([
+        ApiClient.instance.get('/api/student/dashboard'),
+        ApiClient.instance.get('/api/student/readiness?targetRole=Software%20Engineer'),
+      ]);
       setState(() {
-        _dashboardData = response.data['data'];
+        _dashboardData = responses[0].data;
+        _readinessData = responses[1].data;
         _isLoading = false;
       });
     } catch (e) {
-      // Mock fallback if backend is not seeded or fails
       setState(() {
-        _dashboardData = {
-          "readiness": {"technical": 85, "soft_skills": 70, "aptitude": 92},
-          "pending_assessments": 2,
-          "recent_activity": []
-        };
+        _dashboardData = null; // No mock data
+        _readinessData = null; // No mock data
         _isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load dashboard: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -53,9 +59,13 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
       return const Center(child: CircularProgressIndicator(color: NeuTheme.electric));
     }
 
-    final techScore = _dashboardData?['readiness']?['technical'] ?? 0;
-    final softScore = _dashboardData?['readiness']?['soft_skills'] ?? 0;
-    final aptScore = _dashboardData?['readiness']?['aptitude'] ?? 0;
+    final readinessScores = _readinessData?['readiness'] ?? {};
+    final techScore = readinessScores['technical'] ?? 0;
+    final softScore = readinessScores['softSkills'] ?? 0;
+    final aptScore = readinessScores['aptitude'] ?? 0;
+    
+    final assessments = _dashboardData?['upcomingAssessments'] as List<dynamic>? ?? [];
+    final pendingAssessmentsCount = assessments.length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -79,7 +89,7 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Readiness Radar',
+                  'Readiness Radar (Software Engineer)',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -151,7 +161,7 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
             children: [
               _buildActionCard(Icons.trending_up, 'Learning Path', NeuTheme.electric, Colors.white, () => context.push('/student/learning-path')),
               _buildActionCard(Icons.library_books, 'Study Hub', NeuTheme.hotpink, Colors.white, () => context.push('/student/study-hub')),
-              _buildActionCard(Icons.quiz, 'Assessments', NeuTheme.mint, NeuTheme.ink, () => context.push('/student/assessments')),
+              _buildActionCard(Icons.quiz, 'Assessments ($pendingAssessmentsCount)', NeuTheme.mint, NeuTheme.ink, () => context.push('/student/assessments')),
               _buildActionCard(Icons.work, 'Opportunities', NeuTheme.amber, NeuTheme.ink, () => context.push('/student/opportunities')),
             ],
           ),

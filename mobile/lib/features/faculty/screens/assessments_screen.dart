@@ -25,19 +25,22 @@ class _FacultyAssessmentsScreenState extends ConsumerState<FacultyAssessmentsScr
       final response = await ApiClient.instance.post('/api/faculty/assessments/generate', data: {
         "topic": _topicController.text,
         "difficulty": _difficulty,
+        "questionCount": 5,
       });
       setState(() {
-        _generatedQuestions = response.data['data'] ?? [];
+        _generatedQuestions = response.data['questions'] ?? [];
         _isGenerating = false;
       });
     } catch (e) {
       setState(() {
-        _generatedQuestions = [
-          {"q": "What is the Time Complexity of QuickSort?", "options": ["O(n)", "O(n log n)", "O(n^2)", "O(log n)"]},
-          {"q": "Which data structure uses LIFO?", "options": ["Queue", "Stack", "Tree", "Graph"]}
-        ];
+        _generatedQuestions = []; // No mock data
         _isGenerating = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate quiz: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -101,7 +104,7 @@ class _FacultyAssessmentsScreenState extends ConsumerState<FacultyAssessmentsScr
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text('${index + 1}. ${q['q']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('${index + 1}. ${q['question']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                             const SizedBox(height: 8),
                             ...q['options'].map<Widget>((opt) => Padding(
                               padding: const EdgeInsets.only(top: 4),

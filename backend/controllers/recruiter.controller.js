@@ -396,3 +396,44 @@ export async function getMarketplace(req, res, next) {
     next(error);
   }
 }
+
+export async function getPipeline(req, res, next) {
+  try {
+    const drives = await DriveEvent.find({ recruiterId: req.user._id }).populate('registrations.studentId', 'name student.cgpa');
+    let pipeline = [];
+    for (const drive of drives) {
+      for (const reg of drive.registrations) {
+        if (reg.studentId) {
+          pipeline.push({
+            id: reg.studentId._id,
+            name: reg.studentId.name,
+            stage: reg.stage,
+            score: reg.studentId.student?.cgpa || 0,
+            driveId: drive._id
+          });
+        }
+      }
+    }
+    res.json({ data: pipeline });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updatePipelineStage(req, res, next) {
+  try {
+    const { id, stage, driveId } = req.body;
+    const drive = await DriveEvent.findById(driveId);
+    if (!drive) return res.status(404).json({ error: 'Drive not found' });
+
+    const reg = drive.registrations.find(r => String(r.studentId) === String(id));
+    if (reg) {
+      reg.stage = stage;
+      reg.stageHistory.push({ stage, movedBy: req.user._id });
+      await drive.save();
+    }
+    res.json({ message: 'Stage updated' });
+  } catch (error) {
+    next(error);
+  }
+}

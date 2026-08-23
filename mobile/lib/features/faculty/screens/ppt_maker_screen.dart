@@ -13,31 +13,47 @@ class PPTMakerScreen extends ConsumerStatefulWidget {
 
 class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
   final TextEditingController _topicController = TextEditingController();
-  final TextEditingController _slidesController = TextEditingController(text: '10');
   bool _isGenerating = false;
-  List<dynamic> _slides = [];
+  Map<String, dynamic>? _generatedPPT;
 
   Future<void> _generatePPT() async {
     if (_topicController.text.trim().isEmpty) return;
     setState(() => _isGenerating = true);
     
     try {
-      final response = await ApiClient.instance.post('/api/faculty/ppt/generate', data: {
-        "topic": _topicController.text,
-        "num_slides": int.tryParse(_slidesController.text) ?? 10,
+      final coursesRes = await ApiClient.instance.get('/api/faculty/courses');
+      final courses = coursesRes.data['courses'] as List<dynamic>? ?? [];
+      
+      if (courses.isEmpty) {
+        setState(() => _isGenerating = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No courses found')));
+        return;
+      }
+
+      final courseId = courses[0]['_id'];
+
+      final response = await ApiClient.instance.post('/api/faculty/generate-ppt', data: {
+        "courseId": courseId,
+        "topic": _topicController.text.trim(),
       });
+
       setState(() {
-        _slides = response.data['data'] ?? [];
+        _generatedPPT = response.data['resource'];
         _isGenerating = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.data['message'] ?? 'PPT generated successfully')));
+      }
     } catch (e) {
       setState(() {
-        _slides = List.generate(
-          int.tryParse(_slidesController.text) ?? 5,
-          (i) => {"title": "Slide ${i + 1}", "content": "Auto-generated content for slide ${i + 1} about ${_topicController.text}."},
-        );
+        _generatedPPT = null; // No mock data
         _isGenerating = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate PPT: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -49,7 +65,7 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
         backgroundColor: NeuTheme.hotpink,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -66,14 +82,8 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
                     hintText: 'Topic (e.g. History of Web)',
                   ),
                   const SizedBox(height: 16),
-                  NeuInput(
-                    controller: _slidesController,
-                    hintText: 'Number of Slides',
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
                   NeuButton(
-                    text: _isGenerating ? 'Generating...' : 'Generate PPT',
+                    text: _isGenerating ? 'Generating via Agent...' : 'Generate PPT',
                     color: NeuTheme.hotpink,
                     onPressed: _isGenerating ? null : _generatePPT,
                   ),
@@ -81,7 +91,7 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            if (_slides.isNotEmpty) ...[
+            if (_generatedPPT != null) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -89,42 +99,36 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
                   NeuButton(
                     text: 'Download .pptx',
                     color: NeuTheme.mint,
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Download not implemented yet')));
+                    },
                   )
                 ],
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _slides.length,
-                  itemBuilder: (context, index) {
-                    final slide = _slides[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: NeuCard(
-                          backgroundColor: Colors.white,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                slide['title'],
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                slide['content'],
-                                style: TextStyle(fontSize: 14, color: Colors.grey[800]),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: NeuCard(
+                  backgroundColor: Colors.white,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          _generatedPPT!['title'] ?? 'Generated PPT',
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    );
-                  },
+                        const SizedBox(height: 16),
+                        Text(
+                          _generatedPPT!['content'] ?? 'No content generated.',
+                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ]

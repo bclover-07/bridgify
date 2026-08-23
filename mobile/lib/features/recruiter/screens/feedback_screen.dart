@@ -19,17 +19,53 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   double _fitRating = 3.0;
   bool _isSubmitting = false;
 
+  bool _isLoadingDrives = true;
+  List<dynamic> _drives = [];
+  String? _selectedDriveId;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDrives();
+  }
+
+  Future<void> _fetchDrives() async {
+    try {
+      final response = await ApiClient.instance.get('/api/recruiter/dashboard');
+      setState(() {
+        _drives = response.data['recentDrives'] ?? [];
+        if (_drives.isNotEmpty) {
+          _selectedDriveId = _drives[0]['_id'];
+        }
+        _isLoadingDrives = false;
+      });
+    } catch (e) {
+      setState(() {
+        _drives = [];
+        _isLoadingDrives = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load drives: ${e.toString()}')));
+      }
+    }
+  }
+
   Future<void> _submitFeedback() async {
-    if (_candidateIdController.text.trim().isEmpty || _feedbackController.text.trim().isEmpty) return;
+    if (_candidateIdController.text.trim().isEmpty || _feedbackController.text.trim().isEmpty || _selectedDriveId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select drive, student ID, and feedback')));
+      return;
+    }
     
     setState(() => _isSubmitting = true);
     try {
-      await ApiClient.instance.post('/api/recruiter/feedback', data: {
-        "candidate_id": _candidateIdController.text,
-        "technical_rating": _techRating.toInt(),
-        "communication_rating": _commRating.toInt(),
-        "culture_fit_rating": _fitRating.toInt(),
-        "comments": _feedbackController.text,
+      await ApiClient.instance.post('/api/recruiter/feedback/$_selectedDriveId', data: {
+        "studentId": _candidateIdController.text.trim(),
+        "feedback": _feedbackController.text.trim(),
+        // Translating UI ratings to abstract skill signals (optional but good for SEG)
+        "skillSignals": [
+          {"skillId": "tech", "score": _techRating * 20, "feedback": "Technical rating"},
+          {"skillId": "comm", "score": _commRating * 20, "feedback": "Communication rating"}
+        ]
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Feedback Submitted!')));
@@ -43,7 +79,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Feedback queued offline')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to submit: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -58,11 +94,38 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
         backgroundColor: NeuTheme.coral,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: _isLoadingDrives 
+        ? const Center(child: CircularProgressIndicator(color: NeuTheme.coral))
+        : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_drives.isNotEmpty)
+              NeuCard(
+                backgroundColor: NeuTheme.paper,
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedDriveId,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down, color: NeuTheme.ink),
+                    items: _drives.map((d) {
+                      return DropdownMenuItem(
+                        value: d['_id'] as String,
+                        child: Text('${d['company']} Drive', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      );
+                    }).toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => _selectedDriveId = v);
+                      }
+                    },
+                  ),
+                ),
+              ),
+            if (_drives.isEmpty)
+              const Center(child: Text("No active drives to submit feedback for.")),
+            const SizedBox(height: 24),
             NeuCard(
               backgroundColor: NeuTheme.paper,
               child: Column(
@@ -72,7 +135,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   const SizedBox(height: 16),
                   NeuInput(
                     controller: _candidateIdController,
-                    hintText: 'Candidate ID or Name',
+                    hintText: 'Student Object ID',
                   ),
                 ],
               ),
@@ -114,7 +177,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               text: _isSubmitting ? 'Submitting...' : 'Submit Feedback',
               color: NeuTheme.coral,
               textColor: Colors.white,
-              onPressed: _isSubmitting ? null : _submitFeedback,
+              onPressed: _isSubmitting || _drives.isEmpty ? null : _submitFeedback,
             )
           ],
         ),

@@ -12,33 +12,33 @@ class StudyHubScreen extends ConsumerStatefulWidget {
 }
 
 class _StudyHubScreenState extends ConsumerState<StudyHubScreen> {
+  final TextEditingController _roleController = TextEditingController();
   bool isLoading = false;
-  List<dynamic> flashcards = [];
-  bool fileUploaded = false;
+  String? generatedPlan;
 
-  Future<void> _uploadFile() async {
+  Future<void> _generatePlan() async {
+    if (_roleController.text.trim().isEmpty) return;
     setState(() => isLoading = true);
     
     try {
-      // Simulate multipart file upload
-      final response = await ApiClient.instance.post('/api/student/study-hub/upload', data: {});
+      final response = await ApiClient.instance.post('/api/student/study-plan/generate', data: {
+        "targetRole": _roleController.text.trim()
+      });
       setState(() {
-        flashcards = response.data['data'] ?? [
-          {"front": "What is polymorphism?", "back": "The condition of occurring in several different forms."},
-          {"front": "Define Encapsulation", "back": "Bundling of data with the methods that operate on that data."}
-        ];
-        fileUploaded = true;
+        generatedPlan = response.data['plan'];
         isLoading = false;
       });
+      if (mounted && response.data['message'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.data['message'])));
+      }
     } catch (e) {
       setState(() {
-        flashcards = [
-          {"front": "What is polymorphism?", "back": "The condition of occurring in several different forms."},
-          {"front": "Define Encapsulation", "back": "Bundling of data with the methods that operate on that data."}
-        ];
-        fileUploaded = true;
+        generatedPlan = null; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to generate plan: ${e.toString()}')));
+      }
     }
   }
 
@@ -59,58 +59,46 @@ class _StudyHubScreenState extends ConsumerState<StudyHubScreen> {
               backgroundColor: NeuTheme.paper,
               child: Column(
                 children: [
-                  const Icon(Icons.cloud_upload, size: 64, color: NeuTheme.ink),
+                  const Icon(Icons.menu_book, size: 64, color: NeuTheme.ink),
                   const SizedBox(height: 16),
-                  const Text('Upload Notes / PDF', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('AI Study Plan Generator', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  NeuInput(
+                    controller: _roleController,
+                    hintText: 'Target Role (e.g., Data Scientist)',
+                  ),
                   const SizedBox(height: 16),
                   NeuButton(
-                    text: 'Select File',
+                    text: isLoading ? 'Generating via Agent...' : 'Generate Plan',
                     color: NeuTheme.hotpink,
-                    onPressed: _uploadFile,
+                    textColor: Colors.white,
+                    onPressed: isLoading ? null : _generatePlan,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator(color: NeuTheme.hotpink))
-            else if (fileUploaded)
+            if (generatedPlan != null)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Generated Flashcards', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text('Your Study Plan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: flashcards.length,
-                        itemBuilder: (context, index) {
-                          return _buildFlashcard(flashcards[index]);
-                        },
+                      child: NeuCard(
+                        backgroundColor: Colors.white,
+                        child: SingleChildScrollView(
+                          child: Text(
+                            generatedPlan!,
+                            style: const TextStyle(fontSize: 14, height: 1.5, color: NeuTheme.ink),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFlashcard(Map<String, dynamic> cardData) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: NeuCard(
-        backgroundColor: NeuTheme.electric,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Q:', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-            Text(cardData['front'], style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
-            const Divider(color: Colors.white30, height: 24),
-            const Text('A:', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-            Text(cardData['back'], style: const TextStyle(fontSize: 16, color: Colors.white)),
           ],
         ),
       ),

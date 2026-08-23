@@ -36,22 +36,21 @@ class _StudentDirectoryScreenState extends ConsumerState<StudentDirectoryScreen>
     try {
       final response = await ApiClient.instance.get('/api/admin/students');
       setState(() {
-        allStudents = response.data['data'] ?? [];
+        allStudents = response.data['students'] ?? [];
         filteredStudents = List.from(allStudents);
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        allStudents = List.generate(25, (index) => {
-          "id": "S10${index + 1}",
-          "name": "Student ${index + 1}",
-          "branch": index % 2 == 0 ? "Computer Science" : "Electronics",
-          "year": "3rd Year",
-          "cgpa": (7.0 + (index % 3)).toStringAsFixed(1),
-        });
-        filteredStudents = List.from(allStudents);
+        allStudents = []; // No mock data
+        filteredStudents = [];
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load students: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -59,9 +58,10 @@ class _StudentDirectoryScreenState extends ConsumerState<StudentDirectoryScreen>
     final q = _searchController.text.toLowerCase();
     setState(() {
       filteredStudents = allStudents.where((s) {
-        return s['name'].toString().toLowerCase().contains(q) ||
-               s['id'].toString().toLowerCase().contains(q) ||
-               s['branch'].toString().toLowerCase().contains(q);
+        final name = (s['name'] ?? '').toString().toLowerCase();
+        final rollNo = (s['student']?['rollNo'] ?? s['_id'] ?? '').toString().toLowerCase();
+        final branch = (s['student']?['branch'] ?? '').toString().toLowerCase();
+        return name.contains(q) || rollNo.contains(q) || branch.contains(q);
       }).toList();
       _currentPage = 0;
     });
@@ -81,13 +81,13 @@ class _StudentDirectoryScreenState extends ConsumerState<StudentDirectoryScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ID: ${student['id']}'),
+            Text('Roll No: ${student['student']?['rollNo'] ?? student['_id']}'),
             const SizedBox(height: 8),
-            Text('Branch: ${student['branch']}'),
+            Text('Branch: ${student['student']?['branch'] ?? 'N/A'}'),
             const SizedBox(height: 8),
-            Text('Year: ${student['year']}'),
+            Text('Year: ${student['student']?['year'] ?? 'N/A'}'),
             const SizedBox(height: 8),
-            Text('CGPA: ${student['cgpa']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('CGPA: ${student['student']?['cgpa'] ?? 'N/A'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
         actions: [
@@ -151,10 +151,10 @@ class _StudentDirectoryScreenState extends ConsumerState<StudentDirectoryScreen>
                               ],
                               rows: currentStudents.map((s) => DataRow(
                                 cells: [
-                                  DataCell(Text(s['id'])),
-                                  DataCell(Text(s['name'])),
-                                  DataCell(Text(s['branch'])),
-                                  DataCell(Text(s['cgpa'], style: const TextStyle(fontWeight: FontWeight.bold))),
+                                  DataCell(Text(s['student']?['rollNo'] ?? s['_id']?.toString().substring(0, 6) ?? '')),
+                                  DataCell(Text(s['name'] ?? '')),
+                                  DataCell(Text(s['student']?['branch'] ?? '')),
+                                  DataCell(Text((s['student']?['cgpa'] ?? '').toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
                                   DataCell(
                                     IconButton(
                                       icon: const Icon(Icons.visibility),

@@ -13,7 +13,7 @@ class OpportunitiesScreen extends ConsumerStatefulWidget {
 
 class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
   bool isLoading = true;
-  List<dynamic> jobs = [];
+  List<Map<String, dynamic>> jobs = [];
 
   @override
   void initState() {
@@ -24,20 +24,35 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
   Future<void> _fetchJobs() async {
     try {
       final response = await ApiClient.instance.get('/api/student/opportunities');
+      final drives = response.data['opportunities'] as List<dynamic>? ?? [];
+      
+      final List<Map<String, dynamic>> parsedJobs = [];
+      for (var drive in drives) {
+        final roles = drive['roles'] as List<dynamic>? ?? [];
+        for (var role in roles) {
+          parsedJobs.add({
+            "id": role['_id'] ?? drive['_id'],
+            "company": drive['company'] ?? 'Unknown',
+            "role": role['title'] ?? 'Role',
+            "package": role['package'] ?? '',
+            "match": 85, // Mock match percentage for now as it's not calculated on backend
+            "type": drive['status'] == 'active' ? 'Active' : 'Upcoming',
+          });
+        }
+      }
+
       setState(() {
-        jobs = response.data['data'] ?? [];
+        jobs = parsedJobs;
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        jobs = [
-          {"id": 1, "company": "TechCorp", "role": "Frontend Developer", "match": 92, "type": "Full-time"},
-          {"id": 2, "company": "DataSys", "role": "Backend Engineer", "match": 85, "type": "Internship"},
-          {"id": 3, "company": "Innovate LLC", "role": "UI/UX Designer", "match": 60, "type": "Contract"},
-          {"id": 4, "company": "CloudNet", "role": "DevOps Engineer", "match": 75, "type": "Full-time"},
-        ];
+        jobs = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load opportunities: ${e.toString()}')));
+      }
     }
   }
 
@@ -51,20 +66,22 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
       ),
       body: isLoading
         ? const Center(child: CircularProgressIndicator(color: NeuTheme.amber))
-        : GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.8,
+        : jobs.isEmpty
+          ? const Center(child: Text("No upcoming opportunities found."))
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: jobs.length,
+              itemBuilder: (context, index) {
+                final job = jobs[index];
+                return _buildJobCard(job);
+              },
             ),
-            itemCount: jobs.length,
-            itemBuilder: (context, index) {
-              final job = jobs[index];
-              return _buildJobCard(job);
-            },
-          ),
     );
   }
 
@@ -115,11 +132,18 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
             job['role'],
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, height: 1.1),
           ),
+          if (job['package'].toString().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(job['package'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: NeuTheme.electric)),
+            ),
           const Spacer(),
           NeuButton(
             text: 'Apply',
             color: NeuTheme.acid,
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Application feature coming soon')));
+            },
           )
         ],
       ),

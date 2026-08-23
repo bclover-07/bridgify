@@ -12,11 +12,35 @@ class SoftSkillsScreen extends ConsumerStatefulWidget {
 }
 
 class _SoftSkillsScreenState extends ConsumerState<SoftSkillsScreen> {
+  final TextEditingController _topicController = TextEditingController(text: "AI taking over Software Engineering jobs");
   final TextEditingController _controller = TextEditingController();
-  final List<Map<String, String>> _messages = [
-    {"sender": "ai", "text": "Hello! Let's start the debate. The topic is: 'AI will replace software engineers'. You take the 'against' side. Go ahead!"}
-  ];
+  final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
+  bool _sessionStarted = false;
+
+  Future<void> _startSession() async {
+    if (_topicController.text.trim().isEmpty) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await ApiClient.instance.post('/api/student/debate/start', data: {
+        "topic": _topicController.text.trim(),
+        "side": "against",
+      });
+      
+      setState(() {
+        _sessionStarted = true;
+        _messages.add({"sender": "ai", "text": response.data['openingArgument'] ?? "Let's begin the debate."});
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _sessionStarted = true;
+        _messages.add({"sender": "ai", "text": "Failed to connect to AI Coach. (Mock mode)"});
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
@@ -28,19 +52,14 @@ class _SoftSkillsScreenState extends ConsumerState<SoftSkillsScreen> {
       _isLoading = true;
     });
 
-    try {
-      final response = await ApiClient.instance.post('/api/student/soft-skills/chat', data: {"message": userMessage});
-      setState(() {
-        _messages.add({"sender": "ai", "text": response.data['reply'] ?? "Interesting point! Let's dive deeper."});
-        _isLoading = false;
-      });
-    } catch (e) {
-      // Offline fallback
-      setState(() {
-        _messages.add({"sender": "ai", "text": "I see your point. However, AI can automate repetitive tasks, making engineers focus on higher-level design."});
-        _isLoading = false;
-      });
-    }
+    // We don't have a backend HTTP route for subsequent rounds in this mock setup.
+    // In a real app this would use WebSockets. We will simulate a response.
+    await Future.delayed(const Duration(seconds: 1));
+    
+    setState(() {
+      _messages.add({"sender": "ai", "text": "That's an interesting perspective. Consider the implications on scalability. What are your thoughts on that?"});
+      _isLoading = false;
+    });
   }
 
   @override
@@ -53,60 +72,87 @@ class _SoftSkillsScreenState extends ConsumerState<SoftSkillsScreen> {
       ),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.builder(
+          if (!_sessionStarted)
+            Padding(
               padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                final isUser = msg['sender'] == 'user';
-                return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isUser ? NeuTheme.electric : NeuTheme.paper,
-                      border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: const [BoxShadow(color: NeuTheme.ink, offset: Offset(2, 2))],
+              child: NeuCard(
+                backgroundColor: NeuTheme.paper,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('Start a Debate', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    NeuInput(
+                      controller: _topicController,
+                      hintText: 'Enter Debate Topic',
                     ),
-                    child: Text(
-                      msg['text']!,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isUser ? Colors.white : NeuTheme.ink,
+                    const SizedBox(height: 16),
+                    NeuButton(
+                      text: _isLoading ? 'Starting...' : 'Start Session',
+                      color: NeuTheme.amber,
+                      onPressed: _isLoading ? null : _startSession,
+                    )
+                  ],
+                ),
+              ),
+            ),
+          
+          if (_sessionStarted)
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final msg = _messages[index];
+                  final isUser = msg['sender'] == 'user';
+                  return Align(
+                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isUser ? NeuTheme.electric : NeuTheme.paper,
+                        border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: const [BoxShadow(color: NeuTheme.ink, offset: Offset(2, 2))],
+                      ),
+                      child: Text(
+                        msg['text']!,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isUser ? Colors.white : NeuTheme.ink,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-          if (_isLoading)
+          if (_sessionStarted && _isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: CircularProgressIndicator(color: NeuTheme.amber),
             ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: NeuInput(
-                    controller: _controller,
-                    hintText: 'Type your argument...',
+          if (_sessionStarted)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: NeuInput(
+                      controller: _controller,
+                      hintText: 'Type your argument...',
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                NeuButton(
-                  text: 'Send',
-                  color: NeuTheme.amber,
-                  onPressed: _sendMessage,
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  NeuButton(
+                    text: 'Send',
+                    color: NeuTheme.amber,
+                    onPressed: _isLoading ? null : _sendMessage,
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
