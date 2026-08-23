@@ -56,7 +56,6 @@ export default function StudyHubPage() {
     { id: 'code', label: 'AI Code Compiler', icon: FiCode },
     { id: 'interview', label: 'Mock Interview', icon: FiVideo },
     { id: 'debate', label: 'Voice AI Debate Coach', icon: FiMessageSquare },
-    { id: 'resources', label: 'Micro-Learning Notes', icon: FiBookOpen },
   ];
 
   // AI Study Guardian Camera Toggle
@@ -651,29 +650,7 @@ export default function StudyHubPage() {
             </motion.div>
           )}
 
-          {/* TAB 5: MICRO-LEARNING RESOURCES */}
-          {activeTab === 'resources' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 space-y-4">
-              <h3 className="text-xl font-bold">Bite-Sized Micro-Learning Notes & Concept Cards</h3>
-              {loadingResources ? (
-                <div className="p-8 text-center font-bold">Fetching faculty notes & materials...</div>
-              ) : resources.length > 0 ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {resources.map((item, i) => (
-                    <NeuCard key={i} className="p-5 bg-white space-y-2 border-[3px] border-[var(--ink)]">
-                      <h4 className="font-bold text-base text-[var(--electric)]">{item.technology || item.title || 'Micro Learning Note'}</h4>
-                      <p className="text-xs text-gray-700 leading-relaxed">{item.description || item.demandSummary || 'Faculty verified bite-sized concept summary.'}</p>
-                      <NeuBadge variant="info">{item.category || 'Curriculum Module'}</NeuBadge>
-                    </NeuCard>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center text-gray-500 font-bold bg-white border-[3px] border-[var(--ink)] rounded-xl">
-                  No micro-learning notes published yet.
-                </div>
-              )}
-            </motion.div>
-          )}
+
         </div>
       </NeuCard>
     </div>
