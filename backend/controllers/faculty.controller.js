@@ -452,29 +452,50 @@ export async function autoAssignFromLectureNotes(req, res, next) {
       console.warn('runAssessmentGenerator fallback:', gErr.message);
     }
 
+    const formattedQuestions = (genResult.questions && genResult.questions.length > 0)
+      ? genResult.questions.map(q => ({
+          questionText: q.questionText || q.question || 'Topic practice question',
+          type: 'mcq',
+          options: Array.isArray(q.options) ? q.options.map((opt, i) => ({
+            text: typeof opt === 'string' ? opt : opt.text || 'Option',
+            isCorrect: i === (q.correctAnswerIndex || 0) || opt.isCorrect === true
+          })) : [
+            { text: ocrData.topics[0] || 'Topic A', isCorrect: true },
+            { text: 'Topic B', isCorrect: false },
+          ],
+          skillId: q.skillId || 'dsa.basics',
+          bloomLevel: q.bloomLevel || 'understand',
+          maxMarks: q.maxMarks || q.weightage || 10,
+          explanation: q.explanation || 'Extracted from lecture notes.',
+        }))
+      : [
+          {
+            questionText: `Which key topic was covered in the lecture "${ocrData.topics[0] || 'Core Principles'}"?`,
+            type: 'mcq',
+            skillId: 'dsa.basics',
+            bloomLevel: 'understand',
+            maxMarks: 10,
+            options: [
+              { text: ocrData.topics[0] || 'Topic A', isCorrect: true },
+              { text: 'Topic B', isCorrect: false },
+              { text: 'Topic C', isCorrect: false },
+              { text: 'Topic D', isCorrect: false },
+            ],
+            explanation: 'Extracted directly from faculty lecture notes.',
+          }
+        ];
+
     const Assessment = (await import('../models/Assessment.js')).default;
     const publishedAssessment = await Assessment.create({
       courseId: targetCourseId,
       facultyId: req.user._id,
       institutionId,
       title: title || `Lecture Practice Assignment: ${ocrData.topics[0] || 'Topic Practice'}`,
-      description: ocrData.summary,
+      topic: ocrData.topics[0] || 'Lecture Practice',
+      instructions: ocrData.summary,
       status: 'published',
-      questions: genResult.questions || [
-        {
-          questionText: `Which key topic was covered in the lecture "${ocrData.topics[0] || 'Core Principles'}"?`,
-          questionType: 'multiple_choice',
-          skillId: 'dsa.basics',
-          difficulty: 'medium',
-          options: [ocrData.topics[0] || 'Topic A', 'Topic B', 'Topic C', 'Topic D'],
-          correctAnswerIndex: 0,
-          explanation: 'Extracted directly from faculty lecture notes.',
-          weightage: 10,
-        }
-      ],
-      totalMarks: 50,
-      passingMarks: 25,
-      timeLimitMinutes: 30,
+      questions: formattedQuestions,
+      totalMarks: formattedQuestions.reduce((sum, q) => sum + (q.maxMarks || 10), 0),
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
