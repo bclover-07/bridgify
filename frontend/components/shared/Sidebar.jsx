@@ -14,6 +14,7 @@ import {
   FiStar, FiLogOut, FiMap, FiUser
 } from 'react-icons/fi';
 import useAuthStore from '@/lib/store/authStore';
+import Logo from './Logo';
 
 const roleConfigs = {
   student: {
@@ -99,9 +100,8 @@ export default function Sidebar({ role }) {
     <nav className="flex flex-col h-full">
       <div className="px-5 pt-16 lg:pt-5 pb-4">
         <Link href="/" className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-full border-[3px] border-[var(--ink)] flex items-center justify-center" style={{ background: config.accentBg }}>
-            <div className="w-3 h-3 bg-white rounded-full" />
-          </div>
+          <Logo size={36} />
+
           <span className="font-bold text-lg tracking-tight">Bridgify</span>
         </Link>
         <p className="text-sm font-bold mt-2 px-1" style={{ color: config.accentBg }}>

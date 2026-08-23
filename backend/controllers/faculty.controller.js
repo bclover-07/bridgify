@@ -743,7 +743,7 @@ export async function mentorshipMatch(req, res, next) {
   }
 }
 
-export async function generatePPT(req, res, next) {
+export async function generatePPTAgent(req, res, next) {
   try {
     const { courseId, topic } = req.body;
     if (!topic) return res.status(400).json({ error: 'Topic is required' });

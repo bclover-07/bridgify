@@ -7,6 +7,7 @@ import NeuCard from '@/components/shared/NeuCard';
 import NeuButton from '@/components/shared/NeuButton';
 import NeuBadge from '@/components/shared/NeuBadge';
 import api from '@/lib/api';
+import InterviewAvatar from '@/components/shared/InterviewAvatar';
 
 export default function StudyHubPage() {
   const [activeTab, setActiveTab] = useState('interview');
@@ -38,6 +39,8 @@ export default function StudyHubPage() {
   const [interviewCameraActive, setInterviewCameraActive] = useState(false);
   const [proctorStatus, setProctorStatus] = useState('Environment Checked & Clear');
   const interviewVideoRef = useRef(null);
+  const avatarRef = useRef(null);
+  const [isListeningInterview, setIsListeningInterview] = useState(false);
 
   // Voice AI Debate State (TTS + STT)
   const [debateTopic, setDebateTopic] = useState('AI taking over Software Engineering jobs');
@@ -184,6 +187,29 @@ export default function StudyHubPage() {
     }
   };
 
+  const startInterviewVoiceInput = () => {
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => setIsListeningInterview(true);
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInterviewAnswer(prev => prev ? prev + ' ' + transcript : transcript);
+        setIsListeningInterview(false);
+      };
+      recognition.onerror = () => setIsListeningInterview(false);
+      recognition.onend = () => setIsListeningInterview(false);
+
+      recognition.start();
+    } else {
+      alert('Speech recognition is not supported in this browser.');
+    }
+  };
+
   const handleStartInterview = async () => {
     setLoading(true);
     try {
@@ -196,6 +222,10 @@ export default function StudyHubPage() {
         targetRole: interviewRole,
         currentQuestion: `Welcome to your ${interviewRole} mock interview. Question 1: Explain the difference between synchronous and asynchronous execution in node/browser runtimes, and how event loops schedule microtasks vs macrotasks.`,
       });
+      const question = `Welcome to your ${interviewRole} mock interview. Question 1: Explain the difference between synchronous and asynchronous execution in node/browser runtimes, and how event loops schedule microtasks vs macrotasks.`;
+      if (avatarRef.current) {
+        avatarRef.current.speak(question);
+      }
       if (!interviewCameraActive) toggleInterviewCamera();
     } catch (err) {
       console.error(err);
@@ -204,6 +234,10 @@ export default function StudyHubPage() {
         targetRole: interviewRole,
         currentQuestion: `Question 1: Explain how React reconciliation (Virtual DOM diffing) optimizes UI updates compared to direct DOM manipulation.`,
       });
+      const fallbackQ = `Question 1: Explain how React reconciliation (Virtual DOM diffing) optimizes UI updates compared to direct DOM manipulation.`;
+      if (avatarRef.current) {
+        avatarRef.current.speak(fallbackQ);
+      }
     } finally {
       setLoading(false);
     }
@@ -221,10 +255,14 @@ export default function StudyHubPage() {
     setInterviewAnswer('');
 
     // Advance to next question
+    const nextQuestion = `Question ${interviewAnswersList.length + 2}: How do you design database indices in MongoDB for high-cardinality multi-field queries?`;
     setInterviewSession(prev => ({
       ...prev,
-      currentQuestion: `Question ${interviewAnswersList.length + 2}: How do you design database indices in MongoDB for high-cardinality multi-field queries?`,
+      currentQuestion: nextQuestion,
     }));
+    if (avatarRef.current) {
+      avatarRef.current.speak(nextQuestion);
+    }
   };
 
   const handleStartDebate = async () => {
@@ -479,6 +517,12 @@ export default function StudyHubPage() {
 
                 <div className="space-y-4 flex flex-col justify-between">
                   <div>
+                    <h3 className="text-xl font-bold flex items-center gap-2 mb-2">
+                      <FiVideo className="text-[var(--electric)]" /> AI Interviewer Avatar
+                    </h3>
+                    <div className="relative w-full h-[280px] bg-slate-100 border-[3px] border-[var(--ink)] rounded-2xl overflow-hidden mb-4">
+                      <InterviewAvatar ref={avatarRef} vrmUrl="/model/alex.vrm" />
+                    </div>
                     <h3 className="text-xl font-bold mb-3">Interview Parameters & Role Selection</h3>
                     <div className="space-y-3">
                       <div>
@@ -519,11 +563,16 @@ export default function StudyHubPage() {
                           value={interviewAnswer}
                           onChange={e => setInterviewAnswer(e.target.value)}
                           className="neu-input w-full text-sm resize-none bg-white"
-                          placeholder="Type your detailed technical explanation here..."
+                          placeholder="Type your detailed technical explanation here, or click Speak..."
                         />
-                        <NeuButton variant="primary" icon={FiSend} onClick={handleSubmitInterviewAnswer} className="w-full">
-                          Submit Answer to AI Interviewer
-                        </NeuButton>
+                        <div className="flex gap-2">
+                          <NeuButton variant={isListeningInterview ? 'coral' : 'accent'} icon={FiMic} onClick={startInterviewVoiceInput}>
+                            {isListeningInterview ? 'Listening...' : 'Speak'}
+                          </NeuButton>
+                          <NeuButton variant="primary" icon={FiSend} onClick={handleSubmitInterviewAnswer} className="flex-1">
+                            Submit Answer to AI Interviewer
+                          </NeuButton>
+                        </div>
                       </div>
                     </div>
                   )}
