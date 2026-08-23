@@ -168,6 +168,15 @@ async function runTests() {
     return { pathsCount: res.data.paths?.length, selectedPathId: res.data.selectedPathId };
   });
 
+  await testEndpoint('POST Student Toggle Milestone Goal', async () => {
+    const res = await apiCall(studentToken).post('/student/milestones/toggle', {
+      targetRole: 'fullstack-developer',
+      goalId: 'w1-g1',
+      done: true,
+    });
+    return { message: res.data.message, goalId: res.data.goalId };
+  });
+
   await testEndpoint('POST Student Select Path', async () => {
     const res = await apiCall(studentToken).post(
       '/student/readiness/select-path',

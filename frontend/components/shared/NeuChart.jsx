@@ -78,7 +78,7 @@ export function NeuPieChart({ data, height = 300, nameKey = 'name', valueKey = '
   );
 }
 
-export function NeuRadarChart({ data, dataKeys = [], height = 300, angleKey = 'subject' }) {
+export function NeuRadarChart({ data, dataKeys = [], height = 300, angleKey = 'name' }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data}>
