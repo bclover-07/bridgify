@@ -13,7 +13,7 @@ const DEMO_USERS = [
   {
     name: 'Arjun Reddy',
     email: 'arjun@mrdu.edu',
-    password: 'Bridgify@2026',
+    password: 'test123',
     role: 'student',
     isActive: true,
     student: {
@@ -25,7 +25,7 @@ const DEMO_USERS = [
   {
     name: 'Prof. Lakshmi Naidu',
     email: 'lakshmi.naidu@mrdu.edu',
-    password: 'Bridgify@2026',
+    password: 'faculty123',
     role: 'faculty',
     isActive: true,
     faculty: {
@@ -36,14 +36,14 @@ const DEMO_USERS = [
   {
     name: 'Institution Admin',
     email: 'admin@mrdu.edu',
-    password: 'Bridgify@2026',
+    password: 'admin123',
     role: 'admin',
     isActive: true
   },
   {
     name: 'Ravi Menon',
     email: 'ravi@techspark.com',
-    password: 'Bridgify@2026',
+    password: 'recruiter123',
     role: 'recruiter',
     isActive: true,
     recruiter: {
@@ -60,20 +60,23 @@ async function seedDemoUsers() {
     console.log('Connected.');
 
     for (const userData of DEMO_USERS) {
-      const existingUser = await User.findOne({ email: userData.email });
-      if (existingUser) {
-        console.log(`User ${userData.email} already exists, skipping...`);
-        continue;
-      }
-
-      console.log(`Creating user: ${userData.email}...`);
       const passwordHash = await bcrypt.hash(userData.password, 12);
-      
-      await User.create({
-        ...userData,
-        passwordHash
-      });
-      console.log(`Created ${userData.email} successfully.`);
+      const existingUser = await User.findOne({ email: userData.email });
+
+      if (existingUser) {
+        console.log(`Updating password hash for existing user: ${userData.email}...`);
+        existingUser.passwordHash = passwordHash;
+        existingUser.isActive = true;
+        await existingUser.save();
+        console.log(`Updated ${userData.email} successfully.`);
+      } else {
+        console.log(`Creating user: ${userData.email}...`);
+        await User.create({
+          ...userData,
+          passwordHash
+        });
+        console.log(`Created ${userData.email} successfully.`);
+      }
     }
 
     console.log('Seed complete!');
