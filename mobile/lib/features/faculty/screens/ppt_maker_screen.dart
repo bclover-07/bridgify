@@ -38,7 +38,7 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
       });
 
       setState(() {
-        _generatedPPT = response.data['resource'];
+        _generatedPPT = response.data;
         _isGenerating = false;
       });
       if (mounted) {
@@ -103,24 +103,48 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
                 aspectRatio: 16 / 9,
                 child: NeuCard(
                   backgroundColor: Colors.white,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          _generatedPPT!['title'] ?? 'Generated PPT',
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-                          textAlign: TextAlign.center,
+                  child: PageView.builder(
+                    itemCount: (_generatedPPT!['slides'] as List<dynamic>? ?? []).length,
+                    itemBuilder: (context, index) {
+                      final slide = _generatedPPT!['slides'][index];
+                      return Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              slide['title'] ?? 'Slide',
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: NeuTheme.hotpink),
+                            ),
+                            if (slide['subtitle'] != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+                                child: Text(
+                                  slide['subtitle'],
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+                                ),
+                              ),
+                            const SizedBox(height: 16),
+                            ...(slide['bullets'] as List<dynamic>? ?? []).map((bullet) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('• ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                      Expanded(
+                                        child: Text(
+                                          bullet.toString(),
+                                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _generatedPPT!['content'] ?? 'No content generated.',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[800]),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
               ),

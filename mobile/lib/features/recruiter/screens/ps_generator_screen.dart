@@ -131,12 +131,12 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _generatedStatement!['title'] ?? 'Untitled PS',
+                          _generatedStatement!['refined']?['title'] ?? _generatedStatement!['title'] ?? 'Untitled PS',
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          _generatedStatement!['description'] ?? 'No description generated.',
+                          _generatedStatement!['refined']?['background'] ?? _generatedStatement!['description'] ?? 'No description generated.',
                           style: const TextStyle(fontSize: 14, height: 1.5),
                         ),
                       ],

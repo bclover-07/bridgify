@@ -103,7 +103,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       separatorBuilder: (context, index) => const Divider(color: NeuTheme.ink, thickness: NeuTheme.borderWidth),
                       itemBuilder: (context, index) {
                         final t = transactions[index];
-                        final isVerified = true; 
+                        final isVerified = t['isVerified'] ?? true; 
                         return StaggerItem(
                           index: index + 2,
                           child: Padding(

@@ -9,12 +9,13 @@ class ApiClient {
   static const storage = FlutterSecureStorage();
 
   static void init({String? baseUrl}) {
-    // Using localhost since adb reverse binds to IPv6 [::]:5000 on some physical devices
-    String defaultUrl = 'http://localhost:5000';
+    // Use the machine's local IP to support both physical devices and emulators
+    String defaultUrl = 'http://10.20.135.188:5000';
     if (!kIsWeb) {
       try {
         if (defaultTargetPlatform == TargetPlatform.android) {
-          defaultUrl = 'http://10.0.2.2:5000';
+          // Keep 10.0.2.2 as fallback for Android Emulator just in case
+          // defaultUrl = 'http://10.0.2.2:5000';
         }
       } catch (_) {}
     }

@@ -25,7 +25,7 @@ class _FacultyCurriculumGapScreenState extends ConsumerState<FacultyCurriculumGa
         "targetIndustrySkills": _skillsController.text.trim(),
       });
       setState(() {
-        _analysisResult = response.data['gapAnalysis'];
+        _analysisResult = response.data['report'];
         _isAnalyzing = false;
       });
     } catch (e) {
@@ -91,31 +91,26 @@ class _FacultyCurriculumGapScreenState extends ConsumerState<FacultyCurriculumGa
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: (_analysisResult!['missingSkills'] as List<dynamic>? ?? []).map<Widget>((s) => Container(
+                          children: (_analysisResult!['gaps'] as List<dynamic>? ?? []).map<Widget>((g) => Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(color: NeuTheme.coral, borderRadius: BorderRadius.circular(4), border: Border.all(color: NeuTheme.ink)),
-                            child: Text(s.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          )).toList(),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text('Covered Skills', style: TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.mint)),
-                        const Divider(color: NeuTheme.ink, thickness: 2),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: (_analysisResult!['coveredSkills'] as List<dynamic>? ?? []).map<Widget>((s) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: NeuTheme.mint, borderRadius: BorderRadius.circular(4), border: Border.all(color: NeuTheme.ink)),
-                            child: Text(s.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text(g['skillId'].toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           )).toList(),
                         ),
                         const SizedBox(height: 16),
                         const Text('Recommendations', style: TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.sky)),
                         const Divider(color: NeuTheme.ink, thickness: 2),
-                        ...(_analysisResult!['recommendations'] as List<dynamic>? ?? []).map((r) => Padding(
+                        ...(_analysisResult!['gaps'] as List<dynamic>? ?? []).map((g) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Text('• $r', style: const TextStyle(fontSize: 14)),
+                          child: Text('• ${g['recommendation']}', style: const TextStyle(fontSize: 14)),
                         )),
+                        const SizedBox(height: 16),
+                        const Text('Summary', style: TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.mint)),
+                        const Divider(color: NeuTheme.ink, thickness: 2),
+                        Text('Total Syllabus Skills: ${_analysisResult!['totalSyllabusSkills']}'),
+                        Text('Covered High Demand Skills: ${_analysisResult!['coveredHighDemand']}'),
+                        Text('Missing High Demand Skills: ${_analysisResult!['missingHighDemand']}'),
+                        Text('Alignment Score: ${_analysisResult!['alignmentScore']}%', style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),

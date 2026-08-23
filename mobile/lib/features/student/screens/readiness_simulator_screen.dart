@@ -48,7 +48,7 @@ class _ReadinessSimulatorScreenState extends ConsumerState<ReadinessSimulatorScr
     try {
       final response = await ApiClient.instance.get('/api/student/readiness?targetRole=${Uri.encodeComponent(targetRole)}');
       setState(() {
-        data = response.data['readiness'];
+        data = response.data;
         isLoading = false;
         isSimulating = false;
       });
@@ -72,18 +72,23 @@ class _ReadinessSimulatorScreenState extends ConsumerState<ReadinessSimulatorScr
         data: {
           'targetRole': targetRole,
           'hypotheticalScores': {
-            'technical': newTech,
-            'softSkills': newSoft,
-            'aptitude': newApt,
+            'react.core': newTech, // Assuming react.core as a proxy for tech in this simulation
+            'soft.communication': newSoft,
+            'aptitude.quant': newApt,
           }
         },
       );
       setState(() {
-        data = response.data['readiness'];
+        // The what-if returns { readiness: { currentReadiness, whatIfReadiness, improvement } }
+        // We will just show a snackbar with the improvement since updating the whole chart requires full data
         isSimulating = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Simulation complete. (Not saved)')));
+        final whatIf = response.data['readiness'];
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Simulation complete! New Readiness: ${whatIf['whatIfReadiness']}% (+${whatIf['improvement']}%)'),
+          duration: const Duration(seconds: 4),
+        ));
       }
     } catch (e) {
       setState(() => isSimulating = false);
@@ -101,9 +106,26 @@ class _ReadinessSimulatorScreenState extends ConsumerState<ReadinessSimulatorScr
       );
     }
 
-    final techScore = data?['technical'] ?? 0;
-    final softScore = data?['softSkills'] ?? 0;
-    final aptScore = data?['aptitude'] ?? 0;
+    final overall = data?['overallReadiness'] ?? 0;
+    final breakdown = data?['skillBreakdown'] as List<dynamic>? ?? [];
+    
+    // Group skills by category for visualization
+    final frontendSkills = breakdown.where((s) => s['category'] == 'frontend').toList();
+    final backendSkills = breakdown.where((s) => s['category'] == 'backend').toList();
+    final softSkills = breakdown.where((s) => s['category'] == 'soft').toList();
+
+    double getAvg(List<dynamic> skills) {
+      if (skills.isEmpty) return 0;
+      double sum = 0;
+      for (var s in skills) {
+        sum += (s['currentScore'] as num).toDouble();
+      }
+      return sum / skills.length;
+    }
+
+    final techScore = getAvg(frontendSkills);
+    final backScore = getAvg(backendSkills);
+    final softScore = getAvg(softSkills);
 
     return Scaffold(
       appBar: AppBar(
@@ -161,20 +183,20 @@ class _ReadinessSimulatorScreenState extends ConsumerState<ReadinessSimulatorScr
                     backgroundColor: NeuTheme.cyan,
                     child: Column(
                       children: [
-                        const Text('Technical Readiness', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        const Text('Overall Readiness', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
                               child: LinearProgressIndicator(
-                                value: techScore / 100,
+                                value: overall / 100,
                                 backgroundColor: Colors.white,
                                 color: NeuTheme.ink,
                                 minHeight: 20,
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Text('$techScore%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            Text('${overall}%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ],
@@ -188,20 +210,20 @@ class _ReadinessSimulatorScreenState extends ConsumerState<ReadinessSimulatorScr
                     backgroundColor: NeuTheme.hotpink,
                     child: Column(
                       children: [
-                        const Text('Soft Skills Readiness', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                        const Text('Frontend Skills', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                         const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
                               child: LinearProgressIndicator(
-                                value: softScore / 100,
+                                value: techScore / 100,
                                 backgroundColor: Colors.white,
                                 color: NeuTheme.ink,
                                 minHeight: 20,
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Text('$softScore%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text('${techScore.toInt()}%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                           ],
                         ),
                       ],
@@ -215,20 +237,20 @@ class _ReadinessSimulatorScreenState extends ConsumerState<ReadinessSimulatorScr
                     backgroundColor: NeuTheme.amber,
                     child: Column(
                       children: [
-                        const Text('Aptitude Readiness', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        const Text('Soft Skills Readiness', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
                               child: LinearProgressIndicator(
-                                value: aptScore / 100,
+                                value: softScore / 100,
                                 backgroundColor: Colors.white,
                                 color: NeuTheme.ink,
                                 minHeight: 20,
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Text('$aptScore%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            Text('${softScore.toInt()}%', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ],
@@ -243,7 +265,7 @@ class _ReadinessSimulatorScreenState extends ConsumerState<ReadinessSimulatorScr
                     child: NeuButton(
                       text: 'Run What-If Simulation',
                       backgroundColor: NeuTheme.sky,
-                      onPressed: () => _showWhatIfDialog(techScore.toInt(), softScore.toInt(), aptScore.toInt()),
+                      onPressed: () => _showWhatIfDialog(techScore.toInt(), softScore.toInt(), 50),
                     ),
                   ),
                 ),

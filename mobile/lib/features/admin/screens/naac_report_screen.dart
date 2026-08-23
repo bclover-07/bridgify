@@ -55,7 +55,12 @@ class _NAACReportScreenState extends ConsumerState<NAACReportScreen> {
         "end_date": _endDate!.toIso8601String(),
       });
       setState(() {
-        _generatedReport = response.data['report'] ?? "Report generated but empty.";
+        final r = response.data['report'];
+        if (r is Map) {
+          _generatedReport = "Summary: ${r['summary']}\n\nCriterion 1: ${r['criterion1']?['title']} - Score: ${r['criterion1']?['score']} (${r['criterion1']?['status']})\nCriterion 2: ${r['criterion2']?['title']} - Score: ${r['criterion2']?['score']} (${r['criterion2']?['status']})\nCriterion 3: ${r['criterion3']?['title']} - Score: ${r['criterion3']?['score']} (${r['criterion3']?['status']})\nCriterion 4: ${r['criterion4']?['title']} - Score: ${r['criterion4']?['score']} (${r['criterion4']?['status']})";
+        } else {
+          _generatedReport = r?.toString() ?? "Report generated but empty.";
+        }
         _isGenerating = false;
       });
     } catch (e) {

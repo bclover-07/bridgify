@@ -28,7 +28,7 @@ class _FacultyAssessmentsScreenState extends ConsumerState<FacultyAssessmentsScr
         "questionCount": 5,
       });
       setState(() {
-        _generatedQuestions = response.data['questions'] ?? [];
+        _generatedQuestions = response.data['assessment']?['questions'] ?? [];
         _isGenerating = false;
       });
     } catch (e) {

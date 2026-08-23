@@ -194,23 +194,23 @@ export async function generateNAACReport(req, res, next) {
 
 export async function getAnalytics(req, res, next) {
   try {
-    const departmentReadiness = [
-      { department: 'Computer Science (CSE)', score: 88, target: 90 },
-      { department: 'Information Tech (IT)', score: 78, target: 85 },
-      { department: 'Electronics (ECE)', score: 89, target: 88 },
-      { department: 'Electrical (EEE)', score: 75, target: 80 },
-      { department: 'Mechanical (MECH)', score: 70, target: 75 },
+    const branchStats = [
+      { _id: 'CSE', count: 120 },
+      { _id: 'IT', count: 95 },
+      { _id: 'ECE', count: 80 },
+      { _id: 'EEE', count: 60 },
+      { _id: 'MECH', count: 45 },
     ];
 
-    const skillGaps = [
-      { skill: 'React & Frontend', studentAverage: 86, industryDemand: 92 },
-      { skill: 'Node.js & APIs', studentAverage: 82, industryDemand: 90 },
-      { skill: 'System Design', studentAverage: 74, industryDemand: 88 },
-      { skill: 'Python & AI/ML', studentAverage: 89, industryDemand: 85 },
-      { skill: 'Data Structures', studentAverage: 85, industryDemand: 95 },
+    const skillDistribution = [
+      { _id: 'Web', avgConfidence: 86 },
+      { _id: 'Node', avgConfidence: 82 },
+      { _id: 'Sys', avgConfidence: 74 },
+      { _id: 'AI', avgConfidence: 89 },
+      { _id: 'DSA', avgConfidence: 85 },
     ];
 
-    res.json({ departmentReadiness, skillGaps });
+    res.json({ branchStats, skillDistribution });
   } catch (error) {
     next(error);
   }

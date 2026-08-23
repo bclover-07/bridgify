@@ -50,9 +50,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = response.data['user'] as Map<String, dynamic>?;
 
       // Save token securely
-      await ApiClient.storage.write(key: 'jwt', value: token);
-      await ApiClient.storage.write(key: 'user_role', value: user['role']);
-      await ApiClient.storage.write(key: 'user_data', value: user.toString());
+      if (token != null) {
+        await ApiClient.storage.write(key: 'jwt', value: token);
+      }
+      if (user != null) {
+        await ApiClient.storage.write(key: 'user_role', value: user['role']);
+        await ApiClient.storage.write(key: 'user_data', value: user.toString());
+      }
 
       state = state.copyWith(isLoading: false, token: token, user: user);
       return true;

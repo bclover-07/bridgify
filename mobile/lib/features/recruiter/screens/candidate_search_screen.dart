@@ -143,7 +143,7 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                                     border: Border.all(color: NeuTheme.ink, width: NeuTheme.borderWidth),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  child: Text(skill['label'] ?? 'Skill', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: Text(skill['skillLabel'] ?? 'Skill', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                                 );
                               }).toList(),
                             )

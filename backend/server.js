@@ -12,7 +12,7 @@ async function startServer() {
     await connectDB();
     initializeCronJobs();
 
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`Bridgify server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`Client URL: ${process.env.CLIENT_URL || 'http://localhost:3000'}`);

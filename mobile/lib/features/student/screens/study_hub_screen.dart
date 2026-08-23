@@ -123,7 +123,7 @@ class _StudyHubScreenState extends ConsumerState<StudyHubScreen> {
                                             ],
                                           ),
                                         );
-                                      }).toList(),
+                                      }),
                                     ],
                                   ),
                                 ),
