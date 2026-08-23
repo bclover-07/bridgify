@@ -27,43 +27,53 @@ class _PlacementCCScreenState extends ConsumerState<PlacementCCScreen> {
 
   Future<void> _fetchBoard() async {
     try {
-      final response = await ApiClient.instance.get('/api/admin/placement');
-      // Assume data returns list of candidates with status
-      final candidates = response.data['data'] as List<dynamic>? ?? [];
+      final response = await ApiClient.instance.get('/api/admin/placement-cc');
+      // The backend returns { drives, pipeline, totalDrives }
+      // The pipeline might be a flat list of registrations or aggregated
+      // We will assume 'pipeline' is a list of candidate objects for now.
+      final candidates = response.data['pipeline'] as List<dynamic>? ?? [];
       _processBoard(candidates);
     } catch (e) {
-      _processBoard([
-        {"id": "1", "name": "Arjun Kumar", "company": "TechCorp", "status": "Sourcing"},
-        {"id": "2", "name": "Sarah Lee", "company": "DataSys", "status": "Interview"},
-        {"id": "3", "name": "Ravi Patel", "company": "Innovate", "status": "Placed"},
-      ]);
+      _processBoard([]); // No mock data
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load placement data: ${e.toString()}')),
+        );
+      }
     }
   }
 
   void _processBoard(List<dynamic> candidates) {
     setState(() {
       board = {
-        'Sourcing': candidates.where((c) => c['status'] == 'Sourcing').toList(),
-        'Interview': candidates.where((c) => c['status'] == 'Interview').toList(),
-        'Placed': candidates.where((c) => c['status'] == 'Placed').toList(),
+        'Sourcing': candidates.where((c) => c['stage'] == 'Sourced' || c['status'] == 'Sourcing').toList(),
+        'Interview': candidates.where((c) => c['stage'] == 'Interviewed' || c['status'] == 'Interview').toList(),
+        'Placed': candidates.where((c) => c['stage'] == 'Placed' || c['status'] == 'Placed').toList(),
       };
       isLoading = false;
     });
   }
 
   Future<void> _updateCandidateStatus(dynamic candidate, String newStatus) async {
+    final oldStatus = candidate['status'] ?? candidate['stage'] ?? 'Sourcing';
     setState(() {
-      board[candidate['status']]?.remove(candidate);
+      board[oldStatus]?.remove(candidate);
       candidate['status'] = newStatus;
+      candidate['stage'] = newStatus;
       board[newStatus]?.add(candidate);
     });
     try {
-      await ApiClient.instance.post('/api/admin/placement/update', data: {
-        "id": candidate['id'],
-        "status": newStatus,
+      await ApiClient.instance.patch('/api/admin/placement-cc/move-stage', data: {
+        "studentId": candidate['studentId'] ?? candidate['id'] ?? candidate['_id'],
+        "driveId": candidate['driveId'],
+        "newStage": newStatus,
       });
     } catch (e) {
-      // offline handled
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update stage: ${e.toString()}')),
+        );
+      }
     }
   }
 

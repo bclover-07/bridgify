@@ -27,18 +27,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     try {
       final response = await ApiClient.instance.get('/api/admin/dashboard');
       setState(() {
-        _dashboardData = response.data['data'];
+        _dashboardData = response.data;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _dashboardData = {
-          "total_students": 1200,
-          "placement_rate": 82,
-          "active_courses": 45,
-        };
+        _dashboardData = null; // No mock data
         _isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load dashboard: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -78,7 +79,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     children: [
                       const Icon(Icons.school, size: 40, color: NeuTheme.ink),
                       const SizedBox(height: 8),
-                      Text('${_dashboardData?['total_students'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                      Text('${_dashboardData?['stats']?['studentCount'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
                       const Text('Total Students', textAlign: TextAlign.center),
                     ],
                   ),
@@ -92,8 +93,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     children: [
                       const Icon(Icons.work, size: 40, color: NeuTheme.ink),
                       const SizedBox(height: 8),
-                      Text('${_dashboardData?['placement_rate'] ?? 0}%', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: NeuTheme.ink)),
-                      const Text('Placement Rate', textAlign: TextAlign.center, style: TextStyle(color: NeuTheme.ink)),
+                      Text('${_dashboardData?['stats']?['assessmentCount'] ?? 0}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: NeuTheme.ink)),
+                      const Text('Total Assessments', textAlign: TextAlign.center, style: TextStyle(color: NeuTheme.ink)),
                     ],
                   ),
                 ),

@@ -24,21 +24,21 @@ class _SkillLedgerScreenState extends ConsumerState<SkillLedgerScreen> {
 
   Future<void> _fetchLedger() async {
     try {
-      final response = await ApiClient.instance.get('/api/admin/ledger');
+      final response = await ApiClient.instance.get('/api/admin/skill-ledger');
       setState(() {
-        ledgerData = response.data['data'] ?? [];
+        ledgerData = response.data['ledger'] ?? [];
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        ledgerData = [
-          {"hash": "0x8F9A", "student": "Arjun Kumar", "skill": "React.js", "date": "2026-08-20"},
-          {"hash": "0x3C4D", "student": "Sarah Lee", "skill": "Data Structures", "date": "2026-08-21"},
-          {"hash": "0x1A2B", "student": "Ravi Patel", "skill": "System Design", "date": "2026-08-22"},
-          {"hash": "0x9B8C", "student": "Priya Singh", "skill": "Node.js", "date": "2026-08-22"},
-        ];
+        ledgerData = []; // No mock data
         isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load ledger: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -65,7 +65,7 @@ class _SkillLedgerScreenState extends ConsumerState<SkillLedgerScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Total Verified Skills', style: TextStyle(color: Colors.white70)),
+                          const Text('Total Aggregated Skills', style: TextStyle(color: Colors.white70)),
                           Text('${ledgerData.length}', style: const TextStyle(color: NeuTheme.mint, fontSize: 32, fontWeight: FontWeight.bold)),
                         ],
                       ),
@@ -76,7 +76,7 @@ class _SkillLedgerScreenState extends ConsumerState<SkillLedgerScreen> {
                 const SizedBox(height: 16),
                 NeuInput(
                   controller: _searchController,
-                  hintText: 'Search Hash or Student...',
+                  hintText: 'Search Skill Name or Category...',
                   onChanged: (v) => setState(() {}),
                 ),
                 const SizedBox(height: 16),
@@ -85,27 +85,32 @@ class _SkillLedgerScreenState extends ConsumerState<SkillLedgerScreen> {
                     backgroundColor: Colors.white,
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingRowColor: MaterialStateProperty.all(NeuTheme.mint),
-                        columns: const [
-                          DataColumn(label: Text('Tx Hash', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Student', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Skill', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Timestamp', style: TextStyle(fontWeight: FontWeight.bold))),
-                        ],
-                        rows: ledgerData.where((element) {
-                          if (_searchController.text.isEmpty) return true;
-                          final q = _searchController.text.toLowerCase();
-                          return element['hash'].toLowerCase().contains(q) ||
-                                 element['student'].toLowerCase().contains(q);
-                        }).map((item) => DataRow(
-                          cells: [
-                            DataCell(Text(item['hash'], style: const TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.electric))),
-                            DataCell(Text(item['student'])),
-                            DataCell(Text(item['skill'])),
-                            DataCell(Text(item['date'])),
+                      child: SingleChildScrollView(
+                        child: DataTable(
+                          headingRowColor: MaterialStateProperty.all(NeuTheme.mint),
+                          columns: const [
+                            DataColumn(label: Text('Skill', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('Category', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('Students', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('Evidences', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(label: Text('Avg Confidence', style: TextStyle(fontWeight: FontWeight.bold))),
                           ],
-                        )).toList(),
+                          rows: ledgerData.where((element) {
+                            if (_searchController.text.isEmpty) return true;
+                            final q = _searchController.text.toLowerCase();
+                            final label = (element['skillLabel'] ?? '').toString().toLowerCase();
+                            final category = (element['skillCategory'] ?? '').toString().toLowerCase();
+                            return label.contains(q) || category.contains(q);
+                          }).map((item) => DataRow(
+                            cells: [
+                              DataCell(Text(item['skillLabel'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, color: NeuTheme.electric))),
+                              DataCell(Text(item['skillCategory'] ?? 'N/A')),
+                              DataCell(Text((item['studentCount'] ?? 0).toString())),
+                              DataCell(Text((item['evidenceCount'] ?? 0).toString())),
+                              DataCell(Text((item['avgConfidence'] ?? 0).toStringAsFixed(1))),
+                            ],
+                          )).toList(),
+                        ),
                       ),
                     ),
                   ),

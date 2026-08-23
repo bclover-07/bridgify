@@ -13,7 +13,8 @@ class AnalyticsScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
-  bool isLoading = true;
+  List<dynamic> branchStats = [];
+  List<dynamic> skillDistribution = [];
 
   @override
   void initState() {
@@ -23,11 +24,23 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
 
   Future<void> _fetchAnalytics() async {
     try {
-      await ApiClient.instance.get('/api/admin/analytics');
-      setState(() => isLoading = false);
+      final response = await ApiClient.instance.get('/api/admin/analytics');
+      setState(() {
+        branchStats = response.data['branchStats'] ?? [];
+        skillDistribution = response.data['skillDistribution'] ?? [];
+        isLoading = false;
+      });
     } catch (e) {
-      // Mock data is hardcoded in the charts
-      setState(() => isLoading = false);
+      setState(() {
+        branchStats = [];
+        skillDistribution = [];
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load analytics: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -46,85 +59,93 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                NeuCard(
-                  backgroundColor: NeuTheme.paper,
-                  child: Column(
-                    children: [
-                      const Text('Placement Distribution by Branch', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 200,
-                        child: PieChart(
-                          PieChartData(
-                            sectionsSpace: 2,
-                            centerSpaceRadius: 40,
-                            sections: [
-                              PieChartSectionData(value: 40, color: NeuTheme.mint, title: 'CSE', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              PieChartSectionData(value: 30, color: NeuTheme.sky, title: 'ECE', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              PieChartSectionData(value: 20, color: NeuTheme.amber, title: 'IT', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              PieChartSectionData(value: 10, color: NeuTheme.coral, title: 'MECH', radius: 50, titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                NeuCard(
-                  backgroundColor: Colors.white,
-                  child: Column(
-                    children: [
-                      const Text('Average Package (LPA) by Year', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 200,
-                        child: BarChart(
-                          BarChartData(
-                            alignment: BarChartAlignment.spaceAround,
-                            maxY: 15,
-                            barTouchData: BarTouchData(enabled: false),
-                            titlesData: FlTitlesData(
-                              show: true,
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  getTitlesWidget: (value, meta) {
-                                    final years = ['2023', '2024', '2025', '2026'];
-                                    if (value.toInt() < years.length) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(top: 8),
-                                        child: Text(years[value.toInt()], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                                      );
-                                    }
-                                    return const SizedBox.shrink();
-                                  },
-                                ),
-                              ),
-                              leftTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 30,
-                                  getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 10)),
-                                ),
-                              ),
-                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                if (branchStats.isNotEmpty)
+                  NeuCard(
+                    backgroundColor: NeuTheme.paper,
+                    child: Column(
+                      children: [
+                        const Text('Student Distribution by Branch', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 200,
+                          child: PieChart(
+                            PieChartData(
+                              sectionsSpace: 2,
+                              centerSpaceRadius: 40,
+                              sections: branchStats.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final stat = entry.value;
+                                final colors = [NeuTheme.mint, NeuTheme.sky, NeuTheme.amber, NeuTheme.coral];
+                                return PieChartSectionData(
+                                  value: (stat['count'] ?? 0).toDouble(),
+                                  color: colors[index % colors.length],
+                                  title: stat['_id'] ?? 'Unknown',
+                                  radius: 50,
+                                  titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)
+                                );
+                              }).toList(),
                             ),
-                            gridData: const FlGridData(show: false),
-                            borderData: FlBorderData(show: false),
-                            barGroups: [
-                              BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 6.5, color: NeuTheme.coral, width: 20, borderRadius: BorderRadius.circular(2))]),
-                              BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 8.2, color: NeuTheme.coral, width: 20, borderRadius: BorderRadius.circular(2))]),
-                              BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 10.5, color: NeuTheme.coral, width: 20, borderRadius: BorderRadius.circular(2))]),
-                              BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 12.0, color: NeuTheme.coral, width: 20, borderRadius: BorderRadius.circular(2))]),
-                            ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                const SizedBox(height: 24),
+                if (skillDistribution.isNotEmpty)
+                  NeuCard(
+                    backgroundColor: Colors.white,
+                    child: Column(
+                      children: [
+                        const Text('Skill Confidence by Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 200,
+                          child: BarChart(
+                            BarChartData(
+                              alignment: BarChartAlignment.spaceAround,
+                              maxY: 100,
+                              barTouchData: BarTouchData(enabled: false),
+                              titlesData: FlTitlesData(
+                                show: true,
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    getTitlesWidget: (value, meta) {
+                                      if (value.toInt() < skillDistribution.length) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(top: 8),
+                                          child: Text(skillDistribution[value.toInt()]['_id']?.toString().substring(0, 3) ?? '', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
+                                  ),
+                                ),
+                                leftTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 30,
+                                    getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 10)),
+                                  ),
+                                ),
+                                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              gridData: const FlGridData(show: false),
+                              borderData: FlBorderData(show: false),
+                              barGroups: skillDistribution.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final stat = entry.value;
+                                return BarChartGroupData(x: index, barRods: [BarChartRodData(toY: (stat['avgConfidence'] ?? 0).toDouble(), color: NeuTheme.coral, width: 20, borderRadius: BorderRadius.circular(2))]);
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (branchStats.isEmpty && skillDistribution.isEmpty)
+                  const Center(child: Padding(padding: EdgeInsets.all(32), child: Text("No analytics data found.")))
               ],
             ),
           ),
