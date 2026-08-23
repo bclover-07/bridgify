@@ -1,18 +1,72 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaSearch, FaFilter, FaUserCheck, FaBriefcase, FaMagic } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaUserCheck, FaBriefcase, FaMagic, FaRegStar, FaStar } from 'react-icons/fa';
+import Link from 'next/link';
 import NeuCard from '@/components/shared/NeuCard';
 import NeuButton from '@/components/shared/NeuButton';
 import useAuthStore from '@/lib/store/authStore';
-
+import api from '@/lib/api';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
 
 export default function RecruiterDashboard() {
   const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [blindMode, setBlindMode] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+  const [shortlistedIds, setShortlistedIds] = useState([]);
+
+  useEffect(() => {
+    async function loadRecruiterData() {
+      try {
+        const [dashRes, searchRes] = await Promise.all([
+          api.get('/recruiter/dashboard'),
+          api.post('/recruiter/search', { limit: 10 })
+        ]);
+        setDashboardData(dashRes.data);
+        setCandidates(searchRes.data.candidates || []);
+        setShortlistedIds((dashRes.data.shortlisted || []).map(s => s._id));
+      } catch (err) {
+        console.error("Error loading recruiter dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadRecruiterData();
+  }, []);
+
+  const handleAISearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    try {
+      const res = await api.post('/recruiter/search/semantic', { query: searchQuery });
+      if (res.data.candidates) {
+        setCandidates(res.data.candidates);
+      }
+    } catch (err) {
+      console.error("Semantic search failed:", err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const toggleShortlist = async (studentId) => {
+    try {
+      await api.post('/recruiter/shortlist', { studentId });
+      setShortlistedIds(prev => [...prev, studentId]);
+      alert("Candidate shortlisted!");
+    } catch (err) {
+      if (err.response?.status === 409) {
+        alert("Already shortlisted.");
+      } else {
+        console.error(err);
+      }
+    }
+  };
 
   return (
     <PageTransition className="space-y-8">
@@ -31,7 +85,9 @@ export default function RecruiterDashboard() {
             />
             Bias-Free Mode (Hide PII)
           </label>
-          <NeuButton variant="hotpink">Generate Problem Statement</NeuButton>
+          <Link href="/recruiter/ps">
+            <NeuButton variant="hotpink">Generate Problem Statement</NeuButton>
+          </Link>
         </div>
       </StaggerItem>
 
@@ -48,14 +104,17 @@ export default function RecruiterDashboard() {
               placeholder="Describe the candidate you need (e.g., 'React developer with system design skills')"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAISearch()}
             />
           </div>
           <motion.button 
             whileHover={{ scale: 1.05 }} 
             whileTap={{ scale: 0.95 }}
+            onClick={handleAISearch}
+            disabled={searching}
             className="neu-card bg-[var(--acid)] py-4 px-8 text-lg flex items-center justify-center gap-2 font-bold whitespace-nowrap"
           >
-            <FaMagic /> AI Search
+            <FaMagic /> {searching ? 'Searching...' : 'AI Search'}
           </motion.button>
         </NeuCard>
       </StaggerItem>
@@ -100,7 +159,7 @@ export default function RecruiterDashboard() {
         {/* Results */}
         <div className="md:col-span-3 space-y-4">
           <div className="flex justify-between items-center bg-[#f8f7f4] p-4 rounded-xl border-[4px] border-[var(--ink)] shadow-[6px_6px_0px_var(--ink)]">
-            <span className="font-bold">3 Top Matches Found</span>
+            <span className="font-bold">{candidates.length} Candidate Matches Found</span>
             <select className="neu-select py-1 px-3 w-auto text-sm border-[3px] border-[var(--ink)]">
               <option>Sort by: Match %</option>
               <option>Sort by: Readiness</option>
@@ -108,44 +167,61 @@ export default function RecruiterDashboard() {
           </div>
 
           {/* Result Cards */}
-          {[
-            { match: 96, readiness: 92, skills: ['React', 'Next.js', 'System Design'] },
-            { match: 89, readiness: 88, skills: ['React', 'Node.js', 'Algorithms'] },
-            { match: 85, readiness: 81, skills: ['React', 'Tailwind', 'Figma'] }
-          ].map((candidate, i) => (
-            <motion.div whileHover={{ scale: 1.01, x: 4 }} key={i}>
-              <NeuCard className="p-6 bg-white hover:border-[var(--electric)] transition-colors cursor-pointer">
-                <div className="flex flex-col md:flex-row justify-between gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-bold text-xl">
-                        {blindMode ? `Candidate ID: #${1000 + i}` : `Student Name ${i+1}`}
-                      </h3>
-                      {candidate.match > 90 && (
-                        <span className="bg-[var(--electric)] text-white text-xs px-2 py-1 rounded-full font-bold">Top Match</span>
-                      )}
+          {loading ? (
+            <div className="p-8 text-center font-bold text-gray-500">Loading verified candidate graph...</div>
+          ) : candidates.length > 0 ? (
+            candidates.map((candidate, i) => {
+              const isShortlisted = shortlistedIds.includes(candidate.studentId);
+              return (
+                <motion.div whileHover={{ scale: 1.01, x: 4 }} key={candidate.studentId || i}>
+                  <NeuCard className="p-6 bg-white hover:border-[var(--electric)] transition-colors">
+                    <div className="flex flex-col md:flex-row justify-between gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-bold text-xl">
+                            {blindMode ? `Candidate #${(candidate.studentId || '').slice(-6).toUpperCase()}` : candidate.name}
+                          </h3>
+                          {(candidate.matchScore > 80 || candidate.cgpa >= 8.5) && (
+                            <span className="bg-[var(--electric)] text-white text-xs px-2 py-1 rounded-full font-bold">Top Match</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4 font-mono">
+                          {candidate.branch || 'Computer Science'} • Year {candidate.year || 4} • CGPA: {candidate.cgpa || 8.5}
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {(candidate.matchedSkills || []).map((s, idx) => (
+                            <span key={idx} className="bg-[var(--paper)] border-[2px] border-[var(--ink)] px-2 py-1 rounded-md text-xs font-bold">
+                              {typeof s === 'string' ? s : s.label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col items-end justify-between min-w-[140px]">
+                        <div className="text-right mb-4">
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Match Score</p>
+                          <p className="text-4xl font-bold text-[var(--electric)]">{candidate.matchScore || 88}%</p>
+                        </div>
+                        <NeuButton 
+                          variant={isShortlisted ? "mint" : "ghost"} 
+                          size="sm" 
+                          onClick={() => toggleShortlist(candidate.studentId)}
+                          className="w-full flex items-center justify-center gap-2"
+                        >
+                          {isShortlisted ? <><FaStar /> Shortlisted</> : <><FaRegStar /> Shortlist</>}
+                        </NeuButton>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-4 font-mono">B.Tech Computer Science • Class of 2026</p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {candidate.skills.map(s => (
-                        <span key={s} className="bg-[var(--paper)] border-[2px] border-[var(--ink)] px-2 py-1 rounded-md text-xs font-bold">{s}</span>
-                      ))}
-                      <span className="bg-gray-100 border-[2px] border-[var(--ink)] text-gray-700 px-2 py-1 rounded-md text-xs font-bold">+12 more</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-end justify-between min-w-[120px]">
-                    <div className="text-right mb-4">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Semantic Match</p>
-                      <p className="text-4xl font-bold text-[var(--electric)]">{candidate.match}%</p>
-                    </div>
-                    <NeuButton variant="ghost" size="sm" className="w-full">View SEG</NeuButton>
-                  </div>
-                </div>
-              </NeuCard>
-            </motion.div>
-          ))}
+                  </NeuCard>
+                </motion.div>
+              );
+            })
+          ) : (
+            <div className="p-8 text-center text-gray-500 font-bold bg-white border-[3px] border-[var(--ink)] rounded-xl">
+              No candidates found matching criteria.
+            </div>
+          )}
         </div>
       </StaggerItem>
     </PageTransition>

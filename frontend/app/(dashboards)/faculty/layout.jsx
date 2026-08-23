@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import useAuthStore from '@/lib/store/authStore';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 
+import ChatPanel from '@/components/shared/ChatPanel';
+
 export default function FacultyLayout({ children }) {
   const router = useRouter();
   const { user, isLoading, isAuthenticated, fetchUser } = useAuthStore();
@@ -30,5 +32,10 @@ export default function FacultyLayout({ children }) {
 
   if (!isAuthenticated || user?.role !== 'faculty') return null;
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ChatPanel />
+    </>
+  );
 }

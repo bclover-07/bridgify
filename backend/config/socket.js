@@ -51,6 +51,7 @@ export function initializeSocket(httpServer) {
     import('../sockets/alertSocket.js').then((m) => m.registerAlertHandlers(socket)).catch(console.error);
     import('../sockets/interviewSocket.js').then((m) => m.registerInterviewHandlers(socket)).catch(console.error);
     import('../sockets/debateSocket.js').then((m) => m.registerDebateHandlers(socket)).catch(console.error);
+    import('../sockets/chatSocket.js').then((m) => m.registerChatHandlers(socket)).catch(console.error);
   });
 
   return io;

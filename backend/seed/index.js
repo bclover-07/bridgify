@@ -15,6 +15,13 @@ import Course from '../models/Course.js';
 import Attendance from '../models/Attendance.js';
 import SkillEvidenceGraph from '../models/SkillEvidenceGraph.js';
 import Notification from '../models/Notification.js';
+import DriveEvent from '../models/DriveEvent.js';
+import Assessment from '../models/Assessment.js';
+import Submission from '../models/Submission.js';
+import FeedPost from '../models/FeedPost.js';
+import Conversation from '../models/Conversation.js';
+import Message from '../models/Message.js';
+import TechnologyDemand from '../models/TechnologyDemand.js';
 
 import institutionsSeed from './institutions.seed.js';
 import usersSeed from './users.seed.js';
@@ -35,6 +42,13 @@ async function seed() {
       Attendance.deleteMany({}),
       SkillEvidenceGraph.deleteMany({}),
       Notification.deleteMany({}),
+      DriveEvent.deleteMany({}),
+      Assessment.deleteMany({}),
+      Submission.deleteMany({}),
+      FeedPost.deleteMany({}),
+      Conversation.deleteMany({}),
+      Message.deleteMany({}),
+      TechnologyDemand.deleteMany({}),
     ]);
     console.log('Existing data cleared');
 
@@ -65,6 +79,8 @@ async function seed() {
 
     const students = createdUsers.filter((u) => u.role === 'student');
     const faculty = createdUsers.find((u) => u.role === 'faculty');
+    const recruiter = createdUsers.find((u) => u.role === 'recruiter');
+    const admin = createdUsers.find((u) => u.role === 'admin');
 
     console.log('Seeding courses...');
     const createdCourses = [];
@@ -84,6 +100,177 @@ async function seed() {
         'faculty.courses': createdCourses.map((c) => c._id),
       });
     }
+
+    console.log('Seeding Drive Events (Opportunities)...');
+    const drives = await DriveEvent.insertMany([
+      {
+        institutionId: mrdu._id,
+        recruiterId: recruiter._id,
+        company: 'Google Cloud Labs',
+        roles: [{ title: 'Associate Cloud Engineer', vacancies: 15, packageOffered: 1800000 }],
+        driveDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        registrationDeadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        status: 'active',
+        registrations: students.map((s) => ({
+          studentId: s._id,
+          stage: 'applied',
+          registeredAt: new Date(),
+        })),
+      },
+      {
+        institutionId: mrdu._id,
+        recruiterId: recruiter._id,
+        company: 'Amazon Web Services',
+        roles: [{ title: 'Software Development Engineer I', vacancies: 25, packageOffered: 2400000 }],
+        driveDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        registrationDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        status: 'upcoming',
+        registrations: [],
+      },
+      {
+        institutionId: mrdu._id,
+        recruiterId: recruiter._id,
+        company: 'TechSpark Solutions',
+        roles: [{ title: 'Fullstack React Developer', vacancies: 10, packageOffered: 1400000 }],
+        driveDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        registrationDeadline: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        status: 'active',
+        registrations: [],
+      },
+    ]);
+    console.log(`  Created ${drives.length} drive events`);
+
+    console.log('Seeding Assessments & Submissions...');
+    const sampleAssessment = await Assessment.create({
+      institutionId: mrdu._id,
+      courseId: createdCourses[0]._id,
+      facultyId: faculty._id,
+      title: 'Fullstack Microservices & Architecture Quiz',
+      topic: 'Microservices & System Design',
+      difficulty: 'medium',
+      questions: [
+        {
+          questionText: 'What is the primary benefit of event-driven microservice architecture?',
+          type: 'mcq',
+          options: [
+            { text: 'Tight coupling', isCorrect: false },
+            { text: 'Asynchronous decoupling & scale', isCorrect: true },
+            { text: 'Single database', isCorrect: false },
+            { text: 'Monolithic deployment', isCorrect: false },
+          ],
+          bloomLevel: 'apply',
+          maxMarks: 10,
+          skillId: 'CS_SYS_01',
+        },
+        {
+          questionText: 'Which index type speeds up vector similarity search in Mongo/Redis?',
+          type: 'mcq',
+          options: [
+            { text: 'B-Tree', isCorrect: false },
+            { text: 'HNSW / IVF', isCorrect: true },
+            { text: 'Hash', isCorrect: false },
+            { text: 'Text', isCorrect: false },
+          ],
+          bloomLevel: 'apply',
+          maxMarks: 10,
+          skillId: 'CS_DB_01',
+        },
+      ],
+      totalMarks: 20,
+      duration: 30,
+      status: 'published',
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+    });
+
+    for (const student of students) {
+      await Submission.create({
+        studentId: student._id,
+        assessmentId: sampleAssessment._id,
+        answers: [
+          { questionId: sampleAssessment.questions[0]._id, response: '1', finalScore: 10 },
+          { questionId: sampleAssessment.questions[1]._id, response: '1', finalScore: 10 },
+        ],
+        totalScore: 20,
+        percentage: 100,
+        gradingStatus: 'final',
+        submittedAt: new Date(),
+      });
+    }
+    console.log(`  Created assessment and ${students.length} submissions`);
+
+    console.log('Seeding Global Feed Posts...');
+    await FeedPost.insertMany([
+      {
+        authorId: recruiter._id,
+        authorRole: 'recruiter',
+        title: 'TechSpark Tech Hiring Drive 2026 Open!',
+        content: 'We are hiring 15 Fullstack Engineer interns who are proficient in React, Node.js, and System Design. Apply directly through the Opportunities portal!',
+        category: 'hiring',
+        tags: ['Hiring', 'Fullstack', 'Internship'],
+        likes: [students[0]._id, students[1]._id],
+      },
+      {
+        authorId: faculty._id,
+        authorRole: 'faculty',
+        title: 'New AI & LLM Systems Notes Published',
+        content: 'I have published new notes on Transformer architectures and Vector Indexing for CS301. Check the Study Hub resources section.',
+        category: 'research',
+        tags: ['AI', 'SystemDesign', 'Notes'],
+        likes: [students[0]._id],
+      },
+      {
+        authorId: students[0]._id,
+        authorRole: 'student',
+        title: 'Built an AI Agent with Gemini 2.5 & LangGraph!',
+        content: 'Excited to share that I completed a fullstack agentic application with real-time Socket.io and high-level readiness scoring. My SEG score jumped +15 points!',
+        category: 'skill_update',
+        tags: ['AI', 'React', 'Milestone'],
+        likes: [faculty._id, recruiter._id],
+      },
+    ]);
+    console.log('  Created global feed posts');
+
+    console.log('Seeding Real-time Conversations & Messages...');
+    const demoConv = await Conversation.create({
+      participants: [faculty._id, students[0]._id],
+      lastMessage: 'Great progress on your system design assignment Arjun!',
+      lastMessageAt: new Date(),
+    });
+
+    await Message.insertMany([
+      {
+        conversationId: demoConv._id,
+        senderId: students[0]._id,
+        content: 'Hello Professor Naidu, I had a quick question regarding the microservices rubric.',
+      },
+      {
+        conversationId: demoConv._id,
+        senderId: faculty._id,
+        content: 'Great progress on your system design assignment Arjun! Review section 3 of the syllabus notes.',
+      },
+    ]);
+    console.log('  Created demo chat conversation and messages');
+
+    console.log('Seeding Technology Demands (Learning Feed)...');
+    await TechnologyDemand.insertMany([
+      {
+        recruiterId: recruiter._id,
+        skillTag: 'CS_FE_01',
+        technology: 'Next.js 16 & Server Actions',
+        demandFrequency: 'critical',
+        description: 'High industry demand for fullstack developers proficient in Next.js Server Components and App Router.',
+        isActive: true,
+      },
+      {
+        recruiterId: recruiter._id,
+        skillTag: 'CS_OPS_01',
+        technology: 'Docker & Kubernetes Containerization',
+        demandFrequency: 'high',
+        description: 'Container orchestration skills for microservices deployment.',
+        isActive: true,
+      },
+    ]);
+    console.log('  Created industry technology demands');
 
     console.log('Seeding attendance records...');
     const attendanceRecords = [];
@@ -138,11 +325,11 @@ async function seed() {
           skillDomain: skillData.domain,
           nsqfLevel: skillData.nsqf,
           evidenceType: 'self_assessment',
-          confidenceScore: Math.floor(Math.random() * 25) + 15,
+          confidenceScore: Math.floor(Math.random() * 25) + 65,
           decayRate: 0.08,
           lastReinforced: new Date(),
-          evidenceWeight: 0.2,
-          verificationMethod: 'self_declared',
+          evidenceWeight: 0.8,
+          verificationMethod: 'faculty_reviewed',
           evidenceMetadata: {
             source: 'onboarding',
             declaredAt: new Date().toISOString(),
@@ -170,6 +357,8 @@ async function seed() {
     console.log(`  Institutions: ${createdInstitutions.length}`);
     console.log(`  Users: ${createdUsers.length} (${students.length} students, 1 faculty, 1 admin, 1 recruiter)`);
     console.log(`  Courses: ${createdCourses.length}`);
+    console.log(`  Drives: ${drives.length}`);
+    console.log(`  Assessments & Submissions: 1 / ${students.length}`);
     console.log(`  Attendance Records: ${attendanceRecords.length}`);
     console.log(`  SEG Entries: ${segCount}`);
     console.log(`  Notifications: ${createdUsers.length}`);
@@ -191,3 +380,4 @@ async function seed() {
 }
 
 seed();
+

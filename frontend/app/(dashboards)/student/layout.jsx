@@ -7,6 +7,8 @@ import Sidebar from '@/components/shared/Sidebar';
 import Navbar from '@/components/shared/Navbar';
 import SkeletonLoader from '@/components/shared/SkeletonLoader';
 
+import ChatPanel from '@/components/shared/ChatPanel';
+
 export default function StudentLayout({ children }) {
   const router = useRouter();
   const { user, isLoading, isAuthenticated, fetchUser } = useAuthStore();
@@ -32,5 +34,10 @@ export default function StudentLayout({ children }) {
 
   if (!isAuthenticated || user?.role !== 'student') return null;
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ChatPanel />
+    </>
+  );
 }

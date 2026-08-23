@@ -23,10 +23,10 @@ const roleConfigs = {
     basePath: '/student',
     links: [
       { href: '/student', label: 'Dashboard', icon: FiHome },
+      { href: '/student/feed', label: 'Tech Feed', icon: FiTrendingUp },
       { href: '/student/readiness', label: 'Readiness Simulator', icon: FiTarget },
       { href: '/student/learning-path', label: 'Skill Evidence Graph', icon: FiMap },
-      { href: '/student/study-hub', label: 'Study Hub', icon: FiBookOpen },
-      { href: '/student/soft-skills', label: 'Soft Skills Coach', icon: FiMessageSquare },
+      { href: '/student/study-hub', label: 'Study Hub & Soft Skills', icon: FiBookOpen },
       { href: '/student/wallet', label: 'Skill Wallet', icon: FiShield },
       { href: '/student/opportunities', label: 'Opportunities', icon: FiSearch },
       { href: '/student/benchmarks', label: 'Benchmarks', icon: FiAward },
@@ -40,6 +40,7 @@ const roleConfigs = {
     basePath: '/faculty',
     links: [
       { href: '/faculty', label: 'Dashboard', icon: FiHome },
+      { href: '/faculty/feed', label: 'Academic Feed', icon: FiTrendingUp },
       { href: '/faculty/assessments', label: 'Assessments', icon: FiClipboard },
       { href: '/faculty/notes', label: 'Notes Generator', icon: FiEdit3 },
       { href: '/faculty/ppt', label: 'PPT Maker', icon: FiFileText },
@@ -47,7 +48,6 @@ const roleConfigs = {
       { href: '/faculty/cohort-heatmap', label: 'Cohort Heatmap', icon: FiGrid },
       { href: '/faculty/lecture-bridge', label: 'Lecture Bridge', icon: FiLayers },
       { href: '/faculty/mentorship', label: 'Mentorship', icon: FiUsers },
-      { href: '/faculty/learning-feed', label: 'Learning Feed', icon: FiTrendingUp },
     ],
   },
   admin: {
@@ -71,6 +71,7 @@ const roleConfigs = {
     basePath: '/recruiter',
     links: [
       { href: '/recruiter', label: 'Dashboard', icon: FiHome },
+      { href: '/recruiter/feed', label: 'Industry Feed', icon: FiTrendingUp },
       { href: '/recruiter/search', label: 'Candidate Search', icon: FiSearch },
       { href: '/recruiter/ps', label: 'PS Generator', icon: FiEdit3 },
       { href: '/recruiter/marketplace', label: 'Marketplace', icon: FiPackage },

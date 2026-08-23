@@ -17,7 +17,11 @@ export default function CohortHeatmapPage() {
       setLoading(true);
       try {
         const { data } = await api.get('/faculty/dropout-radar');
-        setRiskData(data.risks || []);
+        const list = data.risks || (data.students || []).map(s => ({
+          ...s,
+          riskScore: s.riskScore || (s.riskLevel === 'HIGH' ? 85 : s.riskLevel === 'MEDIUM' ? 55 : 20)
+        }));
+        setRiskData(list);
       } catch (error) {
         console.error("Failed to load dropout radar:", error);
       } finally {

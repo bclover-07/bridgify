@@ -14,7 +14,10 @@ export default function OpportunitiesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/student/opportunities').then(res => { setDrives(res.data.drives || res.data || []); setLoading(false); }).catch(() => setLoading(false));
+    api.get('/student/opportunities').then(res => { 
+      setDrives(res.data.opportunities || res.data.drives || (Array.isArray(res.data) ? res.data : [])); 
+      setLoading(false); 
+    }).catch(() => setLoading(false));
   }, []);
 
   if (loading) return <DashboardSkeleton />;

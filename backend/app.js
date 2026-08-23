@@ -11,6 +11,8 @@ import facultyRoutes from './routes/faculty.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import recruiterRoutes from './routes/recruiter.routes.js';
 import agentRoutes from './routes/agent.routes.js';
+import chatRoutes from './routes/chat.routes.js';
+import feedRoutes from './routes/feed.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -53,6 +55,8 @@ app.use('/api/faculty', facultyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/recruiter', recruiterRoutes);
 app.use('/api/agents', agentRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/feed', feedRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
