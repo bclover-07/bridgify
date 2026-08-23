@@ -175,7 +175,14 @@ Return ONLY the JSON array, no additional text.`;
   } catch (parseErr) {
     const jsonMatch = result.text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      questions = JSON.parse(jsonMatch[0]);
+      try {
+        // Strip trailing commas before closing brackets
+        const sanitized = jsonMatch[0].replace(/,\s*([\]}])/g, '$1');
+        questions = JSON.parse(sanitized);
+      } catch (err) {
+        console.warn('Failed to parse LLM questions JSON:', err.message);
+        questions = [];
+      }
     }
   }
 

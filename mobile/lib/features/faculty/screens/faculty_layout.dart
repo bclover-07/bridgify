@@ -13,7 +13,7 @@ class FacultyLayout extends StatefulWidget {
 
 class _FacultyLayoutState extends State<FacultyLayout> {
   int _currentIndex = 0;
-  final List<String> _routes = ['/faculty/notes', '/faculty/ppt_maker', '/faculty/dropout_radar'];
+  final List<String> _routes = ['/faculty', '/faculty/notes', '/faculty/ppt_maker', '/faculty/dropout_radar'];
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,9 @@ class _FacultyLayoutState extends State<FacultyLayout> {
         },
         selectedItemColor: NeuTheme.violet,
         unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.note), label: 'Notes'),
           BottomNavigationBarItem(icon: Icon(Icons.slideshow), label: 'PPT'),
           BottomNavigationBarItem(icon: Icon(Icons.radar), label: 'Radar'),

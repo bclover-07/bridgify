@@ -13,7 +13,7 @@ class RecruiterLayout extends StatefulWidget {
 
 class _RecruiterLayoutState extends State<RecruiterLayout> {
   int _currentIndex = 0;
-  final List<String> _routes = ['/recruiter/candidate_search', '/recruiter/pipeline', '/recruiter/fair_hiring'];
+  final List<String> _routes = ['/recruiter', '/recruiter/candidate_search', '/recruiter/pipeline', '/recruiter/fair_hiring'];
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,9 @@ class _RecruiterLayoutState extends State<RecruiterLayout> {
         },
         selectedItemColor: NeuTheme.cyan,
         unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.view_kanban), label: 'Pipeline'),
           BottomNavigationBarItem(icon: Icon(Icons.balance), label: 'Fair Hiring'),
