@@ -187,7 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: 250,
                 height: 250,
                 decoration: BoxDecoration(
-                  color: NeuTheme.electric.withOpacity(0.08),
+                  color: NeuTheme.electric.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -199,7 +199,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: 250,
                 height: 250,
                 decoration: BoxDecoration(
-                  color: NeuTheme.hotpink.withOpacity(0.08),
+                  color: NeuTheme.hotpink.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -329,7 +329,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? account.color.withOpacity(0.12)
+                                        ? account.color.withValues(alpha: 0.12)
                                         : Colors.white,
                                     border: Border.all(
                                       color: isSelected ? account.color : NeuTheme.ink,
@@ -359,7 +359,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       const SizedBox(height: 6),
                                       Text(
                                         account.role.toUpperCase(),
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: NeuTheme.ink,
                                           fontWeight: FontWeight.w900,
                                           fontSize: 12,
@@ -387,7 +387,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: NeuTheme.acid.withOpacity(0.3),
+                              color: NeuTheme.acid.withValues(alpha: 0.3),
                               border: Border.all(color: NeuTheme.ink, width: 2),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: const [
