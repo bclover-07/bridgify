@@ -1,0 +1,12 @@
+{
+  "app_title": "Bridgify",
+  "login": "Login",
+  "email": "Email",
+  "password": "Password",
+  "demo_login": "Demo Login",
+  "dashboard": "Dashboard",
+  "student": "Student",
+  "faculty": "Faculty",
+  "admin": "Admin",
+  "recruiter": "Recruiter"
+}
