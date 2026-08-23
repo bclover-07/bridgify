@@ -8,5 +8,17 @@
   "student": "Student",
   "faculty": "Faculty",
   "admin": "Admin",
-  "recruiter": "Recruiter"
+  "recruiter": "Recruiter",
+  "register": "Register",
+  "full_name": "Full Name",
+  "institution_code": "Institution Code",
+  "already_have_account": "Already have an account? Sign in",
+  "dont_have_account": "Don't have an account? Sign up",
+  "create_account": "Create Account",
+  "i_am_a": "I am a...",
+  "empowering_future": "Empowering the future of education & careers.",
+  "welcome_back": "Welcome Back! 👋",
+  "sign_in_dashboard": "Sign in to your dashboard",
+  "real_sign_in": "🔐 Real Sign In",
+  "demo_access": "🎮 Demo Access"
 }

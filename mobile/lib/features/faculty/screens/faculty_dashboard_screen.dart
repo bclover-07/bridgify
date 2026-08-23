@@ -119,7 +119,7 @@ class _FacultyDashboardScreenState extends ConsumerState<FacultyDashboardScreen>
               _buildActionCard(context, Icons.quiz, 'Assessments', NeuTheme.lime, NeuTheme.ink, '/faculty/assessments'),
               _buildActionCard(context, Icons.feed, 'Learning Feed', NeuTheme.sky, NeuTheme.ink, '/faculty/learning_feed'),
               _buildActionCard(context, Icons.class_, 'Classrooms', NeuTheme.mint, NeuTheme.ink, '/faculty/classrooms'),
-              _buildActionCard(context, Icons.compare_arrows, 'Curriculum Gap', NeuTheme.pink, Colors.white, '/faculty/curriculum_gap'),
+              _buildActionCard(context, Icons.compare_arrows, 'Curriculum Gap', NeuTheme.hotpink, Colors.white, '/faculty/curriculum_gap'),
             ],
           ),
         ],
