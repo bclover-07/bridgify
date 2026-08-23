@@ -127,11 +127,6 @@ class _NAACReportScreenState extends ConsumerState<NAACReportScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Generated SSR', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  NeuButton(
-                    text: 'Export PDF',
-                    backgroundColor: NeuTheme.mint,
-                    onPressed: () {},
-                  ),
                 ],
               ),
               const SizedBox(height: 16),

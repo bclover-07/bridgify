@@ -14,7 +14,7 @@ class StudyHubScreen extends ConsumerStatefulWidget {
 class _StudyHubScreenState extends ConsumerState<StudyHubScreen> {
   final TextEditingController _roleController = TextEditingController();
   bool isLoading = false;
-  String? generatedPlan;
+  Map<String, dynamic>? generatedPlan;
 
   Future<void> _generatePlan() async {
     if (_roleController.text.trim().isEmpty) return;
@@ -25,7 +25,7 @@ class _StudyHubScreenState extends ConsumerState<StudyHubScreen> {
         "targetRole": _roleController.text.trim()
       });
       setState(() {
-        generatedPlan = response.data['plan'];
+        generatedPlan = response.data['plan'] as Map<String, dynamic>?;
         isLoading = false;
       });
       if (mounted && response.data['message'] != null) {
@@ -83,17 +83,43 @@ class _StudyHubScreenState extends ConsumerState<StudyHubScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Your Study Plan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text('Your AI Study Plan', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     Expanded(
-                      child: NeuCard(
-                        backgroundColor: Colors.white,
-                        child: SingleChildScrollView(
-                          child: Text(
-                            generatedPlan!,
-                            style: const TextStyle(fontSize: 14, height: 1.5, color: NeuTheme.ink),
-                          ),
-                        ),
+                      child: ListView.builder(
+                        itemCount: (generatedPlan!['weeks'] as List<dynamic>? ?? []).length,
+                        itemBuilder: (context, index) {
+                          final week = generatedPlan!['weeks'][index];
+                          final skills = (week['focusSkills'] as List<dynamic>? ?? []).join(', ');
+                          final milestone = week['milestone'] ?? '';
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: NeuCard(
+                              backgroundColor: Colors.white,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Week ${week['weekNumber']}: $skills', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: NeuTheme.hotpink)),
+                                  const SizedBox(height: 8),
+                                  Text(milestone, style: const TextStyle(fontStyle: FontStyle.italic)),
+                                  const SizedBox(height: 8),
+                                  ...(week['activities'] as List<dynamic>? ?? []).map((a) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.check_circle_outline, size: 16, color: NeuTheme.ink),
+                                          const SizedBox(width: 8),
+                                          Expanded(child: Text('${a['title']} (${a['hours']}h - ${a['type']})', style: const TextStyle(fontSize: 12))),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
