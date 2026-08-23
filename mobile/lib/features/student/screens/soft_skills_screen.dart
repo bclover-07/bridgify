@@ -89,7 +89,7 @@ class _SoftSkillsScreenState extends ConsumerState<SoftSkillsScreen> {
                     const SizedBox(height: 16),
                     NeuButton(
                       text: _isLoading ? 'Starting...' : 'Start Session',
-                      color: NeuTheme.amber,
+                      backgroundColor: NeuTheme.amber,
                       onPressed: _isLoading ? null : _startSession,
                     )
                   ],
@@ -147,7 +147,7 @@ class _SoftSkillsScreenState extends ConsumerState<SoftSkillsScreen> {
                   const SizedBox(width: 16),
                   NeuButton(
                     text: 'Send',
-                    color: NeuTheme.amber,
+                    backgroundColor: NeuTheme.amber,
                     onPressed: _isLoading ? null : _sendMessage,
                   ),
                 ],

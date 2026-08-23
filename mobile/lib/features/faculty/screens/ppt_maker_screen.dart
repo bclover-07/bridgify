@@ -84,7 +84,7 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
                   const SizedBox(height: 16),
                   NeuButton(
                     text: _isGenerating ? 'Generating via Agent...' : 'Generate PPT',
-                    color: NeuTheme.hotpink,
+                    backgroundColor: NeuTheme.hotpink,
                     onPressed: _isGenerating ? null : _generatePPT,
                   ),
                 ],
@@ -98,7 +98,7 @@ class _PPTMakerScreenState extends ConsumerState<PPTMakerScreen> {
                   const Text('Preview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   NeuButton(
                     text: 'Download .pptx',
-                    color: NeuTheme.mint,
+                    backgroundColor: NeuTheme.mint,
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Download not implemented yet')));
                     },

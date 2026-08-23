@@ -85,7 +85,7 @@ class _AssessmentsScreenState extends ConsumerState<AssessmentsScreen> {
                       if (!hasSubmitted)
                         NeuButton(
                           text: 'Start Assessment',
-                          color: NeuTheme.mint,
+                          backgroundColor: NeuTheme.mint,
                           onPressed: () => _takeAssessment(item),
                         )
                     ],
@@ -189,7 +189,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
               const SizedBox(height: 24),
               NeuButton(
                 text: 'Go Back',
-                color: NeuTheme.mint,
+                backgroundColor: NeuTheme.mint,
                 onPressed: () => Navigator.of(context).pop(),
               )
             ],
@@ -241,7 +241,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
             const Spacer(),
             NeuButton(
               text: _currentQ == _questions.length - 1 ? 'Submit Assessment' : 'Next Question',
-              color: NeuTheme.mint,
+              backgroundColor: NeuTheme.mint,
               onPressed: () {
                 if (_selectedAns == null) return;
                 

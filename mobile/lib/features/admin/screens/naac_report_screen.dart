@@ -96,7 +96,7 @@ class _NAACReportScreenState extends ConsumerState<NAACReportScreen> {
                       Expanded(
                         child: NeuButton(
                           text: _startDate != null ? _startDate!.toString().split(' ')[0] : 'Start Date',
-                          color: Colors.white,
+                          backgroundColor: Colors.white,
                           textColor: NeuTheme.ink,
                           onPressed: () => _selectDate(context, true),
                         ),
@@ -105,7 +105,7 @@ class _NAACReportScreenState extends ConsumerState<NAACReportScreen> {
                       Expanded(
                         child: NeuButton(
                           text: _endDate != null ? _endDate!.toString().split(' ')[0] : 'End Date',
-                          color: Colors.white,
+                          backgroundColor: Colors.white,
                           textColor: NeuTheme.ink,
                           onPressed: () => _selectDate(context, false),
                         ),
@@ -115,7 +115,7 @@ class _NAACReportScreenState extends ConsumerState<NAACReportScreen> {
                   const SizedBox(height: 16),
                   NeuButton(
                     text: _isGenerating ? 'Analyzing Metrics...' : 'Generate AI Report',
-                    color: NeuTheme.amber,
+                    backgroundColor: NeuTheme.amber,
                     onPressed: _isGenerating ? null : _generateReport,
                   ),
                 ],
@@ -129,7 +129,7 @@ class _NAACReportScreenState extends ConsumerState<NAACReportScreen> {
                   const Text('Generated SSR', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   NeuButton(
                     text: 'Export PDF',
-                    color: NeuTheme.mint,
+                    backgroundColor: NeuTheme.mint,
                     onPressed: () {},
                   ),
                 ],

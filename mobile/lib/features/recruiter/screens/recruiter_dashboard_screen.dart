@@ -49,7 +49,7 @@ class _RecruiterDashboardScreenState extends ConsumerState<RecruiterDashboardScr
     final user = authState.user ?? {};
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: NeuTheme.primary));
+      return const Center(child: CircularProgressIndicator(color: NeuTheme.hotpink));
     }
 
     return SingleChildScrollView(

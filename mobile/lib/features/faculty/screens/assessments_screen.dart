@@ -83,7 +83,7 @@ class _FacultyAssessmentsScreenState extends ConsumerState<FacultyAssessmentsScr
             const SizedBox(height: 24),
             NeuButton(
               text: _isGenerating ? 'Generating...' : 'Generate Quiz',
-              color: NeuTheme.lime,
+              backgroundColor: NeuTheme.lime,
               onPressed: _isGenerating ? null : _generateQuiz,
             ),
             const SizedBox(height: 24),

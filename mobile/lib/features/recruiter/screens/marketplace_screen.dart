@@ -105,7 +105,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                                   ),
                                   NeuButton(
                                     text: 'View',
-                                    color: NeuTheme.electric,
+                                    backgroundColor: NeuTheme.electric,
                                     textColor: Colors.white,
                                     onPressed: () {},
                                   )

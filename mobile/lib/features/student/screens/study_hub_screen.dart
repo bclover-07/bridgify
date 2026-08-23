@@ -70,7 +70,7 @@ class _StudyHubScreenState extends ConsumerState<StudyHubScreen> {
                   const SizedBox(height: 16),
                   NeuButton(
                     text: isLoading ? 'Generating via Agent...' : 'Generate Plan',
-                    color: NeuTheme.hotpink,
+                    backgroundColor: NeuTheme.hotpink,
                     textColor: Colors.white,
                     onPressed: isLoading ? null : _generatePlan,
                   ),

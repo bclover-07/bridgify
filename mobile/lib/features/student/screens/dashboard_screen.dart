@@ -117,7 +117,6 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
                       radarBackgroundColor: Colors.transparent,
                       borderData: FlBorderData(show: false),
                       radarBorderData: const BorderSide(color: NeuTheme.ink, width: 2),
-                      titlePositionMultiplierPercentage: 0.2,
                       getTitle: (index, angle) {
                         switch (index) {
                           case 0:

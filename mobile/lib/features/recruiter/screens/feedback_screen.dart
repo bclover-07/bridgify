@@ -175,7 +175,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
             const SizedBox(height: 24),
             NeuButton(
               text: _isSubmitting ? 'Submitting...' : 'Submit Feedback',
-              color: NeuTheme.coral,
+              backgroundColor: NeuTheme.coral,
               textColor: Colors.white,
               onPressed: _isSubmitting || _drives.isEmpty ? null : _submitFeedback,
             )

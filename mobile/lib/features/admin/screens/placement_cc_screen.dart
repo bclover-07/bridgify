@@ -124,14 +124,14 @@ class _PlacementCCScreenState extends ConsumerState<PlacementCCScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: DragTarget<dynamic>(
+              child: DragTarget<Object>(
                 onAccept: (data) => _updateCandidateStatus(data, title),
-                builder: (context, candidateData, rejectedData) {
+                builder: (context, List<Object?> candidateData, List<dynamic> rejectedData) {
                   return ListView.builder(
                     itemCount: list.length,
                     itemBuilder: (context, index) {
                       final item = list[index];
-                      return LongPressDraggable<dynamic>(
+                      return LongPressDraggable<Object>(
                         data: item,
                         feedback: Material(
                           color: Colors.transparent,

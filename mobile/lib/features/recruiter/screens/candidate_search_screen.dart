@@ -82,7 +82,7 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                   const SizedBox(height: 16),
                   NeuButton(
                     text: isLoading ? 'Searching...' : 'Find Candidates',
-                    color: NeuTheme.sky,
+                    backgroundColor: NeuTheme.sky,
                     onPressed: isLoading ? null : _performSearch,
                   ),
                 ],
@@ -114,7 +114,7 @@ class _CandidateSearchScreenState extends ConsumerState<CandidateSearchScreen> {
                                 Text(candidate['name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                                 NeuButton(
                                   text: 'Shortlist',
-                                  color: NeuTheme.mint,
+                                  backgroundColor: NeuTheme.mint,
                                   onPressed: () => _shortlistCandidate(candidate['studentId'], candidate['name'] ?? 'Candidate'),
                                 )
                               ],

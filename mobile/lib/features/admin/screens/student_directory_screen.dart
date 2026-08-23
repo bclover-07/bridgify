@@ -93,7 +93,7 @@ class _StudentDirectoryScreenState extends ConsumerState<StudentDirectoryScreen>
         actions: [
           NeuButton(
             text: 'Close',
-            color: NeuTheme.sky,
+            backgroundColor: NeuTheme.sky,
             onPressed: () => Navigator.pop(context),
           )
         ],

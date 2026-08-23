@@ -32,6 +32,7 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
         for (var role in roles) {
           parsedJobs.add({
             "id": role['_id'] ?? drive['_id'],
+            "driveId": drive['_id'],
             "company": drive['company'] ?? 'Unknown',
             "role": role['title'] ?? 'Role',
             "package": role['package'] ?? '',
@@ -127,9 +128,18 @@ class _OpportunitiesScreenState extends ConsumerState<OpportunitiesScreen> {
           const Spacer(),
           NeuButton(
             text: 'Apply',
-            color: NeuTheme.acid,
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Application feature coming soon')));
+            backgroundColor: NeuTheme.acid,
+            onPressed: () async {
+              try {
+                await ApiClient.instance.post('/api/student/opportunities/${job['driveId']}/apply');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Application submitted successfully!')));
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to apply: $e')));
+                }
+              }
             },
           )
         ],

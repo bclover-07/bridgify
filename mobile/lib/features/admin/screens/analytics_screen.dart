@@ -13,6 +13,7 @@ class AnalyticsScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
+  bool isLoading = true;
   List<dynamic> branchStats = [];
   List<dynamic> skillDistribution = [];
 

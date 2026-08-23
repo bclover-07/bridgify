@@ -153,7 +153,7 @@ class _DropoutRadarScreenState extends ConsumerState<DropoutRadarScreen> with Si
                               ),
                               NeuButton(
                                 text: 'Alert',
-                                color: NeuTheme.ink,
+                                backgroundColor: NeuTheme.ink,
                                 textColor: Colors.white,
                                 onPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alert dispatched (Not Implemented)')));

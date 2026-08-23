@@ -94,7 +94,7 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                           padding: const EdgeInsets.only(right: 8),
                           child: NeuButton(
                             text: _formatStageName(stage),
-                            color: isSelected ? NeuTheme.mint : Colors.white,
+                            backgroundColor: isSelected ? NeuTheme.mint : Colors.white,
                             onPressed: () => setState(() => selectedStage = stage),
                           ),
                         );
@@ -145,7 +145,7 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                                   Expanded(
                                     child: NeuButton(
                                       text: 'View Profile',
-                                      color: Colors.white,
+                                      backgroundColor: Colors.white,
                                       onPressed: () {},
                                     ),
                                   ),
@@ -161,7 +161,7 @@ class _PipelineScreenState extends ConsumerState<PipelineScreen> {
                                           boxShadow: const [
                                             BoxShadow(
                                               color: NeuTheme.ink,
-                                              offset: Offset(NeuTheme.shadowOffset, NeuTheme.shadowOffset),
+                                              offset: NeuTheme.shadowOffset,
                                             )
                                           ]
                                         ),

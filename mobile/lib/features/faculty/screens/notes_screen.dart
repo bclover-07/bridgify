@@ -95,7 +95,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   const SizedBox(height: 16),
                   NeuButton(
                     text: _isGenerating ? 'Analyzing Content...' : 'Generate Notes',
-                    color: NeuTheme.cyan,
+                    backgroundColor: NeuTheme.cyan,
                     onPressed: _isGenerating ? null : _generateNotes,
                   ),
                 ],

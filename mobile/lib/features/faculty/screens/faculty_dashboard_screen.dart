@@ -114,7 +114,7 @@ class _FacultyDashboardScreenState extends ConsumerState<FacultyDashboardScreen>
             children: [
               _buildActionCard(context, Icons.radar, 'Dropout Radar', NeuTheme.coral, Colors.white, '/faculty/dropout_radar'),
               _buildActionCard(context, Icons.map, 'Cohort Heatmap', NeuTheme.violet, Colors.white, '/faculty/cohort_heatmap'),
-              _buildActionCard(context, Icons.bridge, 'Lecture Bridge', NeuTheme.electric, Colors.white, '/faculty/lecture_bridge'),
+              _buildActionCard(context, Icons.architecture, 'Lecture Bridge', NeuTheme.electric, Colors.white, '/faculty/lecture_bridge'),
               _buildActionCard(context, Icons.group, 'Mentorship', NeuTheme.acid, NeuTheme.ink, '/faculty/mentorship'),
               _buildActionCard(context, Icons.quiz, 'Assessments', NeuTheme.lime, NeuTheme.ink, '/faculty/assessments'),
               _buildActionCard(context, Icons.feed, 'Learning Feed', NeuTheme.sky, NeuTheme.ink, '/faculty/learning_feed'),

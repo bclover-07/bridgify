@@ -99,7 +99,7 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
                   const SizedBox(height: 16),
                   NeuButton(
                     text: _isGenerating ? 'Generating via Agent...' : 'Generate Problem Statement',
-                    color: NeuTheme.violet,
+                    backgroundColor: NeuTheme.violet,
                     textColor: Colors.white,
                     onPressed: _isGenerating ? null : _generatePS,
                   ),
@@ -114,7 +114,7 @@ class _PsGeneratorScreenState extends ConsumerState<PsGeneratorScreen> {
                   const Text('Generated Statement', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   NeuButton(
                     text: 'Publish to Candidates',
-                    color: NeuTheme.mint,
+                    backgroundColor: NeuTheme.mint,
                     onPressed: _publishPS,
                   ),
                 ],

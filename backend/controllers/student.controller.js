@@ -551,3 +551,33 @@ async function getCourseIds(studentId) {
   const courses = await Course.find({ enrolledStudentIds: studentId }).select('_id');
   return courses.map((c) => c._id);
 }
+
+export async function applyForOpportunity(req, res, next) {
+  try {
+    const driveId = req.params.id;
+    const studentId = req.user._id;
+
+    const { default: DriveEvent } = await import('../models/DriveEvent.js');
+    const drive = await DriveEvent.findById(driveId);
+    if (!drive) {
+      return res.status(404).json({ error: 'Drive not found' });
+    }
+
+    const alreadyApplied = drive.registrations.some(r => String(r.studentId) === String(studentId));
+    if (alreadyApplied) {
+      return res.status(400).json({ error: 'You have already applied for this opportunity.' });
+    }
+
+    drive.registrations.push({
+      studentId,
+      stage: 'applied',
+      stageHistory: [{ stage: 'applied', movedAt: new Date(), notes: 'Student self-applied' }]
+    });
+
+    await drive.save();
+
+    res.json({ message: 'Application submitted successfully', drive });
+  } catch (error) {
+    next(error);
+  }
+}

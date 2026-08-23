@@ -79,7 +79,7 @@ class _MentorshipScreenState extends ConsumerState<MentorshipScreen> {
                       const SizedBox(height: 16),
                       NeuButton(
                         text: 'Refresh Matches',
-                        color: NeuTheme.acid,
+                        backgroundColor: NeuTheme.acid,
                         onPressed: _fetchMatches,
                       ),
                     ],
