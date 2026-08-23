@@ -111,7 +111,7 @@ export default function AdminDashboard() {
         {/* Placement Pipeline */}
         <NeuCard className="md:col-span-2 p-0 bg-white flex flex-col">
           <div className="p-6 border-b-[4px] border-[var(--ink)] flex justify-between items-center bg-[var(--cyan)] rounded-t-[20px]">
-            <h2 className="text-2xl font-bold">Active Placement Drives</h2>
+            <h2 className="text-2xl font-bold text-[var(--ink)]">Active Placement Drives</h2>
           </div>
           <div className="p-6 flex-1">
             <div className="space-y-4">

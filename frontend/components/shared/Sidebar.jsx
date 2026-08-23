@@ -147,10 +147,12 @@ export default function Sidebar({ role }) {
         {navContent}
       </aside>
 
+      {/* Mobile sidebar toggle - only visible when sidebar is hidden on small screens */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-[60] neu-btn neu-btn-white p-2 !shadow-[3px_3px_0px_0px_var(--ink)]"
+        className="lg:hidden fixed top-4 left-4 z-[60] neu-btn neu-btn-white p-2 !shadow-[3px_3px_0px_0px_var(--ink)] hidden"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle menu"
+        style={{ display: 'none' }}
       >
         {mobileOpen ? <FiX size={22} /> : <FiMenu size={22} />}
       </button>
