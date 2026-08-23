@@ -134,13 +134,20 @@ export default function StudentAssignmentsPage() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <span className="text-xs font-bold text-gray-400 uppercase">Week {asgn.week || 1} • {asgn.skillId}</span>
-                  <h3 className="font-bold text-base leading-tight mt-0.5">{asgn.topic}</h3>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-extrabold text-[var(--electric)] uppercase tracking-wide bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                      {asgn.courseCode || 'CS301'} • {asgn.source || 'Faculty Assignment'}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-base leading-tight mt-0.5">{asgn.title || asgn.topic}</h3>
+                  {asgn.instructions && (
+                    <p className="text-xs text-gray-500 line-clamp-1 mt-1 font-medium">{asgn.instructions}</p>
+                  )}
                 </div>
                 {submitted[asgn.id] ? (
                   <NeuBadge variant="success">Completed</NeuBadge>
                 ) : (
-                  <NeuBadge variant="info">Pending</NeuBadge>
+                  <NeuBadge variant="info">New Quiz</NeuBadge>
                 )}
               </div>
             </NeuCard>
@@ -153,9 +160,12 @@ export default function StudentAssignmentsPage() {
             <>
               <NeuCard className="p-6 bg-white space-y-6">
                 <div className="border-b-2 border-gray-100 pb-4">
-                  <span className="text-xs font-bold text-[var(--electric)] uppercase">Topic Practice Suite</span>
-                  <h2 className="text-2xl font-bold mt-1">{selectedAsgn.topic}</h2>
-                  <p className="text-sm text-gray-500">{selectedAsgn.milestoneTitle}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[var(--electric)] uppercase">Faculty Lecture Bridge Practice</span>
+                    <NeuBadge variant="violet">{selectedAsgn.courseCode || 'CS301'}</NeuBadge>
+                  </div>
+                  <h2 className="text-2xl font-bold mt-1 text-gray-900">{selectedAsgn.title || selectedAsgn.topic}</h2>
+                  <p className="text-xs text-gray-600 font-medium mt-1">{selectedAsgn.instructions || selectedAsgn.milestoneTitle}</p>
                 </div>
 
                 {/* MCQ Questions Section */}

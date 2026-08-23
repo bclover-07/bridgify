@@ -717,61 +717,95 @@ export async function selectLearningPath(req, res, next) {
 export async function getAssignments(req, res, next) {
   try {
     const studentId = req.user._id;
+
+    // 1. Fetch all Published Faculty Assessments & Quizzes from MongoDB
+    const Assessment = (await import('../models/Assessment.js')).default;
+    const publishedAssessments = await Assessment.find({ status: 'published' })
+      .sort({ createdAt: -1 })
+      .populate('courseId', 'title code');
+
+    const facultyQuizzes = publishedAssessments.map(a => ({
+      id: a._id.toString(),
+      title: a.title,
+      topic: a.topic || 'Faculty Practice Quiz',
+      courseCode: a.courseId?.code || 'CS301',
+      courseTitle: a.courseId?.title || 'Lecture Bridge Practice',
+      instructions: a.instructions || 'Extracted directly from faculty lecture notes.',
+      dueDate: a.dueDate,
+      totalMarks: a.totalMarks || 10,
+      source: 'Faculty Lecture Bridge',
+      questions: (a.questions || []).map((q, idx) => ({
+        id: `fq_${idx}`,
+        question: q.questionText,
+        options: (q.options || []).map(o => o.text),
+        correctIndex: (q.options || []).findIndex(o => o.isCorrect) >= 0 ? (q.options || []).findIndex(o => o.isCorrect) : 0,
+        explanation: q.explanation || 'Extracted from faculty lecture topics.',
+      })),
+      codingChallenge: {
+        title: `Practice Challenge: ${a.topic || 'Algorithm Implementation'}`,
+        description: `Implement functions covering ${a.topic || 'Core Programming Principles'}.`,
+        starterCode: '// Write your code solution here\nfunction solvePracticeProblem(input) {\n  return input;\n}',
+      }
+    }));
+
+    // 2. Fetch Learning Path Milestones
     const learningPath = await LearningPath.findOne({ studentId }).sort({ updatedAt: -1 });
 
-    if (!learningPath || !learningPath.milestones || learningPath.milestones.length === 0) {
-      return res.json({
-        assignments: [
-          {
-            id: 'asgn_101',
-            title: 'Object-Oriented Programming & Data Structures',
-            topic: 'Core OOP Principles',
-            skillId: 'python.oop',
-            type: 'mcq',
-            questions: [
-              {
-                id: 'q1',
-                question: 'Which OOP pillar restricts direct access to an object state?',
-                options: ['Encapsulation', 'Inheritance', 'Polymorphism', 'Abstraction'],
-                correctIndex: 0,
-                explanation: 'Encapsulation wraps data and code together and hides internal details.'
-              },
-              {
-                id: 'q2',
-                question: 'What is the time complexity of searching an element in a balanced Binary Search Tree?',
-                options: ['O(log n)', 'O(n)', 'O(1)', 'O(n^2)'],
-                correctIndex: 0,
-                explanation: 'Balanced BSTs halve the search space at each step, yielding O(log n).'
-              }
-            ],
-            codingChallenge: {
-              title: 'Implement Stack using Array',
-              description: 'Create a class Stack with push(), pop(), and peek() methods.',
-              starterCode: 'class Stack {\n  constructor() {\n    this.items = [];\n  }\n  push(element) {\n    // implement\n  }\n  pop() {\n    // implement\n  }\n}',
-            }
-          }
-        ]
-      });
-    }
-
-    const assignments = [];
-    let count = 1;
-    for (const m of learningPath.milestones) {
-      for (const t of m.topics) {
-        assignments.push({
-          id: `asgn_${count++}`,
-          week: m.week,
-          milestoneTitle: m.title,
-          topic: t.name,
-          skillId: t.skillId,
-          completed: t.completed,
-          questions: t.mcqs || [],
-          codingChallenge: t.codingTask || null,
-        });
+    const pathAssignments = [];
+    if (learningPath && learningPath.milestones) {
+      let count = 1;
+      for (const m of learningPath.milestones) {
+        for (const t of m.topics) {
+          pathAssignments.push({
+            id: `asgn_${count++}`,
+            week: m.week,
+            milestoneTitle: m.title,
+            topic: t.name,
+            skillId: t.skillId,
+            completed: t.completed,
+            questions: t.mcqs || [],
+            codingChallenge: t.codingTask || null,
+          });
+        }
       }
     }
 
-    res.json({ assignments });
+    // Default Fallback Practice Assignment if none exist
+    const defaultAssignment = {
+      id: 'asgn_101',
+      title: 'Object-Oriented Programming & Data Structures',
+      topic: 'Core OOP Principles',
+      skillId: 'python.oop',
+      type: 'mcq',
+      questions: [
+        {
+          id: 'q1',
+          question: 'Which OOP pillar restricts direct access to an object state?',
+          options: ['Encapsulation', 'Inheritance', 'Polymorphism', 'Abstraction'],
+          correctIndex: 0,
+          explanation: 'Encapsulation wraps data and code together and hides internal details.'
+        },
+        {
+          id: 'q2',
+          question: 'What is the time complexity of searching an element in a balanced Binary Search Tree?',
+          options: ['O(log n)', 'O(n)', 'O(1)', 'O(n^2)'],
+          correctIndex: 0,
+          explanation: 'Balanced BSTs halve the search space at each step, yielding O(log n).'
+        }
+      ],
+      codingChallenge: {
+        title: 'Implement Stack using Array',
+        description: 'Create a class Stack with push(), pop(), and peek() methods.',
+        starterCode: 'class Stack {\n  constructor() {\n    this.items = [];\n  }\n  push(element) {\n    // implement\n  }\n  pop() {\n    // implement\n  }\n}',
+      }
+    };
+
+    const combinedAssignments = [...facultyQuizzes, ...pathAssignments];
+    if (combinedAssignments.length === 0) {
+      combinedAssignments.push(defaultAssignment);
+    }
+
+    res.json({ assignments: combinedAssignments });
   } catch (error) {
     next(error);
   }
