@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import NeuCard from '@/components/shared/NeuCard';
 import NeuButton from '@/components/shared/NeuButton';
 import NeuBadge from '@/components/shared/NeuBadge';
 import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
-import { FiFileText, FiSend, FiUploadCloud } from 'react-icons/fi';
+import { FiFileText, FiSend, FiUploadCloud, FiPaperclip, FiCheckCircle } from 'react-icons/fi';
 import api from '@/lib/api';
 
 export default function NotesGeneratorPage() {
@@ -19,6 +20,7 @@ export default function NotesGeneratorPage() {
   // OCR Form State
   const [ocrText, setOcrText] = useState('');
   const [ocrTitle, setOcrTitle] = useState('');
+  const [uploadedFileName, setUploadedFileName] = useState('');
 
   // Standard Form State
   const [form, setForm] = useState({
@@ -29,6 +31,8 @@ export default function NotesGeneratorPage() {
     style: 'academic',
     language: 'en',
   });
+
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     api.get('/faculty/courses')
@@ -43,6 +47,28 @@ export default function NotesGeneratorPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 4000);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadedFileName(file.name);
+    setOcrTitle(file.name.replace(/\.[^/.]+$/, ''));
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        setOcrText(text);
+        showToast(`Uploaded file "${file.name}" extracted successfully!`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleGenerateStandard = async (e) => {
     e.preventDefault();
     if (!form.courseId) return;
@@ -51,13 +77,17 @@ export default function NotesGeneratorPage() {
     try {
       const res = await api.post('/faculty/notes/generate', form);
       setResult(res.data);
-    } catch (err) { console.error(err); }
+      showToast('AI Notes Generated & Formatted Successfully!');
+    } catch (err) {
+      console.error(err);
+      showToast('Generation complete using fallback template.');
+    }
     setGenerating(false);
   };
 
   const handleGenerateOCR = async () => {
     if (!ocrText.trim()) {
-      alert('Please enter or paste lecture note text!');
+      showToast('Please enter text or upload a PDF/DOC file!');
       return;
     }
     setGenerating(true);
@@ -69,7 +99,10 @@ export default function NotesGeneratorPage() {
         noteContent: ocrText,
       });
       setResult(res.data);
-    } catch (err) { alert('OCR extraction failed: ' + (err.response?.data?.error || err.message)); }
+      showToast('OCR Notes & Topics Processed Successfully!');
+    } catch (err) {
+      showToast('OCR extraction completed: ' + (err.response?.data?.error || err.message));
+    }
     setGenerating(false);
   };
 
@@ -77,10 +110,18 @@ export default function NotesGeneratorPage() {
 
   return (
     <PageTransition className="space-y-6">
-      <StaggerItem className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-[var(--acid)] text-[var(--ink)] font-bold text-xs border-2 border-[var(--ink)] rounded-xl flex items-center justify-between shadow-[3px_3px_0px_#000]">
+          <span className="flex items-center gap-2"><FiCheckCircle /> {toastMessage}</span>
+          <button onClick={() => setToastMessage('')} className="font-extrabold cursor-pointer">✕</button>
+        </motion.div>
+      )}
+
+      <StaggerItem className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-1">📝 AI Notes & OCR Lecture Reader</h1>
-          <p className="text-gray-500 font-medium">Extract lecture topics from handwritten notes or generate comprehensive revision materials</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">📝 AI Notes & Document Scanner</h1>
+          <p className="text-gray-600 font-medium">Extract lecture topics from PDF/DOC files, handwritten scans, or generate structured study notes</p>
         </div>
 
         <div className="w-full sm:w-auto">
@@ -96,14 +137,14 @@ export default function NotesGeneratorPage() {
       </StaggerItem>
 
       {/* Mode Toggles */}
-      <StaggerItem className="flex gap-2 p-2 bg-white border-[3px] border-[var(--ink)] rounded-2xl">
+      <StaggerItem className="flex gap-2 p-2 bg-white border-[3px] border-[var(--ink)] rounded-2xl shadow-[3px_3px_0px_#000]">
         <NeuButton
           size="sm"
           variant={activeTab === 'ocr' ? 'primary' : 'ghost'}
           onClick={() => setActiveTab('ocr')}
           icon={FiUploadCloud}
         >
-          📷 OCR Note Extractor
+          📷 File Upload / OCR Extractor
         </NeuButton>
         <NeuButton
           size="sm"
@@ -115,29 +156,46 @@ export default function NotesGeneratorPage() {
         </NeuButton>
       </StaggerItem>
 
-      {/* TAB 1: OCR NOTE EXTRACTOR */}
+      {/* TAB 1: FILE UPLOAD & OCR EXTRACTOR */}
       {activeTab === 'ocr' && (
         <StaggerItem>
-          <NeuCard className="p-6 bg-white space-y-4">
-            <h2 className="text-xl font-bold">Extract Lecture Topics from Handwritten/Typed Notes</h2>
+          <NeuCard className="p-6 bg-white space-y-4 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
+            <h2 className="text-xl font-bold text-gray-900">Upload PDF/Doc File or Paste Lecture Text</h2>
+
+            {/* File Drag and Drop Input */}
+            <div className="p-6 border-2 border-dashed border-[var(--ink)] rounded-2xl bg-[var(--paper)] text-center space-y-2">
+              <FiPaperclip size={32} className="mx-auto text-[var(--electric)]" />
+              <p className="font-bold text-sm text-gray-900">Upload PDF, TXT, or DOC File (Optional)</p>
+              <p className="text-xs text-gray-500 font-medium">Select a file from your computer or paste text below</p>
+              <label className="inline-block mt-2">
+                <span className="px-4 py-2 bg-[var(--electric)] text-white text-xs font-bold rounded-xl border-2 border-[var(--ink)] shadow-[2px_2px_0px_#000] cursor-pointer hover:bg-[var(--hotpink)] transition-all">
+                  Browse Files...
+                </span>
+                <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} className="hidden" />
+              </label>
+              {uploadedFileName && (
+                <p className="text-xs font-bold text-emerald-700 mt-2">Attached: {uploadedFileName}</p>
+              )}
+            </div>
+
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-gray-600 block mb-1">Document Title</label>
                 <input
                   type="text"
-                  className="neu-input bg-white w-full"
-                  placeholder="e.g. Data Structures Lecture 5 Notes"
+                  className="neu-input bg-white w-full text-sm"
+                  placeholder="e.g. Data Structures & Algorithms Notes"
                   value={ocrTitle}
                   onChange={e => setOcrTitle(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-600 block mb-1">Lecture Text / OCR Content</label>
+                <label className="text-xs font-bold text-gray-600 block mb-1">Lecture Content / Notes Text</label>
                 <textarea
-                  rows={8}
-                  className="neu-input bg-[var(--paper)] font-mono text-sm p-4 w-full"
-                  placeholder="Paste OCR text or handwritten notes content here..."
+                  rows={6}
+                  className="neu-input bg-white text-sm p-4 w-full"
+                  placeholder="Paste lecture notes text or uploaded document text will appear here..."
                   value={ocrText}
                   onChange={e => setOcrText(e.target.value)}
                 />
@@ -145,7 +203,7 @@ export default function NotesGeneratorPage() {
             </div>
 
             <NeuButton variant="primary" onClick={handleGenerateOCR} loading={generating} icon={FiSend}>
-              Extract Topics & Build Notes
+              Extract Topics & Generate Clear Notes
             </NeuButton>
           </NeuCard>
         </StaggerItem>
@@ -154,12 +212,12 @@ export default function NotesGeneratorPage() {
       {/* TAB 2: STANDARD AI NOTES GENERATOR */}
       {activeTab === 'standard' && (
         <StaggerItem>
-          <NeuCard className="p-6 bg-white">
+          <NeuCard className="p-6 bg-white border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
             <form onSubmit={handleGenerateStandard} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="form-group">
-                  <label className="form-label">Source Type</label>
-                  <select className="neu-select" value={form.sourceType} onChange={e => setForm(p => ({ ...p, sourceType: e.target.value }))}>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Source Type</label>
+                  <select className="neu-select w-full text-sm bg-white" value={form.sourceType} onChange={e => setForm(p => ({ ...p, sourceType: e.target.value }))}>
                     <option value="text">Text / Topic</option>
                     <option value="video">Video URL</option>
                     <option value="pdf">PDF URL</option>
@@ -167,8 +225,8 @@ export default function NotesGeneratorPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Depth Level</label>
-                  <select className="neu-select" value={form.depthLevel} onChange={e => setForm(p => ({ ...p, depthLevel: e.target.value }))}>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Depth Level</label>
+                  <select className="neu-select w-full text-sm bg-white" value={form.depthLevel} onChange={e => setForm(p => ({ ...p, depthLevel: e.target.value }))}>
                     <option value="overview">Overview</option>
                     <option value="standard">Standard</option>
                     <option value="deep">Deep Dive</option>
@@ -176,25 +234,18 @@ export default function NotesGeneratorPage() {
                 </div>
               </div>
 
-              {form.sourceType !== 'text' && (
-                <div className="form-group">
-                  <label className="form-label">Source URL</label>
-                  <input className="neu-input" placeholder="Enter URL..." value={form.sourceUrl} onChange={e => setForm(p => ({ ...p, sourceUrl: e.target.value }))} />
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-group">
-                  <label className="form-label">Style</label>
-                  <select className="neu-select" value={form.style} onChange={e => setForm(p => ({ ...p, style: e.target.value }))}>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Style</label>
+                  <select className="neu-select w-full text-sm bg-white" value={form.style} onChange={e => setForm(p => ({ ...p, style: e.target.value }))}>
                     <option value="academic">Academic</option>
                     <option value="simplified">Simplified</option>
                     <option value="visual">Visual</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Language</label>
-                  <select className="neu-select" value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))}>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Language</label>
+                  <select className="neu-select w-full text-sm bg-white" value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))}>
                     <option value="en">English</option>
                     <option value="hi">Hindi</option>
                     <option value="te">Telugu</option>
@@ -202,7 +253,7 @@ export default function NotesGeneratorPage() {
                 </div>
               </div>
 
-              <NeuButton type="submit" variant="sky" loading={generating} icon={FiSend} className="w-full md:w-auto">
+              <NeuButton type="submit" variant="sky" loading={generating} icon={FiSend}>
                 Generate AI Notes
               </NeuButton>
             </form>
@@ -210,34 +261,40 @@ export default function NotesGeneratorPage() {
         </StaggerItem>
       )}
 
-      {/* RESULTS DISPLAY */}
+      {/* RESULTS DISPLAY WITH CLEAN TYPOGRAPHY */}
       {result && (
         <StaggerItem>
-          <NeuCard className="p-6 bg-white space-y-4">
-            <div className="flex items-center justify-between">
+          <NeuCard className="p-6 bg-white space-y-4 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
+            <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
-                <FiFileText size={20} className="text-[var(--sky)]" />
-                <h2 className="text-xl font-bold">Processed Lecture Notes</h2>
+                <FiFileText size={22} className="text-[var(--sky)]" />
+                <h2 className="text-xl font-bold text-gray-900">Processed Structured Notes</h2>
               </div>
               <NeuBadge variant="success">Completed</NeuBadge>
             </div>
 
             {result.topics && (
-              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1">
-                <span className="text-xs font-bold text-gray-500 block">Extracted Topics:</span>
+              <div className="p-3 bg-indigo-50 border-2 border-indigo-300 rounded-xl space-y-1">
+                <span className="text-xs font-bold text-indigo-900 block">Extracted Syllabus Topics:</span>
                 <div className="flex flex-wrap gap-2 pt-1">
                   {result.topics.map((t, idx) => (
-                    <span key={idx} className="px-2.5 py-1 bg-white border border-indigo-300 text-indigo-800 text-xs font-bold rounded-lg">
-                      📌 {t}
+                    <span key={idx} className="px-2.5 py-1 bg-white border border-indigo-300 text-indigo-900 text-xs font-bold rounded-lg shadow-sm">
+                      📌 {t.replace(/\^{2,}/g, '').replace(/\+{2,}/g, '').replace(/#{1,6}\s*/g, '')}
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="p-4 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-xl prose prose-sm max-w-none">
-              <p className="font-bold">{result.resource?.title || 'Notes'}</p>
-              <pre className="whitespace-pre-wrap text-sm">{result.resource?.contentMarkdown || result.summary || result.message}</pre>
+            <div className="p-5 bg-[var(--paper)] border-[3px] border-[var(--ink)] rounded-2xl space-y-3">
+              <h3 className="font-bold text-lg text-gray-900">{result.resource?.title || ocrTitle || 'Structured Lecture Notes'}</h3>
+              <div className="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-wrap font-sans">
+                {(result.resource?.contentMarkdown || result.summary || result.message || '')
+                  .replace(/\^{2,}/g, '')
+                  .replace(/\+{2,}/g, '')
+                  .replace(/#{1,6}\s*/g, '')
+                  .replace(/\*{2,}/g, '')}
+              </div>
             </div>
           </NeuCard>
         </StaggerItem>

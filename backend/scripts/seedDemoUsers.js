@@ -19,7 +19,70 @@ const DEMO_USERS = [
     student: {
       yearOfStudy: 3,
       department: 'Computer Science',
-      gpa: 8.5
+      gpa: 8.5,
+      branch: 'CSE',
+      year: 3,
+      cgpa: 8.5
+    }
+  },
+  {
+    name: 'Karthik Nair',
+    email: 'karthik.nair@mrdu.edu',
+    password: 'test123',
+    role: 'student',
+    isActive: true,
+    student: {
+      yearOfStudy: 3,
+      department: 'Computer Science',
+      gpa: 4.5,
+      branch: 'CSE',
+      year: 3,
+      cgpa: 4.5
+    }
+  },
+  {
+    name: 'Ananya Sharma',
+    email: 'ananya.sharma@mrdu.edu',
+    password: 'test123',
+    role: 'student',
+    isActive: true,
+    student: {
+      yearOfStudy: 4,
+      department: 'Computer Science',
+      gpa: 9.2,
+      branch: 'CSE',
+      year: 4,
+      cgpa: 9.2
+    }
+  },
+  {
+    name: 'Rahul Verma',
+    email: 'rahul.verma@mrdu.edu',
+    password: 'test123',
+    role: 'student',
+    isActive: true,
+    student: {
+      yearOfStudy: 3,
+      department: 'Information Technology',
+      gpa: 7.8,
+      branch: 'IT',
+      year: 3,
+      cgpa: 7.8
+    }
+  },
+  {
+    name: 'Priya Patel',
+    email: 'priya.patel@mrdu.edu',
+    password: 'test123',
+    role: 'student',
+    isActive: true,
+    student: {
+      yearOfStudy: 4,
+      department: 'Electronics & Comm',
+      gpa: 8.9,
+      branch: 'ECE',
+      year: 4,
+      cgpa: 8.9
     }
   },
   {
@@ -64,8 +127,9 @@ async function seedDemoUsers() {
       const existingUser = await User.findOne({ email: userData.email });
 
       if (existingUser) {
-        console.log(`Updating password hash for existing user: ${userData.email}...`);
+        console.log(`Updating user: ${userData.email}...`);
         existingUser.passwordHash = passwordHash;
+        existingUser.student = userData.student || existingUser.student;
         existingUser.isActive = true;
         await existingUser.save();
         console.log(`Updated ${userData.email} successfully.`);

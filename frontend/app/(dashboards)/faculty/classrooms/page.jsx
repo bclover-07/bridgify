@@ -22,6 +22,12 @@ export default function MyClassroomsPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [remedialTopic, setRemedialTopic] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 4000);
+  };
 
   useEffect(() => {
     fetchClassrooms();
@@ -61,9 +67,9 @@ export default function MyClassroomsPage() {
         message: 'Checking in regarding your classroom engagement and SEG readiness.',
         type: 'nudge'
       });
-      alert('Nudge sent to student in real-time!');
+      showToast('Nudge message sent to student in real-time!');
     } catch (e) {
-      alert('Failed: ' + (e.response?.data?.error || e.message));
+      showToast('Failed: ' + (e.response?.data?.error || e.message));
     }
     setActionLoading(false);
   };
@@ -76,10 +82,10 @@ export default function MyClassroomsPage() {
         topic: remedialTopic || 'Targeted Concept Practice',
         description: 'Faculty assigned practice task to boost placement readiness score.',
       });
-      alert('Targeted remedial practice assignment dispatched to student!');
+      showToast('Targeted remedial practice assignment dispatched to student!');
       setRemedialTopic('');
     } catch (e) {
-      alert('Failed: ' + (e.response?.data?.error || e.message));
+      showToast('Failed: ' + (e.response?.data?.error || e.message));
     }
     setActionLoading(false);
   };
@@ -268,6 +274,13 @@ export default function MyClassroomsPage() {
                 ✕
               </button>
             </div>
+
+            {toastMessage && (
+              <div className="p-3 bg-[var(--acid)] text-[var(--ink)] font-bold text-xs border-2 border-[var(--ink)] rounded-xl flex items-center justify-between shadow-[3px_3px_0px_#000]">
+                <span>✅ {toastMessage}</span>
+                <button onClick={() => setToastMessage('')} className="font-extrabold cursor-pointer">✕</button>
+              </div>
+            )}
 
             {detailLoading ? (
               <div className="p-8 text-center font-bold">Fetching comprehensive student metrics...</div>

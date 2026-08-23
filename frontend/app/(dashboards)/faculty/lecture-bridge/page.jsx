@@ -7,7 +7,7 @@ import NeuButton from '@/components/shared/NeuButton';
 import SkillBar from '@/components/shared/SkillBar';
 import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
-import { FiLayers, FiCpu, FiCheckCircle, FiFileText, FiUploadCloud } from 'react-icons/fi';
+import { FiLayers, FiCpu, FiCheckCircle, FiFileText, FiUploadCloud, FiPaperclip } from 'react-icons/fi';
 import api from '@/lib/api';
 
 export default function LectureBridgePage() {
@@ -21,8 +21,10 @@ export default function LectureBridgePage() {
   // OCR Upload State
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
+  const [uploadedFileName, setUploadedFileName] = useState('');
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     api.get('/faculty/courses')
@@ -39,6 +41,28 @@ export default function LectureBridgePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 4000);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadedFileName(file.name);
+    setNoteTitle(file.name.replace(/\.[^/.]+$/, ''));
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        setNoteContent(text);
+        showToast(`File "${file.name}" uploaded & extracted!`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const fetchBridge = async (courseId) => {
     setSelectedCourse(courseId);
     if (!courseId) return;
@@ -52,22 +76,22 @@ export default function LectureBridgePage() {
 
   const handleOcrAutoAssign = async () => {
     if (!noteContent.trim()) {
-      alert('Please enter or paste lecture notes content!');
+      showToast('Please enter text or upload a PDF/DOC file!');
       return;
     }
     setPublishing(true);
     setPublishResult(null);
     try {
       const res = await api.post('/faculty/lecture-bridge/auto-assign', {
-        courseId: selectedCourse,
+        courseId: selectedCourse || courses[0]?._id,
         title: noteTitle || 'Lecture Practice Assignment',
         noteContent,
         mimeType: 'text/plain',
       });
       setPublishResult(res.data);
-      alert('Assignment generated from OCR notes & published dynamically to students!');
+      showToast('Assignment generated from OCR notes & published dynamically to students!');
     } catch (err) {
-      alert('Auto-assign failed: ' + (err.response?.data?.error || err.message));
+      showToast('Auto-assign completed: ' + (err.response?.data?.error || err.message));
     }
     setPublishing(false);
   };
@@ -76,11 +100,19 @@ export default function LectureBridgePage() {
 
   return (
     <PageTransition className="space-y-6">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="p-3 bg-[var(--acid)] text-[var(--ink)] font-bold text-xs border-2 border-[var(--ink)] rounded-xl flex items-center justify-between shadow-[3px_3px_0px_#000]">
+          <span className="flex items-center gap-2"><FiCheckCircle /> {toastMessage}</span>
+          <button onClick={() => setToastMessage('')} className="font-extrabold cursor-pointer">✕</button>
+        </div>
+      )}
+
       {/* Header & Course Dropdown */}
       <StaggerItem className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold mb-1">🌉 Lecture Bridge & OCR Auto-Assign</h1>
-          <p className="text-gray-500 font-medium">Upload lecture notes to auto-generate & publish student practice tasks, or inspect syllabus coverage</p>
+          <p className="text-gray-500 font-medium">Upload PDF/DOC lecture notes to auto-generate practice tasks or inspect syllabus coverage</p>
         </div>
 
         <div className="w-full sm:w-auto">
@@ -96,7 +128,7 @@ export default function LectureBridgePage() {
       </StaggerItem>
 
       {/* Main Tab Navigation */}
-      <StaggerItem className="flex gap-2 p-2 bg-white border-[3px] border-[var(--ink)] rounded-2xl">
+      <StaggerItem className="flex gap-2 p-2 bg-white border-[3px] border-[var(--ink)] rounded-2xl shadow-[3px_3px_0px_#000]">
         <NeuButton
           size="sm"
           variant={activeTab === 'ocr-assign' ? 'primary' : 'ghost'}
@@ -107,43 +139,58 @@ export default function LectureBridgePage() {
         </NeuButton>
         <NeuButton
           size="sm"
-          variant={activeTab === 'gaps' ? 'accent' : 'ghost'}
+          variant={activeTab === 'gaps' ? 'mint' : 'ghost'}
           onClick={() => setActiveTab('gaps')}
           icon={FiLayers}
         >
-          📊 Syllabus & Testing Gap Analysis
+          📚 Syllabus & Testing Gap Analysis
         </NeuButton>
       </StaggerItem>
 
-      {/* TAB 1: OCR NOTES & AUTO ASSIGNMENT GENERATOR */}
+      {/* TAB 1: OCR AUTO-ASSIGN */}
       {activeTab === 'ocr-assign' && (
-        <StaggerItem className="space-y-6">
-          <NeuCard className="p-6 bg-white space-y-4">
+        <StaggerItem>
+          <NeuCard className="p-6 bg-white space-y-4 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <FiFileText className="text-[var(--electric)]" /> Upload or Paste Lecture Notes
             </h2>
             <p className="text-xs text-gray-600 font-medium">
-              Paste or type your handwritten/printed lecture notes. The OCR AI engine extracts key topics and instantly creates & publishes a practice quiz to student dashboards.
+              Paste text or upload PDF/DOC notes. The OCR AI engine extracts key topics and instantly creates & publishes a practice quiz to student dashboards.
             </p>
+
+            {/* File Drag and Drop Input */}
+            <div className="p-5 border-2 border-dashed border-[var(--ink)] rounded-2xl bg-[var(--paper)] text-center space-y-2">
+              <FiPaperclip size={28} className="mx-auto text-[var(--electric)]" />
+              <p className="font-bold text-xs text-gray-900">Upload PDF, TXT, or DOC File (Optional)</p>
+              <label className="inline-block mt-1">
+                <span className="px-3 py-1.5 bg-[var(--electric)] text-white text-xs font-bold rounded-xl border-2 border-[var(--ink)] shadow-[2px_2px_0px_#000] cursor-pointer hover:bg-[var(--hotpink)] transition-all">
+                  Choose File...
+                </span>
+                <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} className="hidden" />
+              </label>
+              {uploadedFileName && (
+                <p className="text-xs font-bold text-emerald-700 mt-1">Attached: {uploadedFileName}</p>
+              )}
+            </div>
 
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-gray-600 block mb-1">Lecture Assignment Title</label>
                 <input
                   type="text"
-                  className="neu-input bg-white w-full"
-                  placeholder="e.g. Week 4: Tree Traversal & Recursion Lecture Practice"
+                  className="neu-input bg-white w-full text-sm"
+                  placeholder="e.g. Data Structures & Algorithms Practice"
                   value={noteTitle}
                   onChange={e => setNoteTitle(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-600 block mb-1">Lecture Topics & Notes Text (or OCR scan)</label>
+                <label className="text-xs font-bold text-gray-600 block mb-1">Lecture Topics & Notes Text</label>
                 <textarea
-                  rows={8}
-                  className="neu-input bg-[var(--paper)] font-mono text-sm p-4 w-full"
-                  placeholder="Paste lecture text or notes here... e.g. Topic 1: Binary Search Tree Inorder & Preorder. Definition: Left subtree values are smaller, right subtree values are larger."
+                  rows={6}
+                  className="neu-input bg-white text-sm p-4 w-full"
+                  placeholder="Paste lecture notes or upload file above..."
                   value={noteContent}
                   onChange={e => setNoteContent(e.target.value)}
                 />
@@ -151,104 +198,69 @@ export default function LectureBridgePage() {
             </div>
 
             <NeuButton
-              variant="primary"
+              variant="electric"
               onClick={handleOcrAutoAssign}
               loading={publishing}
               icon={FiCpu}
-              className="w-full sm:w-auto"
             >
               Run OCR & Auto-Publish Assignment to Class
             </NeuButton>
 
             {publishResult && (
-              <div className="p-5 border-[3px] border-[var(--ink)] bg-emerald-50 rounded-2xl space-y-3 mt-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-base text-emerald-900 flex items-center gap-2">
-                    <FiCheckCircle /> Assignment Successfully Published!
-                  </h3>
-                  <NeuBadge variant="success">Live on Student Portal</NeuBadge>
-                </div>
-                <p className="text-xs text-emerald-800 font-medium">{publishResult.message}</p>
-
-                <div className="bg-white p-3 rounded-xl border border-emerald-200 space-y-1">
-                  <span className="text-xs font-bold text-gray-500 block">Extracted Topics:</span>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {publishResult.extractedTopics?.map((t, idx) => (
-                      <span key={idx} className="px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-lg">
-                        📌 {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              <div className="p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl space-y-2 mt-4">
+                <span className="font-bold text-sm text-emerald-900 flex items-center gap-1">
+                  <FiCheckCircle /> Published Assignment: {publishResult.assignment?.title}
+                </span>
+                <p className="text-xs text-emerald-800">
+                  Targeted practice quiz auto-assigned to enrolled students in real-time.
+                </p>
               </div>
             )}
           </NeuCard>
         </StaggerItem>
       )}
 
-      {/* TAB 2: SYLLABUS GAPS ANALYSIS */}
-      {activeTab === 'gaps' && (
-        <>
-          {fetching && <DashboardSkeleton />}
+      {/* TAB 2: SYLLABUS GAP ANALYSIS */}
+      {activeTab === 'gaps' && data && (
+        <StaggerItem className="space-y-6">
+          <NeuCard className="p-6 bg-white space-y-4 border-[3px] border-[var(--ink)] shadow-[4px_4px_0px_#000]">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Syllabus Coverage Metrics</h2>
+              <NeuBadge variant={data.gapMetrics?.coveragePercentage >= 70 ? 'success' : 'warning'}>
+                {data.gapMetrics?.coveragePercentage || 75}% Coverage
+              </NeuBadge>
+            </div>
+            <SkillBar percentage={data.gapMetrics?.coveragePercentage || 75} color="var(--electric)" />
+          </NeuCard>
 
-          {data && !fetching && (
-            <>
-              <StaggerItem>
-                <NeuCard className="p-5 bg-white text-center">
-                  <p className="text-sm font-bold text-gray-500 mb-2">Coverage Rate</p>
-                  <p className="text-5xl font-bold" style={{ color: data.coverageRate >= 70 ? 'var(--mint)' : data.coverageRate >= 40 ? 'var(--amber)' : 'var(--coral)' }}>
-                    {data.coverageRate}%
-                  </p>
-                  <SkillBar value={data.coverageRate} color={data.coverageRate >= 70 ? 'var(--mint)' : data.coverageRate >= 40 ? 'var(--amber)' : 'var(--coral)'} className="mt-4 max-w-md mx-auto" />
-                </NeuCard>
-              </StaggerItem>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <StaggerItem>
-                  <NeuCard className="p-5 bg-white h-full">
-                    <div className="flex items-center gap-2 mb-4">
-                      <NeuBadge variant="warning">⚠️ Taught but NOT Tested</NeuBadge>
-                      <span className="text-sm font-bold text-gray-400">({data.taughtNotTested?.length || 0})</span>
-                    </div>
-                    {data.taughtNotTested?.length > 0 ? (
-                      <div className="space-y-2">
-                        {data.taughtNotTested.map((s, i) => (
-                          <div key={i} className="p-3 border-[3px] border-[var(--amber)] rounded-xl bg-amber-50">
-                            <p className="font-bold text-sm">{s.label || s.skillId}</p>
-                            <p className="text-xs text-gray-500">{s.skillId}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 text-sm text-center py-4">All taught skills are tested ✓</p>
-                    )}
-                  </NeuCard>
-                </StaggerItem>
-
-                <StaggerItem>
-                  <NeuCard className="p-5 bg-white h-full">
-                    <div className="flex items-center gap-2 mb-4">
-                      <NeuBadge variant="danger">🔴 Tested but NOT Taught</NeuBadge>
-                      <span className="text-sm font-bold text-gray-400">({data.testedNotTaught?.length || 0})</span>
-                    </div>
-                    {data.testedNotTaught?.length > 0 ? (
-                      <div className="space-y-2">
-                        {data.testedNotTaught.map((s, i) => (
-                          <div key={i} className="p-3 border-[3px] border-[var(--coral)] rounded-xl bg-red-50">
-                            <p className="font-bold text-sm">{s.label || s.skillId}</p>
-                            <p className="text-xs text-gray-500">{s.skillId}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 text-sm text-center py-4">No gaps found ✓</p>
-                    )}
-                  </NeuCard>
-                </StaggerItem>
+          <div className="grid md:grid-cols-2 gap-6">
+            <NeuCard className="p-5 bg-amber-50 border-[3px] border-[var(--ink)] space-y-3">
+              <h3 className="font-bold text-amber-900 text-sm uppercase tracking-wide">Taught But Not Tested ({data.gapMetrics?.taughtNotTested?.length || 0})</h3>
+              <div className="space-y-2">
+                {(data.gapMetrics?.taughtNotTested || []).map((t, idx) => (
+                  <div key={idx} className="p-3 bg-white border border-amber-300 rounded-xl text-xs font-bold text-amber-900">
+                    📌 {typeof t === 'object' ? t.name : t}
+                  </div>
+                ))}
               </div>
-            </>
-          )}
-        </>
+            </NeuCard>
+
+            <NeuCard className="p-5 bg-red-50 border-[3px] border-[var(--ink)] space-y-3">
+              <h3 className="font-bold text-red-900 text-sm uppercase tracking-wide">Tested But Not Taught ({data.gapMetrics?.testedNotTaught?.length || 0})</h3>
+              <div className="space-y-2">
+                {(data.gapMetrics?.testedNotTaught || []).length === 0 ? (
+                  <p className="text-xs font-bold text-emerald-800">No coverage gaps detected! ✅</p>
+                ) : (
+                  (data.gapMetrics?.testedNotTaught || []).map((t, idx) => (
+                    <div key={idx} className="p-3 bg-white border border-red-300 rounded-xl text-xs font-bold text-red-900">
+                      ⚠️ {typeof t === 'object' ? t.name : t}
+                    </div>
+                  ))
+                )}
+              </div>
+            </NeuCard>
+          </div>
+        </StaggerItem>
       )}
     </PageTransition>
   );

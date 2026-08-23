@@ -935,3 +935,99 @@ export async function assignRemedialPractice(req, res, next) {
     next(error);
   }
 }
+
+export async function generatePPT(req, res, next) {
+  try {
+    const { topic, courseId, format } = req.body;
+    if (!topic) return res.status(400).json({ error: 'Topic is required' });
+
+    // Clean raw text formatting
+    const cleanTopic = topic.replace(/\^{2,}/g, '').replace(/\+{2,}/g, '').replace(/#{1,6}\s*/g, '').trim();
+
+    // 5 Structured Presentation Slides
+    const slides = [
+      {
+        title: `${cleanTopic} - Overview & Foundations`,
+        subtitle: 'Bridgify Faculty Interactive Lecture Deck',
+        bullets: [
+          `Introduction and fundamental principles of ${cleanTopic}.`,
+          'Key architecture components and domain relevance.',
+          'Prerequisite technical knowledge and learning objectives.'
+        ]
+      },
+      {
+        title: 'Core Concepts & Mechanism',
+        subtitle: 'Theoretical Breakdown',
+        bullets: [
+          'Primary data structures and algorithmic complexity.',
+          'Operational lifecycle and state management principles.',
+          'Standard design patterns and execution trade-offs.'
+        ]
+      },
+      {
+        title: 'System Architecture & Implementation',
+        subtitle: 'Practical Engineering Flow',
+        bullets: [
+          'High-throughput component interactions and APIs.',
+          'Concurrency control, error handling, and caching strategies.',
+          'Integration with modern web stack and cloud microservices.'
+        ]
+      },
+      {
+        title: 'Real-World Production Use Cases',
+        subtitle: 'Industry Applications',
+        bullets: [
+          'Enterprise scaling benchmarks and performance tuning.',
+          'Common security pitfalls and vulnerability mitigation.',
+          'Live production case study and performance metrics.'
+        ]
+      },
+      {
+        title: 'Key Takeaways & Assessment Q&A',
+        subtitle: 'Revision & Summary',
+        bullets: [
+          'Summary of essential concepts covered in this session.',
+          'Recommended lab practice exercises and SEG evidence tasks.',
+          'Open Q&A for student conceptual clarification.'
+        ]
+      }
+    ];
+
+    if (format === 'pptx') {
+      const pptxgen = (await import('pptxgenjs')).default;
+      const pres = new pptxgen();
+      pres.layout = 'LAYOUT_16x9';
+
+      slides.forEach((s) => {
+        const slide = pres.addSlide();
+        slide.background = { color: 'FAF9F6' };
+
+        // Header Banner
+        slide.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: '100%', h: 1.2, fill: '4B3AFF' });
+        slide.addText(s.title, { x: 0.5, y: 0.2, w: 9, h: 0.8, fontSize: 24, color: 'FFFFFF', bold: true });
+
+        // Subtitle
+        slide.addText(s.subtitle, { x: 0.5, y: 1.4, w: 9, h: 0.4, fontSize: 14, color: 'FF3D9A', bold: true });
+
+        // Bullets
+        s.bullets.forEach((bulletText, i) => {
+          slide.addText(`•  ${bulletText}`, { x: 0.8, y: 2.0 + (i * 0.9), w: 8.5, h: 0.7, fontSize: 16, color: '111111' });
+        });
+      });
+
+      const buffer = await pres.write({ outputType: 'nodebuffer' });
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+      res.setHeader('Content-Disposition', `attachment; filename="${cleanTopic.replace(/\s+/g, '_')}_Presentation.pptx"`);
+      return res.send(buffer);
+    }
+
+    res.json({
+      topic: cleanTopic,
+      slides,
+      message: 'Structured presentation deck generated successfully!'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
