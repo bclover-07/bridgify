@@ -9,8 +9,8 @@ class ApiClient {
   static const storage = FlutterSecureStorage();
 
   static void init({String? baseUrl}) {
-    // If running on Android emulator, use 10.0.2.2 instead of localhost
-    final defaultUrl = kIsWeb ? 'http://localhost:5000' : 'http://10.0.2.2:5000';
+    // Using 127.0.0.1 since we configured `adb reverse tcp:5000 tcp:5000` for physical device testing
+    final defaultUrl = kIsWeb ? 'http://localhost:5000' : 'http://127.0.0.1:5000';
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl ?? defaultUrl,
       connectTimeout: const Duration(seconds: 10),

@@ -69,6 +69,50 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> registerUser({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    String? institutionCode,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final response = await ApiClient.instance.post('/api/auth/register', data: {
+        'name': name,
+        'email': email,
+        'password': password,
+        'role': role,
+        if (institutionCode != null && institutionCode.isNotEmpty) 'institutionCode': institutionCode,
+      });
+
+      final token = response.data['accessToken'] ?? response.data['token']; // Fallback in case it's named 'token'
+      final user = response.data['user'];
+
+      // Save token securely
+      if (token != null) {
+         await ApiClient.storage.write(key: 'jwt', value: token);
+      }
+      if (user != null) {
+         await ApiClient.storage.write(key: 'user_role', value: user['role']);
+         await ApiClient.storage.write(key: 'user_data', value: user.toString());
+      }
+
+      state = state.copyWith(isLoading: false, token: token, user: user);
+      return true;
+    } on DioException catch (e) {
+      String errorMessage = 'Registration failed';
+      if (e.response != null && e.response?.data != null) {
+         errorMessage = e.response?.data['error'] ?? e.response?.data['message'] ?? errorMessage;
+      }
+      state = state.copyWith(isLoading: false, error: errorMessage);
+      return false;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'An unexpected error occurred');
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     await ApiClient.storage.deleteAll();
     state = AuthState();

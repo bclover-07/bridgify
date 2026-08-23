@@ -163,7 +163,7 @@ class _StudentDashboardScreenState extends ConsumerState<StudentDashboardScreen>
               _buildActionCard(Icons.quiz, 'Assessments ($pendingAssessmentsCount)', NeuTheme.mint, NeuTheme.ink, () => context.push('/student/assessments')),
               _buildActionCard(Icons.work, 'Opportunities', NeuTheme.amber, NeuTheme.ink, () => context.push('/student/opportunities')),
               _buildActionCard(Icons.person, 'Academic Profile', NeuTheme.sky, NeuTheme.ink, () => context.push('/student/profile')),
-              _buildActionCard(Icons.assignment, 'Assignments', NeuTheme.pink, Colors.white, () => context.push('/student/assignments')),
+              _buildActionCard(Icons.assignment, 'Assignments', NeuTheme.hotpink, Colors.white, () => context.push('/student/assignments')),
               _buildActionCard(Icons.leaderboard, 'Leaderboard', NeuTheme.coral, Colors.white, () => context.push('/student/leaderboard')),
             ],
           ),

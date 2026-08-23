@@ -8,5 +8,17 @@
   "student": "విద్యార్థి",
   "faculty": "అధ్యాపకులు",
   "admin": "అడ్మిన్",
-  "recruiter": "రిక్రూటర్"
+  "recruiter": "రిక్రూటర్",
+  "register": "నమోదు చేయండి",
+  "full_name": "పూర్తి పేరు",
+  "institution_code": "సంస్థ కోడ్",
+  "already_have_account": "ఇప్పటికే ఖాతా ఉందా? సైన్ ఇన్ చేయండి",
+  "dont_have_account": "ఖాతా లేదా? సైన్ అప్ చేయండి",
+  "create_account": "ఖాతా సృష్టించండి",
+  "i_am_a": "నేను ఒక...",
+  "empowering_future": "విద్య మరియు కెరీర్ భవిష్యత్తును బలోపేతం చేయడం.",
+  "welcome_back": "తిరిగి స్వాగతం! 👋",
+  "sign_in_dashboard": "మీ డాష్‌బోర్డ్‌లోకి సైన్ ఇన్ చేయండి",
+  "real_sign_in": "🔐 నిజమైన సైన్ ఇన్",
+  "demo_access": "🎮 డెమో యాక్సెస్"
 }

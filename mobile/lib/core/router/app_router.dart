@@ -1,5 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import '../../features/auth/screens/landing_screen.dart';
+import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/student/screens/student_layout.dart';
 import '../../features/student/screens/dashboard_screen.dart';
@@ -50,7 +52,15 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/',
+      builder: (context, state) => const LandingScreen(),
+    ),
+    GoRoute(
+      path: '/login',
       builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) => const RegisterScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) => StudentLayout(child: child),

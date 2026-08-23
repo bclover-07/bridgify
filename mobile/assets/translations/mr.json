@@ -8,5 +8,17 @@
   "student": "विद्यार्थी",
   "faculty": "शिक्षक",
   "admin": "प्रशासक",
-  "recruiter": "रिक्रूटर"
+  "recruiter": "रिक्रूटर",
+  "register": "नोंदणी करा",
+  "full_name": "पूर्ण नाव",
+  "institution_code": "संस्था कोड",
+  "already_have_account": "आधीच खाते आहे? साइन इन करा",
+  "dont_have_account": "खाते नाही? साइन अप करा",
+  "create_account": "खाते तयार करा",
+  "i_am_a": "मी एक...",
+  "empowering_future": "शिक्षण आणि करिअरचे भविष्य सक्षम करणे.",
+  "welcome_back": "परत स्वागत आहे! 👋",
+  "sign_in_dashboard": "तुमच्या डॅशबोर्डमध्ये साइन इन करा",
+  "real_sign_in": "🔐 वास्तविक साइन इन",
+  "demo_access": "🎮 डेमो प्रवेश"
 }

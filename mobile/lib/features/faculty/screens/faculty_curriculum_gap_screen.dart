@@ -46,7 +46,7 @@ class _FacultyCurriculumGapScreenState extends ConsumerState<FacultyCurriculumGa
     return Scaffold(
       appBar: AppBar(
         title: const Text('Curriculum Gap Analysis'),
-        backgroundColor: NeuTheme.pink,
+        backgroundColor: NeuTheme.hotpink,
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -68,7 +68,7 @@ class _FacultyCurriculumGapScreenState extends ConsumerState<FacultyCurriculumGa
                   const SizedBox(height: 16),
                   NeuButton(
                     text: _isAnalyzing ? 'Analyzing Agent AI...' : 'Run Analysis',
-                    backgroundColor: NeuTheme.pink,
+                    backgroundColor: NeuTheme.hotpink,
                     textColor: Colors.white,
                     onPressed: _isAnalyzing ? null : _analyzeGap,
                   ),
