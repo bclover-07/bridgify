@@ -611,3 +611,35 @@ export async function generatePPT(req, res, next) {
     next(error);
   }
 }
+
+export async function importStudentMarks(req, res, next) {
+  try {
+    const { studentMarks = [] } = req.body;
+
+    if (!Array.isArray(studentMarks) || studentMarks.length === 0) {
+      return res.status(400).json({ error: 'studentMarks array is required' });
+    }
+
+    let updatedCount = 0;
+    for (const record of studentMarks) {
+      const { email, rollNo, cgpa } = record;
+      const query = email ? { email } : rollNo ? { 'student.rollNo': rollNo } : null;
+      if (query) {
+        const studentUser = await User.findOne(query);
+        if (studentUser) {
+          if (!studentUser.student) studentUser.student = {};
+          if (cgpa) studentUser.student.cgpa = Number(cgpa);
+          await studentUser.save();
+          updatedCount++;
+        }
+      }
+    }
+
+    res.json({
+      message: `Successfully imported student marks for ${updatedCount} students.`,
+      updatedCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+}

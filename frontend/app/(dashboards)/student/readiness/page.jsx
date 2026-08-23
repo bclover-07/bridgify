@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import NeuCard from '@/components/shared/NeuCard';
 import NeuButton from '@/components/shared/NeuButton';
-import { NeuRadarChart, NeuBarChart } from '@/components/shared/NeuChart';
+import { NeuRadarChart } from '@/components/shared/NeuChart';
 import NeuBadge from '@/components/shared/NeuBadge';
 import { DashboardSkeleton } from '@/components/shared/LoadingSpinner';
 import PageTransition, { StaggerItem } from '@/components/shared/PageTransition';
@@ -11,14 +11,19 @@ import api from '@/lib/api';
 
 export default function ReadinessPage() {
   const [roles, setRoles] = useState([]);
-  const [selectedRole, setSelectedRole] = useState('frontend-developer');
+  const [selectedRole, setSelectedRole] = useState('fullstack-developer');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [targetRole, setTargetRole] = useState('');
-  const [whatIfResult, setWhatIfResult] = useState(null);
-  const [simulating, setSimulating] = useState(false);
 
-  // Fetch available roles on mount
+  // Onboarding & Path State
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [interestsInput, setInterestsInput] = useState('React, Python, Machine Learning, System Design');
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [generatedPaths, setGeneratedPaths] = useState([]);
+  const [selectedPathId, setSelectedPathId] = useState('');
+  const [showDetailedPlan, setShowDetailedPlan] = useState(true);
+  const [activeMilestones, setActiveMilestones] = useState([]);
+
   useEffect(() => {
     api.get('/student/readiness').then(res => {
       if (res.data.roles) {
@@ -30,7 +35,6 @@ export default function ReadinessPage() {
     }).catch(console.error);
   }, []);
 
-  // Fetch readiness data when selectedRole changes
   useEffect(() => {
     if (!selectedRole) return;
     setLoading(true);
@@ -45,17 +49,38 @@ export default function ReadinessPage() {
       });
   }, [selectedRole]);
 
-  const handleWhatIf = async () => {
-    if (!targetRole) return;
-    setSimulating(true);
+  const handleRunOnboarding = async () => {
+    setOnboardingLoading(true);
     try {
-      const res = await api.post('/student/readiness/what-if', { targetRole });
-      setWhatIfResult(res.data);
+      const interestsArray = interestsInput.split(',').map(s => s.trim()).filter(Boolean);
+      const res = await api.post('/student/readiness/onboard-path', {
+        targetRole: selectedRole,
+        interests: interestsArray,
+      });
+
+      setGeneratedPaths(res.data.paths || []);
+      setSelectedPathId(res.data.selectedPathId || res.data.paths?.[0]?.pathId || '');
+      setActiveMilestones(res.data.activeMilestones || []);
+      setShowOnboarding(false);
+      alert('Custom Learning Paths Generated! Choose your preferred path below.');
     } catch (e) {
-      console.error(e);
-      alert('Failed to simulate: ' + (e.response?.data?.error || e.message));
+      alert('Failed to generate path: ' + (e.response?.data?.error || e.message));
     }
-    setSimulating(false);
+    setOnboardingLoading(false);
+  };
+
+  const handleSelectPath = async (pathId) => {
+    try {
+      const res = await api.post('/student/readiness/select-path', {
+        targetRole: selectedRole,
+        pathId,
+      });
+      setSelectedPathId(pathId);
+      setActiveMilestones(res.data.activePath?.milestones || []);
+      alert(`Active path set to "${res.data.activePath?.title}"!`);
+    } catch (e) {
+      alert('Path selection failed: ' + (e.response?.data?.error || e.message));
+    }
   };
 
   if (loading && !data) return <DashboardSkeleton />;
@@ -63,105 +88,205 @@ export default function ReadinessPage() {
   const radarData = data?.skillBreakdown?.slice(0, 8).map(s => ({
     name: s.label?.substring(0, 12) || 'Skill',
     score: s.currentScore || 0,
-    required: 60, // Default target score
+    required: 60,
   })) || [];
 
   return (
     <PageTransition className="space-y-6">
+      {/* Header & Controls */}
       <StaggerItem className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-1">🎯 Readiness Simulator</h1>
-          <p className="text-gray-500 font-medium">See how ready you are for your target role</p>
+          <h1 className="text-3xl font-bold mb-1">🎯 Readiness Simulator & Career Guidance</h1>
+          <p className="text-gray-500 font-medium">Configure target goals, select tailored AI paths, and track milestone readiness</p>
         </div>
-        <select 
-          className="neu-input bg-white w-full sm:w-auto"
-          value={selectedRole}
-          onChange={(e) => setSelectedRole(e.target.value)}
-        >
-          {roles.map(r => (
-            <option key={r.roleId} value={r.roleId}>{r.label}</option>
-          ))}
-        </select>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <select 
+            className="neu-input bg-white"
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+          >
+            {roles.map(r => (
+              <option key={r.roleId} value={r.roleId}>{r.label}</option>
+            ))}
+          </select>
+          <NeuButton variant="accent" onClick={() => setShowOnboarding(true)}>
+            ⚙️ Career Onboarding
+          </NeuButton>
+        </div>
       </StaggerItem>
 
-      <StaggerItem className="grid md:grid-cols-3 gap-4">
-        <NeuCard className="p-5 bg-[var(--electric)] text-white text-center">
-          <p className="text-sm font-semibold opacity-80 mb-1">Overall Readiness</p>
-          <p className="text-5xl font-bold">{data?.overallReadiness || 0}%</p>
-        </NeuCard>
-        <NeuCard className="p-5 bg-[var(--mint)] text-center">
-          <p className="text-sm font-semibold opacity-80 mb-1">Skills Covered</p>
-          <p className="text-5xl font-bold">{data?.skillBreakdown?.length || 0}</p>
-        </NeuCard>
-        <NeuCard className="p-5 bg-[var(--amber)] text-center">
-          <p className="text-sm font-semibold opacity-80 mb-1">Gaps Found</p>
-          <p className="text-5xl font-bold">{data?.skillBreakdown?.filter(s => s.gap > 0).length || 0}</p>
-        </NeuCard>
-      </StaggerItem>
-
-      {radarData.length > 0 && (
+      {/* Onboarding Wizard Modal */}
+      {showOnboarding && (
         <StaggerItem>
-          <NeuCard className="p-5 bg-white">
-            <h2 className="text-xl font-bold mb-4">Skill Radar</h2>
-            <NeuRadarChart data={radarData} dataKeys={[
-              { key: 'score', label: 'Your Score', color: '#4B3AFF' },
-              { key: 'required', label: 'Required', color: '#FF3D9A' },
-            ]} height={350} />
+          <NeuCard className="p-6 bg-[var(--paper)] border-[3px] border-[var(--ink)] space-y-4">
+            <h2 className="text-xl font-bold text-[var(--ink)]">🚀 Career Goal & Interest Onboarding</h2>
+            <p className="text-sm text-gray-600 font-medium">
+              Specify your domain interests to let AI generate 2 to 3 tailored learning paths with weekly study plans.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">Target Role</label>
+                <input
+                  type="text"
+                  disabled
+                  value={roles.find(r => r.roleId === selectedRole)?.label || selectedRole}
+                  className="neu-input bg-gray-100 w-full"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">Your Key Tech Interests (comma separated)</label>
+                <input
+                  type="text"
+                  value={interestsInput}
+                  onChange={e => setInterestsInput(e.target.value)}
+                  placeholder="e.g. React, Python, Cloud, System Design"
+                  className="neu-input bg-white w-full"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <NeuButton variant="secondary" onClick={() => setShowOnboarding(false)}>
+                Cancel
+              </NeuButton>
+              <NeuButton variant="primary" onClick={handleRunOnboarding} loading={onboardingLoading}>
+                Generate AI Paths
+              </NeuButton>
+            </div>
           </NeuCard>
         </StaggerItem>
       )}
 
-      <StaggerItem>
-        <NeuCard className="p-5 bg-white">
-          <h2 className="text-xl font-bold mb-4">What-If Simulator</h2>
-          <p className="text-gray-500 text-sm font-medium mb-4">Select a target role to see what skills you need to improve</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <select
-              className="neu-input flex-1 bg-white"
-              value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
-            >
-              <option value="">Select a role...</option>
-              {roles.map(r => (
-                <option key={r.roleId} value={r.roleId}>{r.label}</option>
-              ))}
-            </select>
-            <NeuButton variant="primary" onClick={handleWhatIf} loading={simulating}>
-              Simulate
-            </NeuButton>
-          </div>
-
-          {whatIfResult && (
-            <div className="mt-6 p-4 border-[3px] border-[var(--ink)] rounded-2xl bg-[var(--paper)]">
-              <h3 className="font-bold mb-3">Simulation Result for {roles.find(r => r.roleId === targetRole)?.label}</h3>
-              <div className="flex gap-3 mb-4">
-                <NeuBadge variant={whatIfResult.whatIfReadiness >= 70 ? 'success' : 'warning'}>
-                  Target Readiness: {whatIfResult.whatIfReadiness || 0}%
-                </NeuBadge>
-                <NeuBadge variant="info">
-                  Improvement: +{whatIfResult.improvement || 0}%
-                </NeuBadge>
-              </div>
-            </div>
-          )}
+      {/* Top Stats Cards */}
+      <StaggerItem className="grid md:grid-cols-3 gap-4">
+        <NeuCard className="p-5 bg-[var(--electric)] text-white text-center">
+          <p className="text-sm font-semibold opacity-80 mb-1">Overall Role Readiness</p>
+          <p className="text-5xl font-bold">{data?.overallReadiness || 0}%</p>
+        </NeuCard>
+        <NeuCard className="p-5 bg-[var(--mint)] text-center">
+          <p className="text-sm font-semibold opacity-80 mb-1">Skills Verified</p>
+          <p className="text-5xl font-bold">{data?.skillBreakdown?.length || 0}</p>
+        </NeuCard>
+        <NeuCard className="p-5 bg-[var(--amber)] text-center">
+          <p className="text-sm font-semibold opacity-80 mb-1">High-Impact Gaps</p>
+          <p className="text-5xl font-bold">{data?.skillBreakdown?.filter(s => s.gap > 0).length || 0}</p>
         </NeuCard>
       </StaggerItem>
 
-      {data?.recommendations?.length > 0 && (
-        <StaggerItem>
-          <NeuCard className="p-5 bg-white">
-            <h2 className="text-xl font-bold mb-4">Skill Recommendations</h2>
-            <div className="space-y-3">
-              {data.recommendations.map((rec, i) => (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)] gap-2">
+      {/* AI Generated Learning Path Selector */}
+      {generatedPaths.length > 0 && (
+        <StaggerItem className="space-y-4">
+          <h2 className="text-xl font-bold">🛣️ Generated AI Career Paths for {roles.find(r => r.roleId === selectedRole)?.label}</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {generatedPaths.map(p => (
+              <NeuCard
+                key={p.pathId}
+                className={`p-5 space-y-3 border-[3px] border-[var(--ink)] ${
+                  selectedPathId === p.pathId ? 'bg-indigo-50 shadow-[4px_4px_0px_#000]' : 'bg-white'
+                }`}
+              >
+                <div className="flex justify-between items-start">
                   <div>
-                    <span className="font-bold text-sm block">{rec.label}</span>
-                    <span className="text-xs text-gray-500">Current: {rec.currentScore}% • Target: {rec.targetScore}%</span>
+                    <h3 className="font-bold text-lg">{p.title}</h3>
+                    <span className="text-xs font-semibold text-[var(--electric)]">{p.focus}</span>
                   </div>
-                  <NeuBadge variant="danger">High Impact Gap</NeuBadge>
+                  {selectedPathId === p.pathId && (
+                    <NeuBadge variant="success">Active Path</NeuBadge>
+                  )}
+                </div>
+
+                <p className="text-xs text-gray-600">{p.description}</p>
+                <p className="text-xs font-bold text-gray-500">⏱️ Est. Duration: {p.estimatedWeeks} Weeks</p>
+
+                <div className="pt-2">
+                  {selectedPathId !== p.pathId ? (
+                    <NeuButton variant="primary" onClick={() => handleSelectPath(p.pathId)}>
+                      Select This Path
+                    </NeuButton>
+                  ) : (
+                    <NeuBadge variant="info">Selected Path Active</NeuBadge>
+                  )}
+                </div>
+              </NeuCard>
+            ))}
+          </div>
+        </StaggerItem>
+      )}
+
+      {/* Toggle for Detailed Study Plan & Milestones */}
+      <StaggerItem className="flex items-center justify-between p-4 bg-white border-[3px] border-[var(--ink)] rounded-2xl">
+        <div>
+          <h3 className="font-bold text-base">📘 Detailed Study Plan & Milestone Guidance</h3>
+          <p className="text-xs text-gray-500 font-medium">View week-by-week topic roadmaps and interactive practice tasks</p>
+        </div>
+        <button
+          onClick={() => setShowDetailedPlan(!showDetailedPlan)}
+          className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer border-2 border-[var(--ink)] transition-all ${
+            showDetailedPlan ? 'bg-[var(--electric)] justify-end' : 'bg-gray-300 justify-start'
+          }`}
+        >
+          <div className="w-4 h-4 rounded-full bg-white border border-[var(--ink)]" />
+        </button>
+      </StaggerItem>
+
+      {/* Detailed Study Plan Roadmap */}
+      {showDetailedPlan && (
+        <StaggerItem className="space-y-4">
+          <NeuCard className="p-6 bg-white space-y-4">
+            <h2 className="text-xl font-bold">🗺️ Active Milestone Roadmap</h2>
+            <div className="space-y-4">
+              {(activeMilestones.length > 0 ? activeMilestones : [
+                {
+                  week: 1,
+                  title: 'Core Fundamentals & Algorithmic Thinking',
+                  description: 'Master arrays, hash maps, complexity, and basic data structures.',
+                  topics: [
+                    { name: 'Data Structures & Algorithmic Thinking', skillId: 'dsa.basics' },
+                    { name: 'System Design & REST API Design', skillId: 'backend.api' }
+                  ]
+                },
+                {
+                  week: 2,
+                  title: 'Frontend React Architecture & State Management',
+                  description: 'Build responsive components, custom hooks, and state management.',
+                  topics: [
+                    { name: 'React Components & Hooks', skillId: 'react.basics' },
+                    { name: 'Tailwind & UI Design System', skillId: 'frontend.ui' }
+                  ]
+                }
+              ]).map((m, idx) => (
+                <div key={idx} className="p-4 border-[3px] border-[var(--ink)] rounded-xl bg-[var(--paper)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-[var(--electric)] uppercase">Week {m.week || idx + 1}</span>
+                    <NeuBadge variant="info">In Progress</NeuBadge>
+                  </div>
+                  <h3 className="font-bold text-lg">{m.title}</h3>
+                  <p className="text-xs text-gray-600">{m.description}</p>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {m.topics?.map((t, tidx) => (
+                      <span key={tidx} className="px-3 py-1 bg-white border-2 border-[var(--ink)] rounded-lg text-xs font-bold">
+                        📌 {t.name} ({t.skillId})
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
+          </NeuCard>
+        </StaggerItem>
+      )}
+
+      {/* Skill Radar Chart */}
+      {radarData.length > 0 && (
+        <StaggerItem>
+          <NeuCard className="p-5 bg-white">
+            <h2 className="text-xl font-bold mb-4">Skill Gap Radar</h2>
+            <NeuRadarChart data={radarData} dataKeys={[
+              { key: 'score', label: 'Your Score', color: '#4B3AFF' },
+              { key: 'required', label: 'Required Target', color: '#FF3D9A' },
+            ]} height={350} />
           </NeuCard>
         </StaggerItem>
       )}

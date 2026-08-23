@@ -11,7 +11,7 @@ import {
   FiUsers, FiBarChart2, FiFileText, FiAlertTriangle, FiGrid,
   FiBriefcase, FiActivity, FiLayers,
   FiDatabase, FiCpu, FiEdit3, FiPackage, FiHeart,
-  FiStar, FiLogOut, FiMap
+  FiStar, FiLogOut, FiMap, FiUser
 } from 'react-icons/fi';
 import useAuthStore from '@/lib/store/authStore';
 
@@ -23,13 +23,15 @@ const roleConfigs = {
     basePath: '/student',
     links: [
       { href: '/student', label: 'Dashboard', icon: FiHome },
+      { href: '/student/profile', label: 'My Profile & Academics', icon: FiUser },
       { href: '/student/feed', label: 'Tech Feed', icon: FiTrendingUp },
       { href: '/student/readiness', label: 'Readiness Simulator', icon: FiTarget },
+      { href: '/student/assignments', label: 'Assignments & Practice', icon: FiEdit3 },
       { href: '/student/learning-path', label: 'Skill Evidence Graph', icon: FiMap },
       { href: '/student/study-hub', label: 'Study Hub & Soft Skills', icon: FiBookOpen },
       { href: '/student/wallet', label: 'Skill Wallet', icon: FiShield },
       { href: '/student/opportunities', label: 'Opportunities', icon: FiSearch },
-      { href: '/student/benchmarks', label: 'Benchmarks', icon: FiAward },
+      { href: '/student/benchmarks', label: 'Benchmarks & Leaderboard', icon: FiAward },
       { href: '/student/assessments', label: 'Assessments', icon: FiClipboard },
     ],
   },

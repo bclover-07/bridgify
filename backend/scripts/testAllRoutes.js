@@ -160,6 +160,53 @@ async function runTests() {
     return { sessionId: res.data.session._id, side: res.data.session.side };
   });
 
+  await testEndpoint('POST Student Onboarding Paths', async () => {
+    const res = await apiCall(studentToken).post(
+      '/student/readiness/onboard-path',
+      { targetRole: 'fullstack-developer', interests: ['React', 'Python', 'ML'] }
+    );
+    return { pathsCount: res.data.paths?.length, selectedPathId: res.data.selectedPathId };
+  });
+
+  await testEndpoint('POST Student Select Path', async () => {
+    const res = await apiCall(studentToken).post(
+      '/student/readiness/select-path',
+      { targetRole: 'fullstack-developer', pathId: 'path_specialist' }
+    );
+    return { title: res.data.activePath?.title };
+  });
+
+  await testEndpoint('GET Student Assignments', async () => {
+    const res = await apiCall(studentToken).get('/student/assignments');
+    return { count: res.data.assignments?.length };
+  });
+
+  await testEndpoint('POST Student Submit Assignment Practice', async () => {
+    const res = await apiCall(studentToken).post(
+      '/student/assignments/submit',
+      { skillId: 'dsa.basics', score: 100, topicName: 'Data Structures' }
+    );
+    return { message: res.data.message, scoreAdded: res.data.scoreAdded };
+  });
+
+  await testEndpoint('POST Student AI Code Review', async () => {
+    const res = await apiCall(studentToken).post(
+      '/student/code/ai-review',
+      { code: 'function add(a, b) { return a + b; }', language: 'javascript' }
+    );
+    return { hasErrors: res.data.review?.hasErrors, timeComplexity: res.data.review?.timeComplexity };
+  });
+
+  await testEndpoint('GET Student Leaderboard', async () => {
+    const res = await apiCall(studentToken).get('/student/leaderboard');
+    return { myRank: res.data.myRank, totalStudents: res.data.totalStudents };
+  });
+
+  await testEndpoint('GET Student Academic Profile', async () => {
+    const res = await apiCall(studentToken).get('/student/profile/academics');
+    return { name: res.data.profile?.name, cgpa: res.data.profile?.cgpa };
+  });
+
   // ----------------------------------------------------
   // 3. FACULTY ROUTES & AI AGENTS
   // ----------------------------------------------------
@@ -225,6 +272,15 @@ async function runTests() {
   await testEndpoint('GET Faculty Learning Feed', async () => {
     const res = await apiCall(facultyToken).get('/faculty/learning-feed');
     return { totalDemands: res.data.feed?.length };
+  });
+
+  await testEndpoint('POST Faculty Import Student Marks', async () => {
+    const res = await apiCall(facultyToken).post('/faculty/students/import-marks', {
+      studentMarks: [
+        { email: 'arjun@mrdu.edu', rollNo: '21MR1A0501', cgpa: 9.1 }
+      ]
+    });
+    return { updatedCount: res.data.updatedCount, message: res.data.message };
   });
 
   // ----------------------------------------------------

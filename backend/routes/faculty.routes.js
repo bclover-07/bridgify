@@ -26,6 +26,7 @@ router.post('/projects/assign', facultyController.assignProject);
 router.get('/learning-feed', facultyController.getLearningFeed);
 router.post('/lecture-bridge', facultyController.lectureBridge);
 router.post('/mentorship/match', facultyController.mentorshipMatch);
+router.post('/students/import-marks', facultyController.importStudentMarks);
 router.post('/ppt/generate', facultyController.generatePPT);
 
 export default router;
