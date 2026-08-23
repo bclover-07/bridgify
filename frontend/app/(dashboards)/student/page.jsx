@@ -147,7 +147,7 @@ export default function StudentDashboard() {
                       <span className="font-bold text-lg">{s.percentage}%</span>
                     )}
                     <NeuBadge variant={s.gradingStatus === 'final' ? 'success' : s.gradingStatus === 'auto_graded' ? 'info' : 'warning'}>
-                      {s.gradingStatus?.replace('_', ' ') || 'pending'}
+                      {String(s.gradingStatus || 'pending').replace(/_/g, ' ')}
                     </NeuBadge>
                   </div>
                 </div>
@@ -155,6 +155,7 @@ export default function StudentDashboard() {
             </div>
           </NeuCard>
         </StaggerItem>
-      </PageTransition>
+      )}
+    </PageTransition>
   );
 }
