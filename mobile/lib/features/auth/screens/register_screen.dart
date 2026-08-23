@@ -34,7 +34,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
 
     if (success && mounted) {
-      context.go('/$_selectedRole');
+      final user = ref.read(authProvider).user;
+      final role = user?['role'] ?? _selectedRole;
+      context.go('/$role');
     }
   }
 

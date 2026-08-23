@@ -144,12 +144,12 @@ export default function Sidebar({ role }) {
 
   return (
     <>
-      <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-white fixed left-0 top-0 z-40 overflow-hidden border-r-[3px] border-[var(--ink)]">
+      <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white fixed left-0 top-0 z-40 overflow-hidden border-r-[3px] border-[var(--ink)]">
         {navContent}
       </aside>
 
       <button
-        className="lg:hidden fixed top-4 left-4 z-[60] neu-btn neu-btn-white p-2 !shadow-[3px_3px_0px_0px_var(--ink)]"
+        className="md:hidden fixed top-4 left-4 z-[60] neu-btn neu-btn-white p-2 !shadow-[3px_3px_0px_0px_var(--ink)]"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle menu"
       >
@@ -160,14 +160,14 @@ export default function Sidebar({ role }) {
         {mobileOpen && (
           <>
             <motion.div
-              className="fixed inset-0 bg-black/40 z-[45] lg:hidden"
+              className="fixed inset-0 bg-black/40 z-[45] md:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
-              className="fixed left-0 top-0 h-full w-72 bg-white border-r-[3px] border-[var(--ink)] z-[55] lg:hidden overflow-y-auto"
+              className="fixed left-0 top-0 h-full w-72 bg-white border-r-[3px] border-[var(--ink)] z-[55] md:hidden overflow-y-auto"
               initial={{ x: -288 }}
               animate={{ x: 0 }}
               exit={{ x: -288 }}
@@ -179,7 +179,7 @@ export default function Sidebar({ role }) {
         )}
       </AnimatePresence>
 
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t-[3px] border-[var(--ink)] z-50 flex items-center justify-around px-2 safe-area-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t-[3px] border-[var(--ink)] z-50 flex items-center justify-around px-2 safe-area-bottom">
         {mobileBottomLinks.map((link) => {
           const active = isActive(link.href);
           return (

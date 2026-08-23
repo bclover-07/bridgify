@@ -9,8 +9,8 @@ class ApiClient {
   static const storage = FlutterSecureStorage();
 
   static void init({String? baseUrl}) {
-    // Using 127.0.0.1 since we configured `adb reverse tcp:5000 tcp:5000` for physical device testing
-    final defaultUrl = kIsWeb ? 'http://localhost:5000' : 'http://127.0.0.1:5000';
+    // Using localhost since adb reverse binds to IPv6 [::]:5000 on some physical devices
+    final defaultUrl = kIsWeb ? 'http://localhost:5000' : 'http://localhost:5000';
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl ?? defaultUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -28,6 +28,14 @@ class ApiClient {
         }
         return handler.next(options);
       },
+    ));
+
+    _dio.interceptors.add(LogInterceptor(
+      request: true,
+      requestBody: true,
+      responseBody: true,
+      error: true,
+      logPrint: (obj) => debugPrint(obj.toString()),
     ));
 
     _dio.interceptors.add(OfflineInterceptor());

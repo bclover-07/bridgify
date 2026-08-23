@@ -22,6 +22,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   final List<String> _roles = ['student', 'faculty', 'admin', 'recruiter'];
 
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill the default demo role credentials
+    _handleSelectDemo(_selectedRole);
+  }
+
   void _handleSelectDemo(String role) {
     setState(() {
       _selectedRole = role;
@@ -50,11 +57,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final success = await ref.read(authProvider.notifier).login(
       _emailController.text, 
       _passwordController.text, 
-      _selectedRole
+      _selectedRole // Only used if needed, backend determines actual role
     );
     
     if (success && mounted) {
-      context.go('/$_selectedRole');
+      final user = ref.read(authProvider).user;
+      final role = user?['role'] ?? _selectedRole;
+      context.go('/$role');
     }
   }
 
