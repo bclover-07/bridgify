@@ -80,10 +80,14 @@ class _StudentAssignmentsScreenState extends ConsumerState<StudentAssignmentsScr
                     if (_codeController.text.trim().isEmpty) return;
                     setStateDialog(() => _isSubmitting = true);
                     try {
+                      final codingChallenge = assignment['codingChallenge'] as Map<String, dynamic>?;
+                      final title = codingChallenge?['title'] ?? assignment['topic'] ?? 'Assignment';
                       await ApiClient.instance.post('/api/student/assignments/submit', data: {
-                        "assignmentId": assignment['_id'],
+                        "skillId": assignment['skillId'] ?? 'general.practice',
+                        "topicName": title,
                         "code": _codeController.text.trim(),
                         "language": "javascript",
+                        "score": 95 // Simulated grading score for practice
                       });
                       if (mounted) {
                         Navigator.pop(context);
@@ -110,7 +114,7 @@ class _StudentAssignmentsScreenState extends ConsumerState<StudentAssignmentsScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Assignments'),
+        title: const Text('Assignments & Practice'),
         backgroundColor: NeuTheme.amber,
         foregroundColor: NeuTheme.ink,
       ),
@@ -118,33 +122,44 @@ class _StudentAssignmentsScreenState extends ConsumerState<StudentAssignmentsScr
           ? const Center(child: CircularProgressIndicator(color: NeuTheme.amber))
           : _assignments.isEmpty
               ? const Center(child: Text('No pending assignments.', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _assignments.length,
-                  itemBuilder: (context, index) {
-                    final assignment = _assignments[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: NeuCard(
-                        backgroundColor: Colors.white,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(assignment['title'] ?? 'Untitled Assignment', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            Text(assignment['description'] ?? 'No description provided.', style: const TextStyle(fontSize: 14)),
-                            const SizedBox(height: 16),
-                            NeuButton(
-                              text: 'Submit Work',
-                              backgroundColor: NeuTheme.amber,
-                              textColor: NeuTheme.ink,
-                              onPressed: () => _showSubmitDialog(assignment),
+              : PageTransition(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _assignments.length,
+                    itemBuilder: (context, index) {
+                      final assignment = _assignments[index];
+                      final codingChallenge = assignment['codingChallenge'] as Map<String, dynamic>?;
+                      final title = codingChallenge?['title'] ?? assignment['topic'] ?? 'Untitled Assignment';
+                      final description = codingChallenge?['description'] ?? 'Complete the practice questions for ${assignment['topic']}';
+
+                      return StaggerItem(
+                        index: index,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: NeuCard(
+                            backgroundColor: Colors.white,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text('Week ${assignment['week'] ?? '?'} - ${assignment['milestoneTitle'] ?? ''}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                                const SizedBox(height: 4),
+                                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 8),
+                                Text(description, style: const TextStyle(fontSize: 14)),
+                                const SizedBox(height: 16),
+                                NeuButton(
+                                  text: 'Submit Work',
+                                  backgroundColor: NeuTheme.amber,
+                                  textColor: NeuTheme.ink,
+                                  onPressed: () => _showSubmitDialog(assignment),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
     );
   }

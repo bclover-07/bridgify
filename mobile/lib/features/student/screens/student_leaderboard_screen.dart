@@ -53,43 +53,55 @@ class _StudentLeaderboardScreenState extends ConsumerState<StudentLeaderboardScr
           ? const Center(child: CircularProgressIndicator(color: NeuTheme.coral))
           : _leaderboard.isEmpty
               ? const Center(child: Text('No leaderboard data yet.', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _leaderboard.length,
-                  itemBuilder: (context, index) {
-                    final student = _leaderboard[index];
-                    final rank = index + 1;
-                    Color rankColor = NeuTheme.paper;
-                    if (rank == 1) rankColor = NeuTheme.amber;
-                    if (rank == 2) rankColor = Colors.grey.shade300;
-                    if (rank == 3) rankColor = Colors.orange.shade200;
+              : PageTransition(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _leaderboard.length,
+                    itemBuilder: (context, index) {
+                      final student = _leaderboard[index];
+                      final rank = index + 1;
+                      Color rankColor = NeuTheme.paper;
+                      if (rank == 1) rankColor = NeuTheme.amber;
+                      if (rank == 2) rankColor = Colors.grey.shade300;
+                      if (rank == 3) rankColor = Colors.orange.shade200;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: NeuCard(
-                        backgroundColor: rankColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          children: [
-                            Text('#$rank', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(student['name'] ?? 'Unknown', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      return StaggerItem(
+                        index: index,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: NeuCard(
+                            backgroundColor: rankColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Text('#$rank', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(student['name'] ?? 'Unknown', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                      if (student['badge'] != null)
+                                        Text('Badge: ${student['badge']}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: NeuTheme.electric,
+                                    border: Border.all(color: NeuTheme.ink, width: 2),
+                                    borderRadius: BorderRadius.circular(NeuTheme.radiusButton)
+                                  ),
+                                  child: Text('${student['readinessScore'] ?? 0} pts', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                )
+                              ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: NeuTheme.electric,
-                                border: Border.all(color: NeuTheme.ink, width: 2),
-                                borderRadius: BorderRadius.circular(NeuTheme.radiusButton)
-                              ),
-                              child: Text('${student['score'] ?? 0} pts', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            )
-                          ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
     );
   }

@@ -64,116 +64,130 @@ class _BenchmarksScreenState extends ConsumerState<BenchmarksScreen> {
         backgroundColor: NeuTheme.orange,
         foregroundColor: NeuTheme.ink,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            NeuCard(
-              backgroundColor: NeuTheme.paper,
-              child: Column(
-                children: [
-                  const Text('Your Overall Percentile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$overallPercentile%',
-                    style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: NeuTheme.orange),
-                  ),
-                  const Text('Compared to cohort maximums', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text('Skill Comparison (You vs Cohort Max)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            if (benchmarks.isEmpty)
-              const Center(child: Text('No skill data available to benchmark against.'))
-            else ...[
-              SizedBox(
-                height: 300,
+      body: PageTransition(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              StaggerItem(
+                index: 0,
                 child: NeuCard(
-                  backgroundColor: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                  child: BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.spaceAround,
-                      maxY: 100,
-                      barTouchData: BarTouchData(enabled: false),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, meta) {
-                              if (value.toInt() < benchmarks.length) {
-                                String label = benchmarks[value.toInt()]['skillLabel'] ?? 'Skill';
-                                if (label.length > 8) {
-                                  label = '${label.substring(0, 6)}..';
-                                }
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    label,
-                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 30,
-                            getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 10)),
-                          ),
-                        ),
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  backgroundColor: NeuTheme.paper,
+                  child: Column(
+                    children: [
+                      const Text('Your Overall Percentile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$overallPercentile%',
+                        style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: NeuTheme.orange),
                       ),
-                      gridData: const FlGridData(show: false),
-                      borderData: FlBorderData(show: false),
-                      barGroups: benchmarks.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final comp = entry.value;
-                        return BarChartGroupData(
-                          x: index,
-                          barRods: [
-                            BarChartRodData(
-                              toY: (comp['myScore'] as num).toDouble(),
-                              color: NeuTheme.orange,
-                              width: 15,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            BarChartRodData(
-                              toY: (comp['cohortMax'] as num).toDouble(),
-                              color: NeuTheme.ink,
-                              width: 15,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
+                      const Text('Compared to cohort maximums', style: TextStyle(color: Colors.grey)),
+                    ],
                   ),
                 ),
               ),
+              const SizedBox(height: 24),
+              StaggerItem(
+                index: 1,
+                child: const Text('Skill Comparison (You vs Cohort Max)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(width: 12, height: 12, color: NeuTheme.orange),
-                  const SizedBox(width: 8),
-                  const Text('You', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 24),
-                  Container(width: 12, height: 12, color: NeuTheme.ink),
-                  const SizedBox(width: 8),
-                  const Text('Cohort Max', style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              )
-            ]
-          ],
+              if (benchmarks.isEmpty)
+                const Center(child: Text('No skill data available to benchmark against.'))
+              else ...[
+                StaggerItem(
+                  index: 2,
+                  child: SizedBox(
+                    height: 300,
+                    child: NeuCard(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: 100,
+                          barTouchData: BarTouchData(enabled: false),
+                          titlesData: FlTitlesData(
+                            show: true,
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, meta) {
+                                  if (value.toInt() < benchmarks.length) {
+                                    String label = benchmarks[value.toInt()]['skillLabel'] ?? 'Skill';
+                                    if (label.length > 8) {
+                                      label = '${label.substring(0, 6)}..';
+                                    }
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Text(
+                                        label,
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 30,
+                                getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 10)),
+                              ),
+                            ),
+                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          ),
+                          gridData: const FlGridData(show: false),
+                          borderData: FlBorderData(show: false),
+                          barGroups: benchmarks.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final comp = entry.value;
+                            return BarChartGroupData(
+                              x: index,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: (comp['myScore'] as num).toDouble(),
+                                  color: NeuTheme.orange,
+                                  width: 15,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                                BarChartRodData(
+                                  toY: (comp['cohortMax'] as num).toDouble(),
+                                  color: NeuTheme.ink,
+                                  width: 15,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                StaggerItem(
+                  index: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(width: 12, height: 12, color: NeuTheme.orange),
+                      const SizedBox(width: 8),
+                      const Text('You', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 24),
+                      Container(width: 12, height: 12, color: NeuTheme.ink),
+                      const SizedBox(width: 8),
+                      const Text('Cohort Max', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ]
+            ],
+          ),
         ),
       ),
     );

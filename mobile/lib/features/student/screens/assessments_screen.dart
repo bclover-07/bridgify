@@ -59,41 +59,46 @@ class _AssessmentsScreenState extends ConsumerState<AssessmentsScreen> {
         ? const Center(child: CircularProgressIndicator(color: NeuTheme.mint))
         : assessments.isEmpty 
           ? const Center(child: Text("No upcoming assessments found."))
-          : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: assessments.length,
-            itemBuilder: (context, index) {
-              final item = assessments[index];
-              final hasSubmitted = item['hasSubmitted'] == true;
-              final score = hasSubmitted && item['submission'] != null ? item['submission']['percentage'] ?? item['submission']['totalScore'] ?? 0 : 0;
-              final questionsCount = (item['questions'] as List<dynamic>? ?? []).length;
-              
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: NeuCard(
-                  backgroundColor: !hasSubmitted ? NeuTheme.paper : NeuTheme.acid,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(item['title'] ?? 'Untitled Assessment', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Text(
-                        !hasSubmitted ? 'Pending - $questionsCount Questions' : 'Completed - Score: $score%',
-                        style: TextStyle(color: Colors.grey[800]),
+          : PageTransition(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: assessments.length,
+                itemBuilder: (context, index) {
+                  final item = assessments[index];
+                  final hasSubmitted = item['hasSubmitted'] == true;
+                  final score = hasSubmitted && item['submission'] != null ? item['submission']['percentage'] ?? item['submission']['totalScore'] ?? 0 : 0;
+                  final questionsCount = (item['questions'] as List<dynamic>? ?? []).length;
+                  
+                  return StaggerItem(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: NeuCard(
+                        backgroundColor: !hasSubmitted ? NeuTheme.paper : NeuTheme.acid,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(item['title'] ?? 'Untitled Assessment', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            Text(
+                              !hasSubmitted ? 'Pending - $questionsCount Questions' : 'Completed - Score: $score%',
+                              style: TextStyle(color: Colors.grey[800]),
+                            ),
+                            const SizedBox(height: 16),
+                            if (!hasSubmitted)
+                              NeuButton(
+                                text: 'Start Assessment',
+                                backgroundColor: NeuTheme.mint,
+                                onPressed: () => _takeAssessment(item),
+                              )
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      if (!hasSubmitted)
-                        NeuButton(
-                          text: 'Start Assessment',
-                          backgroundColor: NeuTheme.mint,
-                          onPressed: () => _takeAssessment(item),
-                        )
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -215,50 +220,65 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Question ${_currentQ + 1} of ${_questions.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 16),
-            NeuCard(
-              backgroundColor: NeuTheme.paper,
-              child: Text(q['questionText'] ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(height: 24),
-            ...options.map((opt) {
-              final text = opt['text'] as String;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedAns = text),
-                  child: NeuCard(
-                    backgroundColor: _selectedAns == text ? NeuTheme.acid : Colors.white,
-                    child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+        child: PageTransition(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              StaggerItem(
+                index: 0,
+                child: Text('Question ${_currentQ + 1} of ${_questions.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+              const SizedBox(height: 16),
+              StaggerItem(
+                index: 1,
+                child: NeuCard(
+                  backgroundColor: NeuTheme.paper,
+                  child: Text(q['questionText'] ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
-              );
-            }).toList(),
-            const Spacer(),
-            NeuButton(
-              text: _currentQ == _questions.length - 1 ? 'Submit Assessment' : 'Next Question',
-              backgroundColor: NeuTheme.mint,
-              onPressed: () {
-                if (_selectedAns == null) return;
-                
-                _answers[q['_id']] = _selectedAns!;
+              ),
+              const SizedBox(height: 24),
+              ...options.asMap().entries.map((entry) {
+                final int idx = entry.key;
+                final opt = entry.value;
+                final text = opt['text'] as String;
+                return StaggerItem(
+                  index: idx + 2,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedAns = text),
+                      child: NeuCard(
+                        backgroundColor: _selectedAns == text ? NeuTheme.acid : Colors.white,
+                        child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+              const Spacer(),
+              StaggerItem(
+                index: options.length + 2,
+                child: NeuButton(
+                  text: _currentQ == _questions.length - 1 ? 'Submit Assessment' : 'Next Question',
+                  backgroundColor: NeuTheme.mint,
+                  onPressed: () {
+                    if (_selectedAns == null) return;
+                    
+                    _answers[q['_id']] = _selectedAns!;
 
-                if (_currentQ == _questions.length - 1) {
-                  _submitQuiz();
-                } else {
-                  setState(() {
-                    _currentQ++;
-                    // Restore previous answer if going back was supported, but we only go forward here
-                    _selectedAns = _answers[_questions[_currentQ]['_id']]; 
-                  });
-                }
-              },
-            )
-          ],
+                    if (_currentQ == _questions.length - 1) {
+                      _submitQuiz();
+                    } else {
+                      setState(() {
+                        _currentQ++;
+                        _selectedAns = _answers[_questions[_currentQ]['_id']]; 
+                      });
+                    }
+                  },
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );

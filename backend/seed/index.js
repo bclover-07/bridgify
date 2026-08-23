@@ -364,10 +364,10 @@ async function seed() {
     console.log(`  Notifications: ${createdUsers.length}`);
 
     console.log('\n--- Demo Accounts ---');
-    console.log('  Student:   arjun@mrdu.edu / test123');
-    console.log('  Faculty:   lakshmi.naidu@mrdu.edu / faculty123');
-    console.log('  Admin:     admin@mrdu.edu / admin123');
-    console.log('  Recruiter: ravi@techspark.com / recruiter123');
+    console.log('  Student:   arjun@mrdu.edu / Bridgify@2026');
+    console.log('  Faculty:   lakshmi.naidu@mrdu.edu / Bridgify@2026');
+    console.log('  Admin:     admin@mrdu.edu / Bridgify@2026');
+    console.log('  Recruiter: ravi@techspark.com / Bridgify@2026');
 
     await mongoose.connection.close();
     console.log('\nDatabase connection closed.');
