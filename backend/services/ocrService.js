@@ -4,11 +4,13 @@ import { otariCall } from '../utils/otariCall.js';
  * Extract text and key topics from uploaded lecture notes (handwritten images, printed notes, or PDF text).
  * @param {string|Buffer} noteContent - Raw text or base64 image data of notes
  * @param {string} mimeType - MIME type of uploaded file (e.g., 'text/plain', 'image/png', 'application/pdf')
+ * @param {string} userId - User ID triggering the OCR operation
  * @returns {Promise<{ extractedText: string, topics: string[], keyConcepts: string[], summary: string }>}
  */
-export async function extractTextFromNotes(noteContent, mimeType = 'text/plain') {
+export async function extractTextFromNotes(noteContent, mimeType = 'text/plain', userId = null) {
   try {
     let rawText = '';
+    const safeUserId = userId || '650000000000000000000001';
 
     if (typeof noteContent === 'string' && !noteContent.startsWith('data:')) {
       rawText = noteContent;
@@ -20,6 +22,7 @@ Preserve technical terms, code snippets, equations, and key topic headings. Retu
         route: 'faculty.notes.generate',
         prompt,
         input: typeof noteContent === 'string' ? noteContent.substring(0, 5000) : noteContent.toString('utf-8').substring(0, 5000),
+        userId: safeUserId,
       });
 
       rawText = aiRes.text || noteContent.toString('utf-8');
@@ -38,6 +41,7 @@ ${rawText.substring(0, 4000)}`;
       route: 'faculty.notes.generate',
       prompt: topicPrompt,
       input: rawText,
+      userId: safeUserId,
     });
 
     const outputText = structuredRes.text || '';

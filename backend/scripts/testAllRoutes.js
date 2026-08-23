@@ -299,6 +299,11 @@ async function runTests() {
     return { title: res.data.assessment?.title, questionsCount: res.data.assessment?.questions?.length };
   });
 
+  await testEndpoint('GET Faculty Classrooms', async () => {
+    const res = await apiCall(facultyToken).get('/faculty/classrooms');
+    return { classroomsCount: res.data.classrooms?.length };
+  });
+
   // ----------------------------------------------------
   // 4. RECRUITER ROUTES & AI AGENTS
   // ----------------------------------------------------

@@ -28,7 +28,8 @@ router.post('/projects/assign', facultyController.assignProject);
 router.get('/learning-feed', facultyController.getLearningFeed);
 router.post('/lecture-bridge', facultyController.lectureBridge);
 router.post('/mentorship/match', facultyController.mentorshipMatch);
-router.post('/students/import-marks', facultyController.importStudentMarks);
-router.post('/ppt/generate', facultyController.generatePPT);
+router.get('/classrooms', facultyController.getClassrooms);
+router.get('/students/:studentId/detail', facultyController.getStudentDetail);
+router.post('/students/:studentId/assign-remedial', facultyController.assignRemedialPractice);
 
 export default router;
